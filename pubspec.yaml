@@ -1,0 +1,11 @@
+name: flutist
+description: "A Flutter project management framework inspired by Tuist"
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+
+dependencies: {}
+
+dev_dependencies: {}
