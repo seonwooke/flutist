@@ -15,7 +15,7 @@
 ///   },
 /// )
 /// ```
-class ProjectOption {
+class ProjectOptions {
   /// Whether to use custom templates for module generation.
   /// If false, uses Flutist's default templates.
   ///
@@ -34,7 +34,7 @@ class ProjectOption {
 
   /// Creates a new ProjectOption.
   /// 새로운 ProjectOption을 생성합니다.
-  const ProjectOption({
+  const ProjectOptions({
     this.useCustomTemplate = false,
   });
 }
