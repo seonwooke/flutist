@@ -10,7 +10,7 @@ import 'core.dart';
 /// ```dart
 /// final project = Project(
 ///   name: 'my_app',
-///   option: ProjectOption(
+///   options: ProjectOptions(
 ///     useCustomTemplate: true,
 ///     defaultPaths: {...},
 ///   ),
@@ -45,7 +45,7 @@ class Project {
   /// 프로젝트의 설정 옵션.
   /// 프로젝트 동작과 모듈 생성 설정을 제어합니다.
   /// 지정하지 않으면 기본 ProjectOption()이 사용됩니다.
-  final ProjectOption option;
+  final ProjectOptions options;
 
   /// List of modules in this project.
   /// Each module represents a distinct package or feature in the workspace.
@@ -58,7 +58,7 @@ class Project {
   /// 새로운 Project를 생성합니다.
   Project({
     required this.name,
-    this.option = const ProjectOption(),
+    this.options = const ProjectOptions(),
     this.modules = const [],
   });
 }
