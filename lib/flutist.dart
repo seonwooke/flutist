@@ -1,1 +1,3 @@
-library flutist;
+library;
+
+export 'commands/commands.dart';
