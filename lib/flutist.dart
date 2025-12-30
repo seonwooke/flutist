@@ -1,3 +1,3 @@
 library;
 
-export 'commands/commands.dart';
+export 'src/commands/commands.dart';
