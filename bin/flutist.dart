@@ -1,4 +1,5 @@
-import 'package:args/args.dart';
+import 'dart:io';
+
 import 'package:flutist/flutist.dart';
 
 void main(List<String> arguments) async {
@@ -7,31 +8,35 @@ void main(List<String> arguments) async {
   }
 
   try {
-    final ArgParser parser = ArgParser();
-    final argResults = parser.parse(arguments);
-    final commandName = argResults.arguments[0];
+    // Get command name (first argument)
+    final commandName = arguments[0];
+
+    // Get remaining arguments for the command
+    final commandArgs = arguments.skip(1).toList();
 
     switch (commandName) {
+      /// tuist init
       case 'init':
-        // TODO:
-        // tuist init
-        // - arguments 길이가 2일 경우에는 두 번쨰 인자로 프로젝트 생성
-        // - arguments 길이가 1일 경우에는 현재 path의 이름으로 프로젝트 초기화
-        InitCommand().execute(argResults);
+        InitCommand().execute(commandArgs);
         break;
+
+      /// tuist generate
       case 'generate':
-        // tuist generate
-        // - project.dart 파일을 보고 모든 pubspec.yaml 파일을 업데이트
-        // - package.dart 파일을 보고 패키지 generate 파일 생성
-        GenerateCommand().execute(argResults);
+        GenerateCommand().execute(commandArgs);
         break;
+
+      /// tuist create --name <module_name> --path <path> --options <ModuleType>
       case 'create':
-        // TODO:
-        // tuist create --name <module_name> --path <path> --type <type>
-        CreateCommand().execute(argResults);
+        CreateCommand().execute(commandArgs);
         break;
+
+      /// tuist help
       default:
-        break;
+        Logger.error('Unknown command: $commandName');
+        exit(1);
     }
-  } catch (e) {}
+  } catch (e) {
+    Logger.error(e.toString());
+    exit(1);
+  }
 }

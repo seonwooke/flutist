@@ -15,7 +15,7 @@ class Logger {
   /// Prints an error message in red to stderr.
   /// 빨간색으로 에러 메시지를 출력합니다.
   static void error(String message) {
-    stderr.writeln(red.wrap('❌ Error: $message'));
+    stderr.writeln(red.wrap('❌ [Error] $message'));
   }
 
   /// Prints an informational message in blue.

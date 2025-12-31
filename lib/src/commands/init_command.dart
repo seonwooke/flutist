@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:args/args.dart';
 import 'package:path/path.dart' as path;
 
 import '../core/core.dart';
@@ -18,13 +17,13 @@ class InitCommand implements BaseCommand {
       'Initialize a new Flutist project with Workspace support.';
 
   @override
-  void execute(ArgResults arguments) async {
-    final rootPath = Directory.current.path;
-    final projectName = path.basename(rootPath);
-
-    Logger.info('Initializing Flutist project...');
-
+  void execute(List<String> arguments) async {
     try {
+      final rootPath = Directory.current.path;
+      final projectName = path.basename(rootPath);
+
+      Logger.info('Initializing Flutist project...');
+
       // 1. Create root configuration files
       await FileHelper.writeFile(
         path.join(rootPath, 'project.dart'),
