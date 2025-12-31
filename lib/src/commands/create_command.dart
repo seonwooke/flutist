@@ -60,7 +60,7 @@ class CreateCommand implements BaseCommand {
       /// Create module
       _createModule(path, name, moduleType);
 
-      Logger.success('✅ Module created successfully!');
+      Logger.success('Module created successfully!');
     } catch (e) {
       Logger.error('Failed to create module: $e');
       Logger.info(
@@ -81,6 +81,7 @@ class CreateCommand implements BaseCommand {
 
     // Store created module paths for workspace update
     List<String> createdModulePaths = [];
+    List<String> createdModuleNames = [];
 
     if (moduleType == ModuleType.simple) {
       // Simple: Create directly in path (no layers)
@@ -93,11 +94,15 @@ class CreateCommand implements BaseCommand {
       // Add all layer paths
       for (final layer in layers) {
         createdModulePaths.add('$path/$name/$layer');
+        createdModuleNames.add(layer);
       }
     }
 
     // Update root pubspec.yaml workspace
     _updateRootPubspec(currentDir, createdModulePaths);
+
+    // Update project.dart modules
+    _updateProjectDart(currentDir, createdModuleNames, moduleType);
   }
 
   /// Creates a simple module (no layers).
@@ -117,7 +122,7 @@ class CreateCommand implements BaseCommand {
     // Create lib/ folder
     _createLibFolder(modulePath);
 
-    Logger.success('✅ Created simple module: $path');
+    Logger.success('Created simple module: $path');
   }
 
   /// Creates a layered module (feature, library, standard).
@@ -157,7 +162,7 @@ class CreateCommand implements BaseCommand {
       }
     }
 
-    Logger.success('✅ Created layered module: $path/$name');
+    Logger.success('Created layered module: $path/$name');
   }
 
   /// Creates pubspec.yaml file.
@@ -214,11 +219,92 @@ class CreateCommand implements BaseCommand {
 
       // Write back to file
       rootPubspecFile.writeAsStringSync(editor.toString());
-      Logger.success('✅ Updated root pubspec.yaml');
+      Logger.success('Updated root pubspec.yaml');
     } catch (e) {
       Logger.error('Failed to update root pubspec.yaml: $e');
     }
   }
+
+  /// Updates the project.dart file with new module entries.
+  /// project.dart 파일에 새 모듈 항목을 추가합니다.
+  void _updateProjectDart(
+    String currentDir,
+    List<String> moduleNames,
+    ModuleType moduleType,
+  ) {
+    Logger.info('Updating project.dart...');
+
+    final projectFile = File('$currentDir/project.dart');
+
+    if (!projectFile.existsSync()) {
+      Logger.warn('project.dart not found. Skipping module registration.');
+      return;
+    }
+
+    try {
+      // Read current content
+      String content = projectFile.readAsStringSync();
+
+      // Find the modules list
+      final modulesPattern = RegExp(r'modules:\s*\[');
+      final match = modulesPattern.firstMatch(content);
+
+      if (match == null) {
+        Logger.warn('Could not find modules list in project.dart');
+        return;
+      }
+
+      // Find the closing bracket of modules list
+      int bracketCount = 0;
+      int startIndex = match.end;
+      int insertIndex = -1;
+
+      for (int i = startIndex; i < content.length; i++) {
+        if (content[i] == '[') {
+          bracketCount++;
+        } else if (content[i] == ']') {
+          if (bracketCount == 0) {
+            insertIndex = i;
+            break;
+          }
+          bracketCount--;
+        }
+      }
+
+      if (insertIndex == -1) {
+        Logger.warn('Could not find closing bracket for modules list');
+        return;
+      }
+
+      // Get the content before the closing bracket and trim whitespace
+      String beforeBracket = content.substring(0, insertIndex).trimRight();
+      final afterBracket = content.substring(insertIndex);
+
+      // Generate module entries
+      final moduleEntries = StringBuffer();
+      for (final moduleName in moduleNames) {
+        moduleEntries.write('\n'); // Add newline before each module
+        moduleEntries
+            .write(CreateTemplates.projectModule(moduleName, moduleType));
+      }
+
+      // Combine
+      final newContent = '$beforeBracket$moduleEntries\n  $afterBracket';
+
+      // Write back to file
+      projectFile.writeAsStringSync(newContent);
+
+      for (final moduleName in moduleNames) {
+        Logger.info('  ✓ Added to project.dart: $moduleName');
+      }
+
+      Logger.success('Updated project.dart');
+    } catch (e) {
+      Logger.error('Failed to update project.dart: $e');
+    }
+  }
+
+  // MARK: - Helper
 
   /// Checks if a module with the same path and name already exists.
   /// 동일한 경로와 이름의 모듈이 이미 존재하는지 확인합니다.
@@ -232,7 +318,7 @@ class CreateCommand implements BaseCommand {
       // Check if pubspec.yaml exists in path
       final pubspecPath = '$currentDir/$path/pubspec.yaml';
       if (File(pubspecPath).existsSync()) {
-        Logger.error('❌ Module already exists at: $path');
+        Logger.error('Module already exists at: $path');
         Logger.error('   Found: $pubspecPath');
         exit(1);
       }
@@ -240,14 +326,12 @@ class CreateCommand implements BaseCommand {
       // Check if parent directory exists
       final parentPath = '$currentDir/$path/$name';
       if (Directory(parentPath).existsSync()) {
-        Logger.error('❌ Module already exists at: $path/$name');
+        Logger.error('Module already exists at: $path/$name');
         Logger.error('   Directory already exists: $parentPath');
         exit(1);
       }
     }
   }
-
-  // MARK: - Helper
 
   /// Converts string to ModuleType enum.
   /// 문자열을 ModuleType enum으로 변환합니다.

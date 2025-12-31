@@ -1,3 +1,5 @@
+import '../core/core.dart';
+
 class CreateTemplates {
   static String pubspecYaml(String modulePath, String moduleName) => '''
 name: $moduleName
@@ -20,4 +22,11 @@ void main() {
   // Example entry point
 }
 ''';
+
+  static String projectModule(String moduleName, ModuleType moduleType) => '''
+    Module(
+      name: '$moduleName',
+      type: ModuleType.${moduleType.name},
+      dependencies: [],
+    ),''';
 }
