@@ -41,13 +41,6 @@ class Package {
   /// 이 의존성들은 pubspec.yaml의 'dependencies' 섹션에 추가됩니다.
   final List<Dependency> dependencies;
 
-  /// List of development dependencies available for modules to use.
-  /// These dependencies will be added to the 'dev_dependencies' section of pubspec.yaml.
-  ///
-  /// 모듈에서 사용할 수 있는 개발 의존성 목록.
-  /// 이 의존성들은 pubspec.yaml의 'dev_dependencies' 섹션에 추가됩니다.
-  final List<Dependency> devDependencies;
-
   /// List of all modules defined in this package.
   /// These modules can be referenced as dependencies by other modules.
   ///
@@ -60,7 +53,6 @@ class Package {
   Package({
     required this.name,
     this.dependencies = const [],
-    this.devDependencies = const [],
     this.modules = const [],
   });
 }

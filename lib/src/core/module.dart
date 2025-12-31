@@ -53,11 +53,21 @@ class Module {
   /// 'dependencies' 섹션에 추가될 일반 의존성 목록.
   final List<Dependency> dependencies;
 
+  /// Development dependencies that will be added to the 'dev_dependencies' section.
+  /// 'dev_dependencies' 섹션에 추가될 개발 의존성 목록.
+  final List<Dependency> devDependencies;
+
+  /// Sub-modules or module dependencies within this module.
+  /// 이 모듈 내의 하위 모듈 또는 모듈 의존성 목록.
+  final List<Module> modules;
+
   /// Creates a new Module.
   /// 새로운 Module을 생성합니다.
   Module({
     required this.name,
     this.type = ModuleType.library,
     this.dependencies = const [],
+    this.devDependencies = const [],
+    this.modules = const [],
   });
 }

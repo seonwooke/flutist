@@ -86,6 +86,7 @@ class CreateCommand implements BaseCommand {
     if (moduleType == ModuleType.simple) {
       // Simple: Create directly in path (no layers)
       _createSimpleModule(currentDir, path, name);
+      createdModuleNames.add(name);
     } else {
       // Other types: Create parent folder + layers
       final layers = _getLayersForType(moduleType, name);
@@ -103,6 +104,9 @@ class CreateCommand implements BaseCommand {
 
     // Update project.dart modules
     _updateProjectDart(currentDir, createdModuleNames, moduleType);
+
+    // Update package.dart modules
+    _updatePackageDart(currentDir, createdModuleNames, moduleType);
   }
 
   /// Creates a simple module (no layers).
@@ -304,6 +308,84 @@ class CreateCommand implements BaseCommand {
     }
   }
 
+  /// Updates the package.dart file with new module entries.
+  /// package.dart 파일에 새 모듈 항목을 추가합니다.
+  void _updatePackageDart(
+    String currentDir,
+    List<String> moduleNames,
+    ModuleType moduleType,
+  ) {
+    Logger.info('Updating package.dart...');
+
+    final packageFile = File('$currentDir/package.dart');
+
+    if (!packageFile.existsSync()) {
+      Logger.warn('package.dart not found. Skipping module registration.');
+      return;
+    }
+
+    try {
+      // Read current content
+      String content = packageFile.readAsStringSync();
+
+      // Find the modules list in Package
+      final modulesPattern = RegExp(r'modules:\s*\[');
+      final match = modulesPattern.firstMatch(content);
+
+      if (match == null) {
+        Logger.warn('Could not find modules list in package.dart');
+        return;
+      }
+
+      // Find the closing bracket of modules list
+      int bracketCount = 0;
+      int startIndex = match.end;
+      int insertIndex = -1;
+
+      for (int i = startIndex; i < content.length; i++) {
+        if (content[i] == '[') {
+          bracketCount++;
+        } else if (content[i] == ']') {
+          if (bracketCount == 0) {
+            insertIndex = i;
+            break;
+          }
+          bracketCount--;
+        }
+      }
+
+      if (insertIndex == -1) {
+        Logger.warn('Could not find closing bracket for modules list');
+        return;
+      }
+
+      // Get the content before the closing bracket and trim whitespace
+      String beforeBracket = content.substring(0, insertIndex).trimRight();
+      final afterBracket = content.substring(insertIndex);
+
+      // Generate module entries
+      final moduleEntries = StringBuffer();
+      for (final moduleName in moduleNames) {
+        moduleEntries.write('\n'); // Add newline before each module
+        moduleEntries
+            .write(CreateTemplates.packageModule(moduleName, moduleType));
+      }
+
+      // Combine
+      final newContent = '$beforeBracket$moduleEntries\n  $afterBracket';
+
+      // Write back to file
+      packageFile.writeAsStringSync(newContent);
+
+      for (final moduleName in moduleNames) {
+        Logger.info('  ✓ Added to package.dart: $moduleName');
+      }
+
+      Logger.success('Updated package.dart');
+    } catch (e) {
+      Logger.error('Failed to update package.dart: $e');
+    }
+  }
   // MARK: - Helper
 
   /// Checks if a module with the same path and name already exists.
