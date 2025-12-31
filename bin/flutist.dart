@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:args/args.dart';
 import 'package:flutist/flutist.dart';
 
 void main(List<String> arguments) async {
@@ -9,27 +8,32 @@ void main(List<String> arguments) async {
   }
 
   try {
-    final ArgParser parser = ArgParser();
-    final argResults = parser.parse(arguments);
-    final commandName = argResults.arguments[0];
+    // Get command name (first argument)
+    final commandName = arguments[0];
+
+    // Get remaining arguments for the command
+    final commandArgs = arguments.skip(1).toList();
 
     switch (commandName) {
       /// tuist init
       case 'init':
-        InitCommand().execute(argResults);
+        InitCommand().execute(commandArgs);
         break;
 
       /// tuist generate
       case 'generate':
-        GenerateCommand().execute(argResults);
+        GenerateCommand().execute(commandArgs);
         break;
 
       /// tuist create --name <module_name> --path <path> --options <ModuleType>
       case 'create':
-        CreateCommand().execute(argResults);
+        CreateCommand().execute(commandArgs);
         break;
+
+      /// tuist help
       default:
-        break;
+        Logger.error('Unknown command: $commandName');
+        exit(1);
     }
   } catch (e) {
     Logger.error(e.toString());
