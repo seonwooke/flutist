@@ -2,6 +2,11 @@
 
 All notable changes to Flutist will be documented in this file.
 
+## [1.0.1] - 2025-01-02
+
+### 🐛 Fixed
+- Fixed README.md banner image loading issue by using GitHub raw URL instead of relative path
+
 ## [1.0.0] - 2025-01-02
 
 ### 🎉 Initial Release

@@ -1,6 +1,6 @@
 name: flutist
 description: "A Flutter project management framework inspired by Tuist"
-version: 1.0.0
+version: 1.0.1
 homepage: https://github.com/seonwooke/flutist
 repository: https://github.com/seonwooke/flutist
 issue_tracker: https://github.com/seonwooke/flutist/issues
