@@ -166,7 +166,6 @@ class InitCommand implements BaseCommand {
   }
 
   /// Creates example scaffold templates.
-  /// 예제 스캐폴드 템플릿을 생성합니다.
   Future<void> _createExampleTemplates(String rootPath) async {
     Logger.info('Creating example templates...');
 
@@ -179,7 +178,6 @@ class InitCommand implements BaseCommand {
   }
 
   /// Creates feature template with BLoC pattern.
-  /// BLoC 패턴 기능 템플릿을 생성합니다.
   Future<void> _createFeatureTemplate(String templatesDir) async {
     final featureDir = path.join(templatesDir, 'feature');
     await Directory(featureDir).create(recursive: true);

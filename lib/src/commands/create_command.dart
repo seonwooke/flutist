@@ -75,7 +75,6 @@ class CreateCommand implements BaseCommand {
   }
 
   /// Creates the module with specified structure.
-  /// 지정된 구조로 모듈을 생성합니다.
   void _createModule(String path, String name, ModuleType moduleType) {
     // Get current working directory
     final currentDir = Directory.current.path;
@@ -114,7 +113,6 @@ class CreateCommand implements BaseCommand {
   }
 
   /// Creates a simple module (no layers).
-  /// 단순 모듈을 생성합니다 (레이어 없음).
   void _createSimpleModule(String currentDir, String path, String name) {
     final modulePath = '$currentDir/$path';
     final moduleDir = Directory(modulePath);
@@ -137,7 +135,6 @@ class CreateCommand implements BaseCommand {
   }
 
   /// Creates a layered module (feature, library, standard).
-  /// 레이어가 있는 모듈을 생성합니다 (feature, library, standard).
   void _createLayeredModule(
     String currentDir,
     String path,
@@ -180,7 +177,6 @@ class CreateCommand implements BaseCommand {
   }
 
   /// Creates pubspec.yaml file.
-  /// pubspec.yaml 파일을 생성합니다.
   void _createPubspec(String modulePath, String moduleName) {
     final pubspecFile = File('$modulePath/pubspec.yaml');
     final content = CreateTemplates.pubspecYaml(modulePath, moduleName);
@@ -189,7 +185,6 @@ class CreateCommand implements BaseCommand {
   }
 
   /// Creates lib/ folder.
-  /// lib/ 폴더를 생성합니다.
   void _createLibFolder(String modulePath) {
     final libDir = Directory('$modulePath/lib');
     if (!libDir.existsSync()) {
@@ -199,7 +194,6 @@ class CreateCommand implements BaseCommand {
   }
 
   /// Creates main.dart file (for library example layer only).
-  /// main.dart 파일을 생성합니다 (library의 example 레이어만).
   void _createMainDart(String layerPath) {
     final mainFile = File('$layerPath/lib/main.dart');
     final content = CreateTemplates.mainDart(layerPath);
@@ -209,7 +203,6 @@ class CreateCommand implements BaseCommand {
   }
 
   /// Updates the root pubspec.yaml file with the new module paths.
-  /// root pubspec.yaml 파일을 업데이트하여 새로운 모듈 경로를 추가합니다.
   void _updateRootPubspec(String currentDir, List<String> modulePaths) {
     Logger.info('Updating root pubspec.yaml...');
 
@@ -240,7 +233,6 @@ class CreateCommand implements BaseCommand {
   }
 
   /// Updates the project.dart file with new module entries.
-  /// project.dart 파일에 새 모듈 항목을 추가합니다.
   void _updateProjectDart(
     String currentDir,
     List<String> moduleNames,
@@ -319,7 +311,6 @@ class CreateCommand implements BaseCommand {
   }
 
   /// Updates the package.dart file with new module entries.
-  /// package.dart 파일에 새 모듈 항목을 추가합니다.
   void _updatePackageDart(
     String currentDir,
     List<String> moduleNames,
@@ -398,7 +389,6 @@ class CreateCommand implements BaseCommand {
   }
 
   /// Creates analysis_options.yaml that includes root config.
-  /// root 설정을 include하는 analysis_options.yaml을 생성합니다.
   void _createAnalysisOptions(String modulePath, String moduleRelativePath) {
     // Calculate relative path to root
     final depth = moduleRelativePath.split('/').length;
@@ -414,7 +404,6 @@ class CreateCommand implements BaseCommand {
   // MARK: - Helper
 
   /// Checks if a module with the same path and name already exists.
-  /// 동일한 경로와 이름의 모듈이 이미 존재하는지 확인합니다.
   void _checkModuleExists(
     String currentDir,
     String path,
@@ -441,7 +430,6 @@ class CreateCommand implements BaseCommand {
   }
 
   /// Converts string to ModuleType enum.
-  /// 문자열을 ModuleType enum으로 변환합니다.
   ModuleType _parseModuleType(String typeString) {
     switch (typeString) {
       case 'feature':
@@ -458,7 +446,6 @@ class CreateCommand implements BaseCommand {
   }
 
   /// Returns the list of layer names for the given module type.
-  /// 주어진 모듈 타입에 대한 레이어 이름 목록을 반환합니다.
   List<String> _getLayersForType(ModuleType moduleType, String moduleName) {
     switch (moduleType) {
       case ModuleType.feature:

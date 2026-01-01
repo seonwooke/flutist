@@ -4,10 +4,8 @@ import '../core/core.dart';
 import '../utils/utils.dart';
 
 /// Generator for flutist_gen.dart file.
-/// flutist_gen.dart 파일 생성기.
 class GenFileGenerator {
   /// Generates the flutist_gen.dart file based on package.dart.
-  /// package.dart를 기반으로 flutist_gen.dart 파일을 생성합니다.
   static void generate(String rootPath) {
     try {
       Logger.info('Generating flutist_gen.dart...');
@@ -43,7 +41,6 @@ class GenFileGenerator {
   }
 
   /// Parses package.dart content.
-  /// package.dart 내용을 파싱합니다.
   static Package _parsePackageDart(String content) {
     // Parse package name
     final nameMatch = RegExp(r"name:\s*'([^']+)'").firstMatch(content);
@@ -63,7 +60,6 @@ class GenFileGenerator {
   }
 
   /// Parses dependencies from package.dart content.
-  /// package.dart 내용에서 dependencies를 파싱합니다.
   static List<Dependency> _parseDependencies(String content) {
     final dependencies = <Dependency>[];
 
@@ -91,7 +87,6 @@ class GenFileGenerator {
   }
 
   /// Parses modules from package.dart content.
-  /// package.dart 내용에서 modules를 파싱합니다.
   static List<Module> _parseModules(String content) {
     final modules = <Module>[];
 
@@ -120,7 +115,6 @@ class GenFileGenerator {
   }
 
   /// Builds the content for flutist_gen.dart.
-  /// flutist_gen.dart의 내용을 생성합니다.
   static String _buildGenContent(Package package) {
     final buffer = StringBuffer();
 
@@ -162,7 +156,6 @@ class GenFileGenerator {
   }
 
   /// Converts snake_case to camelCase.
-  /// snake_case를 camelCase로 변환합니다.
   static String _toCamelCase(String snakeCase) {
     final parts = snakeCase.split('_');
     if (parts.length == 1) return snakeCase;
@@ -177,7 +170,6 @@ class GenFileGenerator {
   }
 
   /// Converts string to ModuleType enum.
-  /// 문자열을 ModuleType enum으로 변환합니다.
   static ModuleType _parseModuleType(String typeString) {
     switch (typeString) {
       case 'feature':

@@ -1,6 +1,8 @@
 import '../core/core.dart';
 
+/// Template generator for module creation.
 class CreateTemplates {
+  /// Generates pubspec.yaml content for a module.
   static String pubspecYaml(String modulePath, String moduleName) => '''
 name: $moduleName
 description: A Flutter module
@@ -15,12 +17,14 @@ dependencies:
 resolution: workspace
 ''';
 
+  /// Generates main.dart content for library example layer.
   static String mainDart(String projectName) => '''
 void main() {
   // Example entry point
 }
 ''';
 
+  /// Generates Module entry for project.dart.
   static String projectModule(String moduleName, ModuleType moduleType) => '''
     Module(
       name: '$moduleName',
@@ -30,11 +34,11 @@ void main() {
       modules: [],
     ),''';
 
+  /// Generates Module entry for package.dart.
   static String packageModule(String moduleName, ModuleType moduleType) => '''
     Module(name: '$moduleName', type: ModuleType.${moduleType.name}),''';
 
   /// Generates analysis_options.yaml that includes root config.
-  /// root 설정을 include하는 analysis_options.yaml을 생성합니다.
   ///
   /// [relativePath] - Path to root (e.g., "../.." for features/login/login_example)
   static String analysisOptionsYaml(String relativePath) => '''

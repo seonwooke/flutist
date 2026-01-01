@@ -1,4 +1,6 @@
+/// Template generator for project initialization.
 class InitTemplates {
+  /// Generates root pubspec.yaml content.
   static String pubspecYaml(String projectName) => '''
 name: $projectName
 description: A new Flutter project managed by Flutist.
@@ -19,6 +21,7 @@ dependencies:
 workspace:
 ''';
 
+  /// Generates project.dart content.
   static String projectDart(String projectName) => '''
 // ignore_for_file: unused_import
 
@@ -50,6 +53,7 @@ final project = Project(
 );
 ''';
 
+  /// Generates package.dart content.
   static String packageDart(String projectName) => '''
 import 'package:flutist/flutist.dart';
 
@@ -66,6 +70,7 @@ final package = Package(
 );
 ''';
 
+  /// Generates app/lib/main.dart content.
   static String appMainDart() => '''
 import 'package:flutter/material.dart';
 import 'package:app/app.dart';
@@ -75,6 +80,7 @@ void main() {
 }
 ''';
 
+  /// Generates app/lib/app.dart content.
   static String appAppDart() => '''
 import 'package:flutter/material.dart';
 
@@ -124,6 +130,7 @@ class MainScaffold extends StatelessWidget {
 }
 ''';
 
+  /// Generates app/pubspec.yaml content.
   static String appPubspecYaml() => '''
 name: app
 version: 1.0.0
@@ -139,6 +146,7 @@ dependencies:
 resolution: workspace
 ''';
 
+  /// Generates feature template.yaml content.
   static String featureTemplateYaml() => '''
 description: "Feature module with BLoC pattern"
 
@@ -174,7 +182,6 @@ import '{{name}}_event.dart';
 import '{{name}}_state.dart';
 
 /// BLoC for {{Name}} feature.
-/// {{Name}} 기능을 위한 BLoC.
 class {{Name}}Bloc extends Bloc<{{Name}}Event, {{Name}}State> {
   {{Name}}Bloc() : super({{Name}}Initial()) {
     on<{{Name}}Started>(_onStarted);
@@ -205,25 +212,21 @@ class {{Name}}Bloc extends Bloc<{{Name}}Event, {{Name}}State> {
 }
 ''';
 
+  /// Generates feature state template content.
   static String featureStateDartTemplate() => '''
 /// States for {{Name}} BLoC.
-/// {{Name}} BLoC의 상태들.
 sealed class {{Name}}State {}
 
 /// Initial state.
-/// 초기 상태.
 final class {{Name}}Initial extends {{Name}}State {}
 
 /// Loading state.
-/// 로딩 상태.
 final class {{Name}}Loading extends {{Name}}State {}
 
 /// Success state.
-/// 성공 상태.
 final class {{Name}}Success extends {{Name}}State {}
 
 /// Error state.
-/// 에러 상태.
 final class {{Name}}Error extends {{Name}}State {
   final String message;
   
@@ -231,22 +234,21 @@ final class {{Name}}Error extends {{Name}}State {
 }
 ''';
 
+  /// Generates feature event template content.
   static String featureEventDartTemplate() => '''
 /// Events for {{Name}} BLoC.
-/// {{Name}} BLoC의 이벤트들.
 sealed class {{Name}}Event {}
 
 /// Event triggered when the feature starts.
-/// 기능이 시작될 때 트리거되는 이벤트.
 final class {{Name}}Started extends {{Name}}Event {}
 
 /// Event triggered when data is loaded.
-/// 데이터가 로드될 때 트리거되는 이벤트.
 final class {{Name}}Loaded extends {{Name}}Event {
   // TODO: Add necessary fields
 }
 ''';
 
+  /// Generates feature screen template content.
   static String featureScreenDartTemplate() => '''
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -256,7 +258,6 @@ import '../bloc/{{name}}_event.dart';
 import '../bloc/{{name}}_state.dart';
 
 /// Screen for {{Name}} feature.
-/// {{Name}} 기능을 위한 화면.
 class {{Name}}Screen extends StatelessWidget {
   const {{Name}}Screen({super.key});
 
@@ -292,6 +293,7 @@ class {{Name}}Screen extends StatelessWidget {
 }
 ''';
 
+  /// Generates root analysis_options.yaml content.
   static String analysisOptionsYaml() => '''
 # This file configures the static analysis for this Dart project.
 # No external packages required - all rules are defined here.

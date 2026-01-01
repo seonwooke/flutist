@@ -8,14 +8,6 @@ import '../utils/utils.dart';
 import 'commands.dart';
 
 /// Command to generate code from user-defined templates.
-/// 사용자 정의 템플릿에서 코드를 생성하는 명령어.
-///
-/// Usage / 사용법:
-/// ```bash
-/// flutist scaffold --help
-/// flutist scaffold list
-/// flutist scaffold <template-name> --name <name>
-/// ```
 class ScaffoldCommand implements BaseCommand {
   @override
   String get name => 'scaffold';
@@ -52,7 +44,6 @@ class ScaffoldCommand implements BaseCommand {
   }
 
   /// Shows main help message.
-  /// 메인 도움말 메시지를 표시합니다.
   void _showHelp() {
     print('''
 OVERVIEW: Generates new code based on a template
@@ -96,7 +87,6 @@ See 'flutist scaffold help <subcommand>' for detailed help.
   }
 
   /// Shows help for a specific subcommand.
-  /// 특정 하위 명령어에 대한 도움말을 표시합니다.
   void _showSubcommandHelp(String subCommand) {
     switch (subCommand) {
       case 'list':
@@ -136,7 +126,6 @@ EXAMPLES:
   }
 
   /// Lists all available templates.
-  /// 사용 가능한 모든 템플릿을 나열합니다.
   void _listTemplates() {
     final rootPath = Directory.current.path;
     final templatesDir = Directory(p.join(rootPath, 'flutist', 'templates'));
@@ -226,7 +215,6 @@ EXAMPLES:
   }
 
   /// Generates files from a template.
-  /// 템플릿에서 파일을 생성합니다.
   void _generateFromTemplate(String templateName, List<String> arguments) {
     final parser = ArgParser()
       ..addOption(
@@ -306,7 +294,6 @@ TEMPLATE VARIABLES:
   }
 
   /// Processes a template and generates files.
-  /// 템플릿을 처리하고 파일을 생성합니다.
   void _processTemplate(String templateName, Map<String, String> attributes) {
     final rootPath = Directory.current.path;
     final templateDir = Directory(
@@ -333,7 +320,6 @@ TEMPLATE VARIABLES:
   }
 
   /// Processes template using template.yaml configuration.
-  /// template.yaml 설정을 사용하여 템플릿을 처리합니다.
   void _processAdvancedTemplate(
     Directory templateDir,
     File configFile,
@@ -389,7 +375,6 @@ TEMPLATE VARIABLES:
   }
 
   /// Processes a file item from template.yaml.
-  /// template.yaml의 파일 항목을 처리합니다.
   void _processFileItem(
     Directory templateDir,
     Map item,
@@ -429,7 +414,6 @@ TEMPLATE VARIABLES:
   }
 
   /// Processes a directory item from template.yaml.
-  /// template.yaml의 디렉토리 항목을 처리합니다.
   void _processDirectoryItem(
     Directory templateDir,
     Map item,
@@ -462,7 +446,6 @@ TEMPLATE VARIABLES:
   }
 
   /// Processes template in simple mode (no template.yaml).
-  /// 단순 모드로 템플릿을 처리합니다 (template.yaml 없음).
   void _processSimpleTemplate(
     Directory templateDir,
     Map<String, String> attributes,
@@ -511,7 +494,6 @@ TEMPLATE VARIABLES:
   }
 
   /// Replaces template variables with actual values.
-  /// 템플릿 변수를 실제 값으로 치환합니다.
   String _replaceVariables(String content, Map<String, String> attributes) {
     var result = content;
 
@@ -545,7 +527,6 @@ TEMPLATE VARIABLES:
   }
 
   /// Copies a directory recursively.
-  /// 디렉토리를 재귀적으로 복사합니다.
   void _copyDirectory(Directory source, Directory destination) {
     destination.createSync(recursive: true);
 
@@ -561,7 +542,6 @@ TEMPLATE VARIABLES:
   }
 
   /// Converts any string to snake_case.
-  /// 문자열을 snake_case로 변환합니다.
   String _toSnakeCase(String input) {
     var result = input.replaceAllMapped(
       RegExp(r'[A-Z]'),
@@ -578,7 +558,6 @@ TEMPLATE VARIABLES:
   }
 
   /// Converts snake_case to PascalCase.
-  /// snake_case를 PascalCase로 변환합니다.
   String _toPascalCase(String snakeCase) {
     final parts = snakeCase.split('_');
     return parts.map((part) {
@@ -588,7 +567,6 @@ TEMPLATE VARIABLES:
   }
 
   /// Converts snake_case to camelCase.
-  /// snake_case를 camelCase로 변환합니다.
   String _toCamelCase(String snakeCase) {
     final parts = snakeCase.split('_');
     if (parts.isEmpty) return snakeCase;

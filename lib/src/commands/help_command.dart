@@ -4,7 +4,6 @@ import '../utils/utils.dart';
 import 'commands.dart';
 
 /// Command to display help information.
-/// 도움말 정보를 표시하는 명령어.
 class HelpCommand implements BaseCommand {
   @override
   String get name => 'help';
@@ -22,7 +21,6 @@ class HelpCommand implements BaseCommand {
   }
 
   /// Shows general help with all available commands.
-  /// 사용 가능한 모든 명령어를 포함한 일반 도움말을 표시합니다.
   void _showGeneralHelp() {
     Logger.banner();
     print('''
@@ -68,7 +66,6 @@ EXAMPLES:
   }
 
   /// Shows detailed help for a specific command.
-  /// 특정 명령어에 대한 상세 도움말을 표시합니다.
   void _showCommandHelp(String commandName) {
     switch (commandName) {
       case 'init':
