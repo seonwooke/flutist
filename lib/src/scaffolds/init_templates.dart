@@ -295,11 +295,9 @@ class {{Name}}Screen extends StatelessWidget {
 
   /// Generates root README.md content.
   static String rootReadme(String projectName, String version) => '''
-# $projectName
-
 <div align="center">
 
-![Flutist Logo](assets/logo.png)
+<img src="https://raw.githubusercontent.com/seonwooke/flutist/release/1.0.0/assets/flutist_banner.png" alt="Flutist Banner">
 
 **A Flutter project managed by Flutist**
 
