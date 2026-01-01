@@ -130,6 +130,9 @@ class CreateCommand implements BaseCommand {
     // Create lib/ folder
     _createLibFolder(modulePath);
 
+    // Create analysis_options.yaml
+    _createAnalysisOptions(modulePath, path);
+
     Logger.success('Created simple module: $path');
   }
 
@@ -163,6 +166,9 @@ class CreateCommand implements BaseCommand {
 
       // Create lib/ folder
       _createLibFolder(layerPath);
+
+      // Create analysis_options.yaml
+      _createAnalysisOptions(layerPath, '$path/$name');
 
       // Create main.dart for library example layer
       if (moduleType == ModuleType.library && layer.endsWith('_example')) {
@@ -390,6 +396,21 @@ class CreateCommand implements BaseCommand {
       Logger.error('Failed to update package.dart: $e');
     }
   }
+
+  /// Creates analysis_options.yaml that includes root config.
+  /// root 설정을 include하는 analysis_options.yaml을 생성합니다.
+  void _createAnalysisOptions(String modulePath, String moduleRelativePath) {
+    // Calculate relative path to root
+    final depth = moduleRelativePath.split('/').length;
+    final relativePath = List.filled(depth, '..').join('/');
+
+    final analysisOptionsFile = File('$modulePath/analysis_options.yaml');
+    final content = CreateTemplates.analysisOptionsYaml(relativePath);
+
+    analysisOptionsFile.writeAsStringSync(content);
+    Logger.info('  ✓ Created analysis_options.yaml');
+  }
+
   // MARK: - Helper
 
   /// Checks if a module with the same path and name already exists.

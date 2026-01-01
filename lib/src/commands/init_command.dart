@@ -73,6 +73,10 @@ class InitCommand implements BaseCommand {
         path.join(rootPath, 'pubspec.yaml'),
         InitTemplates.pubspecYaml(projectName),
       );
+      await FileHelper.writeFile(
+        path.join(rootPath, 'analysis_options.yaml'),
+        InitTemplates.analysisOptionsYaml(),
+      );
 
       // 3. Scaffolding default "app" module
       final appBasePath = path.join(rootPath, 'app');
