@@ -15,17 +15,17 @@ void main(List<String> arguments) async {
     final commandArgs = arguments.skip(1).toList();
 
     switch (commandName) {
-      /// tuist init
+      /// flutist init
       case 'init':
         InitCommand().execute(commandArgs);
         break;
 
-      /// tuist generate
+      /// flutist generate
       case 'generate':
         GenerateCommand().execute(commandArgs);
         break;
 
-      /// tuist create --name <module_name> --path <path> --options <ModuleType>
+      /// flutist create --name <module_name> --path <path> --options <ModuleType>
       case 'create':
         CreateCommand().execute(commandArgs);
         break;
@@ -40,7 +40,7 @@ void main(List<String> arguments) async {
         PubCommand().execute(commandArgs);
         break;
 
-      /// tuist help
+      /// flutist help
       default:
         Logger.error('Unknown command: $commandName');
         exit(1);
