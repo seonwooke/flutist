@@ -34,6 +34,8 @@ class WorkspaceEditor {
           editor,
         );
         break;
+      case ModuleType.custom:
+        break;
     }
 
     await pubspecFile.writeAsString(editor.toString());

@@ -16,13 +16,6 @@
 /// )
 /// ```
 class ProjectOptions {
-  /// Whether to use custom templates for module generation.
-  /// If false, uses Flutist's default templates.
-  ///
-  /// 모듈 생성 시 커스텀 템플릿 사용 여부.
-  /// false인 경우 Flutist의 기본 템플릿을 사용합니다.
-  final bool useCustomTemplate;
-
   /// Whether to enable strict mode for dependency validation.
   /// In strict mode, circular dependencies and invalid references are rejected.
   /// (Not implemented yet)
@@ -34,7 +27,5 @@ class ProjectOptions {
 
   /// Creates a new ProjectOption.
   /// 새로운 ProjectOption을 생성합니다.
-  const ProjectOptions({
-    this.useCustomTemplate = false,
-  });
+  const ProjectOptions();
 }
