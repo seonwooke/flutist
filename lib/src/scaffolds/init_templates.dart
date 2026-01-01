@@ -9,6 +9,8 @@ environment:
   sdk: ^3.5.0
 
 dependencies:
+  flutter:
+    sdk: flutter
   flutist:
     path: ../flutist
 
@@ -18,7 +20,12 @@ workspace:
 ''';
 
   static String projectDart(String projectName) => '''
+// ignore_for_file: unused_import
+
 import 'package:flutist/flutist.dart';
+
+import 'flutist/flutist_gen.dart';
+import 'package.dart';
 
 final project = Project(
   name: '$projectName',
@@ -26,6 +33,7 @@ final project = Project(
     useCustomTemplate: false,
   ),
   modules: [
+    // Example)
     Module(
       name: 'app',
       type: ModuleType.simple,
