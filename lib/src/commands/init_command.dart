@@ -23,9 +23,44 @@ class InitCommand implements BaseCommand {
       final rootPath = Directory.current.path;
       final projectName = path.basename(rootPath);
 
+      // 1. Check if Flutter project exists
+      final pubspecExists = File('$rootPath/pubspec.yaml').existsSync();
+
+      if (!pubspecExists) {
+        // Ask user if they want to create Flutter project
+        Logger.warn('No Flutter project found in current directory.');
+        Logger.info('Do you want to create a new Flutter project? (y/n)');
+
+        final answer = stdin.readLineSync()?.toLowerCase();
+
+        if (answer == 'y' || answer == 'yes') {
+          Logger.info('Creating Flutter project...');
+
+          final result = await Process.run(
+            'flutter',
+            ['create', '.', '--project-name', projectName],
+            workingDirectory: rootPath,
+          );
+
+          if (result.exitCode != 0) {
+            Logger.error('Failed to create Flutter project');
+            exit(1);
+          }
+
+          // Remove files and folders created by flutter create
+          await _removeFilesAndFolders(rootPath);
+
+          Logger.success('Flutter project created');
+        } else {
+          Logger.error('Flutist requires a Flutter project.');
+          Logger.info('Run "flutter create ." first, then "flutist init"');
+          exit(1);
+        }
+      }
+
       Logger.info('Initializing Flutist project...');
 
-      // 1. Create root configuration files
+      // 2. Create root configuration files
       await FileHelper.writeFile(
         path.join(rootPath, 'project.dart'),
         InitTemplates.projectDart(projectName),
@@ -39,7 +74,7 @@ class InitCommand implements BaseCommand {
         InitTemplates.pubspecYaml(projectName),
       );
 
-      // 2. Scaffolding default "app" module
+      // 3. Scaffolding default "app" module
       final appBasePath = path.join(rootPath, 'app');
       final appLibPath = path.join(appBasePath, 'lib');
 
@@ -78,6 +113,46 @@ class InitCommand implements BaseCommand {
       Logger.info('Next: Run "flutter pub get" to install dependencies');
     } catch (e) {
       Logger.error('Initialization failed: $e');
+    }
+  }
+
+  Future<void> _removeFilesAndFolders(String rootPath) async {
+    // Remove files and folders created by flutter create
+    final libDir = Directory(path.join(rootPath, 'lib'));
+    final testDir = Directory(path.join(rootPath, 'test'));
+    final pubspecFile = File(path.join(rootPath, 'pubspec.yaml'));
+    final analysisOptionsFile =
+        File(path.join(rootPath, 'analysis_options.yaml'));
+    final readmeFile = File(path.join(rootPath, 'README.md'));
+
+    // Remove lib folder and all its contents
+    if (libDir.existsSync()) {
+      await libDir.delete(recursive: true);
+      Logger.info('Removed lib folder');
+    }
+
+    // Remove test folder and all its contents
+    if (testDir.existsSync()) {
+      await testDir.delete(recursive: true);
+      Logger.info('Removed test folder');
+    }
+
+    // Remove pubspec.yaml
+    if (pubspecFile.existsSync()) {
+      await pubspecFile.delete();
+      Logger.info('Removed pubspec.yaml');
+    }
+
+    // Remove analysis_options.yaml
+    if (analysisOptionsFile.existsSync()) {
+      await analysisOptionsFile.delete();
+      Logger.info('Removed analysis_options.yaml');
+    }
+
+    // Remove README.md
+    if (readmeFile.existsSync()) {
+      await readmeFile.delete();
+      Logger.info('Removed README.md');
     }
   }
 }
