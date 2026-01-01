@@ -98,7 +98,7 @@ class InitCommand implements BaseCommand {
         InitTemplates.appPubspecYaml(),
       );
 
-      // 3. Add "app" module to workspace
+      // 4. Add "app" module to workspace
       await WorkspaceEditor.addModuleToWorkspace(
         rootPath,
         'app',
@@ -106,7 +106,10 @@ class InitCommand implements BaseCommand {
         ModuleType.simple,
       );
 
-      // 4. Generate flutist_gen.dart ✨ 추가!
+      // 5. Create example templates
+      await _createExampleTemplates(rootPath);
+
+      // 6. Generate flutist_gen.dart
       GenFileGenerator.generate(rootPath);
 
       Logger.success('Flutist initialization complete!');
@@ -154,5 +157,55 @@ class InitCommand implements BaseCommand {
       await readmeFile.delete();
       Logger.info('Removed README.md');
     }
+  }
+
+  /// Creates example scaffold templates.
+  /// 예제 스캐폴드 템플릿을 생성합니다.
+  Future<void> _createExampleTemplates(String rootPath) async {
+    Logger.info('Creating example templates...');
+
+    final templatesDir = path.join(rootPath, 'flutist', 'templates');
+
+    /// Feature template (BLoC pattern)
+    await _createFeatureTemplate(templatesDir);
+
+    Logger.success('Created example templates');
+  }
+
+  /// Creates feature template with BLoC pattern.
+  /// BLoC 패턴 기능 템플릿을 생성합니다.
+  Future<void> _createFeatureTemplate(String templatesDir) async {
+    final featureDir = path.join(templatesDir, 'feature');
+    await Directory(featureDir).create(recursive: true);
+
+    // template.yaml
+    await FileHelper.writeFile(
+      path.join(featureDir, 'template.yaml'),
+      InitTemplates.featureTemplateYaml(),
+    );
+
+    // bloc.dart.template
+    await FileHelper.writeFile(
+      path.join(featureDir, 'bloc.dart.template'),
+      InitTemplates.featureBlocDartTemplate(),
+    );
+
+    // state.dart.template
+    await FileHelper.writeFile(
+      path.join(featureDir, 'state.dart.template'),
+      InitTemplates.featureStateDartTemplate(),
+    );
+
+    // event.dart.template
+    await FileHelper.writeFile(
+      path.join(featureDir, 'event.dart.template'),
+      InitTemplates.featureEventDartTemplate(),
+    );
+
+    // screen.dart.template
+    await FileHelper.writeFile(
+      path.join(featureDir, 'screen.dart.template'),
+      InitTemplates.featureScreenDartTemplate(),
+    );
   }
 }

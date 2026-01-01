@@ -40,6 +40,11 @@ void main(List<String> arguments) async {
         PubCommand().execute(commandArgs);
         break;
 
+      /// flutist scaffold <template_name> --name <name> --path <path>
+      case 'scaffold':
+        ScaffoldCommand().execute(commandArgs);
+        break;
+
       /// flutist help
       default:
         Logger.error('Unknown command: $commandName');
