@@ -29,4 +29,15 @@ class Logger {
   static void warn(String message) {
     print(yellow.wrap('⚠️ $message'));
   }
+
+  /// Prints the Flutist banner.
+  /// Flutist 배너를 출력합니다.
+  static void banner() {
+    print('''
+╔══════════════════════════════════════════════════════════════╗
+║                    Flutist CLI Tool                          ║
+║         Flutter Workspace & Module Management                ║
+╚══════════════════════════════════════════════════════════════╝
+''');
+  }
 }

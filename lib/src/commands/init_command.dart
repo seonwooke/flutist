@@ -20,6 +20,8 @@ class InitCommand implements BaseCommand {
   @override
   void execute(List<String> arguments) async {
     try {
+      Logger.banner();
+
       final rootPath = Directory.current.path;
       final projectName = path.basename(rootPath);
 

@@ -3,11 +3,13 @@ import 'dart:io';
 import 'package:flutist/flutist.dart';
 
 void main(List<String> arguments) async {
-  if (arguments.isEmpty) {
-    // TODO: Print help message
-  }
-
   try {
+    // If no arguments provided, show help
+    if (arguments.isEmpty) {
+      HelpCommand().execute([]);
+      return;
+    }
+
     // Get command name (first argument)
     final commandName = arguments[0];
 
@@ -51,8 +53,13 @@ void main(List<String> arguments) async {
         break;
 
       /// flutist help
+      case 'help':
+        HelpCommand().execute(commandArgs);
+        break;
+
       default:
         Logger.error('Unknown command: $commandName');
+        Logger.info('Run "flutist help" to see all available commands.');
         exit(1);
     }
   } catch (e) {
