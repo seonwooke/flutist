@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as path;
 
 import '../core/core.dart';
+import '../generator/flutist_generator.dart';
 import '../parser/parser.dart';
 import '../scaffolds/init_templates.dart';
 import '../utils/utils.dart';
@@ -70,8 +71,11 @@ class InitCommand implements BaseCommand {
         ModuleType.simple,
       );
 
+      // 4. Generate flutist_gen.dart ✨ 추가!
+      GenFileGenerator.generate(rootPath);
+
       Logger.success('Flutist initialization complete!');
-      Logger.info('Next: Run "flutist generate" to sync your project');
+      Logger.info('Next: Run "flutter pub get" to install dependencies');
     } catch (e) {
       Logger.error('Initialization failed: $e');
     }

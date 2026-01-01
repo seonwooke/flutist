@@ -28,5 +28,10 @@ void main() {
       name: '$moduleName',
       type: ModuleType.${moduleType.name},
       dependencies: [],
+      devDependencies: [],
+      modules: [],
     ),''';
+
+  static String packageModule(String moduleName, ModuleType moduleType) => '''
+    Module(name: '$moduleName', type: ModuleType.${moduleType.name}),''';
 }

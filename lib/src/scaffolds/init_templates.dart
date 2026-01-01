@@ -32,7 +32,11 @@ final project = Project(
       dependencies: [
         // Example)
         // package.dependencies.intl,
-        // package.devDependencies.test,
+      ],
+      devDependencies: [
+        // package.dependencies.test,
+      ],
+      modules: [
         // package.modules.login,
       ],
     ),
@@ -48,9 +52,6 @@ final package = Package(
   dependencies: [
     // TODO: Add dependencies here
     Dependency(name: 'intl', version: '^20.2.0'),
-  ],
-  devDependencies: [
-    // TODO: Add dev dependencies here
     Dependency(name: 'test', version: '^1.28.0'),
   ],
   modules: [

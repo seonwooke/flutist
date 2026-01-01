@@ -12,15 +12,10 @@ class Dependency {
   /// 버전 제약 조건 (예: '^1.0.0', 'any').
   final String version;
 
-  /// Whether this is a dev dependency (appears in dev_dependencies section).
-  /// dev dependency 여부 (dev_dependencies 섹션에 포함됨).
-  final bool isDev;
-
   /// Creates a new Dependency.
   /// 새로운 Dependency를 생성합니다.
   Dependency({
     required this.name,
     required this.version,
-    this.isDev = false,
   });
 }
