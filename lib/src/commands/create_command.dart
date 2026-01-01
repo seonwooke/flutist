@@ -469,6 +469,10 @@ class CreateCommand implements BaseCommand {
       case ModuleType.simple:
         // No layers, just the module itself
         return [];
+
+      case ModuleType.custom:
+        // No layers, just the module itself
+        return [];
     }
   }
 }

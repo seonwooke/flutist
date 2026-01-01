@@ -33,6 +33,13 @@ enum ModuleType {
   /// lib 폴더만 있는 단순 모듈.
   /// 단일 목적 모듈이나 앱 모듈에 사용됩니다.
   simple,
+
+  /// Custom module with custom template.
+  /// Used for custom modules with custom templates.
+  ///
+  /// 커스텀 모듈.
+  /// 커스텀 템플릿을 사용하는 커스텀 모듈에 사용됩니다.
+  custom,
 }
 
 /// Represents a module in a Flutist project.
