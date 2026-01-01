@@ -30,6 +30,11 @@ void main(List<String> arguments) async {
         CreateCommand().execute(commandArgs);
         break;
 
+      /// flutist run
+      case 'run':
+        RunCommand().execute(commandArgs);
+        break;
+
       /// tuist help
       default:
         Logger.error('Unknown command: $commandName');
