@@ -408,7 +408,8 @@ class CreateCommand implements BaseCommand {
   }
 
   /// Creates README.md file for a module.
-  void _createReadme(String modulePath, String moduleName, ModuleType moduleType) {
+  void _createReadme(
+      String modulePath, String moduleName, ModuleType moduleType) {
     final readmeFile = File('$modulePath/README.md');
     final content = CreateTemplates.moduleReadme(moduleName, moduleType);
 

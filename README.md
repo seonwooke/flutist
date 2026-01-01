@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/flutist_banner.png" alt="Flutist Banner">
+<img src="https://raw.githubusercontent.com/seonwooke/flutist/release/1.0.0/assets/flutist_banner.png" alt="Flutist Banner">
 
 **A Flutter project management framework inspired by Tuist**
 
