@@ -45,6 +45,11 @@ void main(List<String> arguments) async {
         ScaffoldCommand().execute(commandArgs);
         break;
 
+      /// flutist graph
+      case 'graph':
+        GraphCommand().execute(commandArgs);
+        break;
+
       /// flutist help
       default:
         Logger.error('Unknown command: $commandName');
