@@ -2,57 +2,54 @@ import 'dart:io';
 
 import 'package:flutist/flutist.dart';
 
+/// Main entry point for Flutist CLI.
+/// Parses command-line arguments and executes the appropriate command.
 void main(List<String> arguments) async {
-  if (arguments.isEmpty) {
-    // TODO: Print help message
-  }
-
   try {
-    // Get command name (first argument)
-    final commandName = arguments[0];
+    if (arguments.isEmpty) {
+      HelpCommand().execute([]);
+      return;
+    }
 
-    // Get remaining arguments for the command
+    final commandName = arguments[0];
     final commandArgs = arguments.skip(1).toList();
 
     switch (commandName) {
-      /// flutist init
       case 'init':
         InitCommand().execute(commandArgs);
         break;
 
-      /// flutist generate
       case 'generate':
         GenerateCommand().execute(commandArgs);
         break;
 
-      /// flutist create --name <module_name> --path <path> --options <ModuleType>
       case 'create':
         CreateCommand().execute(commandArgs);
         break;
 
-      /// flutist run
       case 'run':
         RunCommand().execute(commandArgs);
         break;
 
-      /// flutist pub add <package_name>
       case 'pub':
         PubCommand().execute(commandArgs);
         break;
 
-      /// flutist scaffold <template_name> --name <name> --path <path>
       case 'scaffold':
         ScaffoldCommand().execute(commandArgs);
         break;
 
-      /// flutist graph
       case 'graph':
         GraphCommand().execute(commandArgs);
         break;
 
-      /// flutist help
+      case 'help':
+        HelpCommand().execute(commandArgs);
+        break;
+
       default:
         Logger.error('Unknown command: $commandName');
+        Logger.info('Run "flutist help" to see all available commands.');
         exit(1);
     }
   } catch (e) {

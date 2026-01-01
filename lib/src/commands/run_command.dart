@@ -5,6 +5,7 @@ import 'package:path/path.dart' as path;
 import '../utils/utils.dart';
 import 'commands.dart';
 
+/// Command to run the Flutter application.
 class RunCommand implements BaseCommand {
   @override
   String get name => 'run';

@@ -7,14 +7,6 @@ import '../utils/utils.dart';
 import 'commands.dart';
 
 /// Command to generate dependency graph.
-/// 의존성 그래프를 생성하는 명령어.
-///
-/// Usage / 사용법:
-/// ```bash
-/// flutist graph
-/// flutist graph --format mermaid
-/// flutist graph --format dot --output graph.dot
-/// ```
 class GraphCommand implements BaseCommand {
   @override
   String get name => 'graph';
@@ -164,7 +156,6 @@ FORMATS:
   }
 
   /// Removes comments from Dart code.
-  /// Dart 코드에서 주석을 제거합니다.
   String _removeComments(String code) {
     // Remove multi-line comments /* ... */
     code = code.replaceAll(RegExp(r'/\*.*?\*/', dotAll: true), '');
@@ -394,9 +385,16 @@ $mermaidCode
 
 /// Represents a module node in the dependency graph.
 class ModuleNode {
+  /// Module name.
   final String name;
+
+  /// List of dependency names.
   final List<String> dependencies;
+
+  /// List of dev dependency names.
   final List<String> devDependencies;
+
+  /// List of module dependency names.
   final List<String> modules;
 
   ModuleNode({

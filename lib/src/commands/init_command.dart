@@ -20,6 +20,8 @@ class InitCommand implements BaseCommand {
   @override
   void execute(List<String> arguments) async {
     try {
+      Logger.banner();
+
       final rootPath = Directory.current.path;
       final projectName = path.basename(rootPath);
 
@@ -72,6 +74,22 @@ class InitCommand implements BaseCommand {
       await FileHelper.writeFile(
         path.join(rootPath, 'pubspec.yaml'),
         InitTemplates.pubspecYaml(projectName),
+      );
+      await FileHelper.writeFile(
+        path.join(rootPath, 'analysis_options.yaml'),
+        InitTemplates.analysisOptionsYaml(),
+      );
+
+      // Read version from pubspec.yaml
+      final pubspecContent =
+          await File(path.join(rootPath, 'pubspec.yaml')).readAsString();
+      final versionMatch =
+          RegExp(r'version:\s*([^\s]+)').firstMatch(pubspecContent);
+      final version = versionMatch?.group(1) ?? '1.0.0+1';
+
+      await FileHelper.writeFile(
+        path.join(rootPath, 'README.md'),
+        InitTemplates.rootReadme(projectName, version),
       );
 
       // 3. Scaffolding default "app" module
@@ -160,7 +178,6 @@ class InitCommand implements BaseCommand {
   }
 
   /// Creates example scaffold templates.
-  /// 예제 스캐폴드 템플릿을 생성합니다.
   Future<void> _createExampleTemplates(String rootPath) async {
     Logger.info('Creating example templates...');
 
@@ -173,7 +190,6 @@ class InitCommand implements BaseCommand {
   }
 
   /// Creates feature template with BLoC pattern.
-  /// BLoC 패턴 기능 템플릿을 생성합니다.
   Future<void> _createFeatureTemplate(String templatesDir) async {
     final featureDir = path.join(templatesDir, 'feature');
     await Directory(featureDir).create(recursive: true);

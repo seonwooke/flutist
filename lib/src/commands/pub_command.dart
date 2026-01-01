@@ -37,7 +37,6 @@ class PubCommand implements BaseCommand {
   }
 
   /// Handles the 'add' subcommand.
-  /// 'add' 서브커맨드를 처리합니다.
   Future<void> _handleAdd(List<String> arguments) async {
     if (arguments.isEmpty) {
       Logger.error('No package name provided.');
@@ -90,7 +89,6 @@ class PubCommand implements BaseCommand {
   }
 
   /// Gets the latest version of a package using dart pub add.
-  /// dart pub add를 사용하여 패키지의 최신 버전을 가져옵니다.
   Future<String?> _getLatestVersion(String packageName, String rootPath) async {
     // Create a temporary directory for pub add
     final tempDir = Directory(path.join(rootPath, '.flutist_temp'));
@@ -146,7 +144,6 @@ environment:
   }
 
   /// Adds a dependency to package.dart content.
-  /// package.dart 내용에 의존성을 추가합니다.
   String _addDependencyToPackage(
     String packageContent,
     String packageName,

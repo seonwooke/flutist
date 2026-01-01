@@ -60,7 +60,6 @@ class GenerateCommand implements BaseCommand {
   }
 
   /// Parses the package.dart file.
-  /// package.dart 파일을 파싱합니다.
   Package? _parsePackageDart(String currentDir) {
     Logger.info('Parsing package.dart...');
 
@@ -96,7 +95,6 @@ class GenerateCommand implements BaseCommand {
   }
 
   /// Parses dependencies from package.dart content.
-  /// package.dart 내용에서 dependencies를 파싱합니다.
   List<Dependency> _parseDependencies(String content) {
     final dependencies = <Dependency>[];
 
@@ -127,7 +125,6 @@ class GenerateCommand implements BaseCommand {
   }
 
   /// Parses modules from package.dart content.
-  /// package.dart 내용에서 modules를 파싱합니다.
   List<Module> _parseModules(String content) {
     final modules = <Module>[];
 
@@ -159,7 +156,6 @@ class GenerateCommand implements BaseCommand {
   }
 
   /// Parses the project.dart file.
-  /// project.dart 파일을 파싱합니다.
   Project? _parseProjectDart(String currentDir) {
     Logger.info('Parsing project.dart...');
 
@@ -191,7 +187,6 @@ class GenerateCommand implements BaseCommand {
   }
 
   /// Parses modules from project.dart content.
-  /// project.dart 내용에서 modules를 파싱합니다.
   List<Module> _parseProjectModules(String content) {
     final modules = <Module>[];
 
@@ -239,7 +234,6 @@ class GenerateCommand implements BaseCommand {
   }
 
   /// Parses dependency references from a module's dependencies or devDependencies array.
-  /// 모듈의 dependencies 또는 devDependencies 배열에서 의존성 참조를 파싱합니다.
   List<Dependency> _parseModuleDependencies(
       String moduleContent, String fieldName) {
     final dependencies = <Dependency>[];
@@ -271,7 +265,6 @@ class GenerateCommand implements BaseCommand {
   }
 
   /// Parses module references from a module's modules array.
-  /// 모듈의 modules 배열에서 모듈 참조를 파싱합니다.
   List<Module> _parseModuleReferences(String moduleContent) {
     final modules = <Module>[];
 
@@ -302,7 +295,6 @@ class GenerateCommand implements BaseCommand {
   }
 
   /// Updates pubspec.yaml files for all modules.
-  /// 모든 모듈의 pubspec.yaml 파일을 업데이트합니다.
   void _updatePubspecFiles(
       String currentDir, Project project, Package package) {
     Logger.info('Updating pubspec.yaml files...');
@@ -315,7 +307,6 @@ class GenerateCommand implements BaseCommand {
   }
 
   /// Updates pubspec.yaml for a single module.
-  /// 단일 모듈의 pubspec.yaml을 업데이트합니다.
   void _updateModulePubspec(String currentDir, Module module, Package package) {
     // Find the module's pubspec.yaml location
     final pubspecPath = _findModulePubspecPath(currentDir, module);
@@ -354,7 +345,6 @@ class GenerateCommand implements BaseCommand {
   }
 
   /// Finds the pubspec.yaml path for a module.
-  /// 모듈의 pubspec.yaml 경로를 찾습니다.
   String? _findModulePubspecPath(String currentDir, Module module) {
     // Try different possible locations based on module name pattern
 
@@ -389,7 +379,6 @@ class GenerateCommand implements BaseCommand {
   }
 
   /// Gets version for a dependency from package.dart.
-  /// package.dart에서 의존성의 버전을 가져옵니다.
   String? _getVersionFromPackage(Package package, String dependencyName) {
     try {
       final dep = package.dependencies.firstWhere(
@@ -403,8 +392,6 @@ class GenerateCommand implements BaseCommand {
 
   /// Ensures a section exists in the YAML document.
   /// If it doesn't exist, creates it as an empty map.
-  /// YAML 문서에 섹션이 존재하는지 확인합니다.
-  /// 존재하지 않으면 빈 맵으로 생성합니다.
   void _ensureSection(YamlEditor editor, String sectionName) {
     try {
       // Try to access the section
@@ -417,7 +404,6 @@ class GenerateCommand implements BaseCommand {
   }
 
   /// Formats pubspec.yaml content to ensure proper blank lines.
-  /// pubspec.yaml 내용을 포맷팅하여 적절한 빈 줄을 보장합니다.
   String _formatPubspecContent(String content) {
     // Convert inline maps to multiline
     content = _convertInlineMapsToMultiline(content);
@@ -427,7 +413,6 @@ class GenerateCommand implements BaseCommand {
   }
 
   /// Converts inline YAML maps to multiline format.
-  /// inline YAML 맵을 multiline 형식으로 변환합니다.
   String _convertInlineMapsToMultiline(String content) {
     // Convert dev_dependencies: {key: value} to multiline
     final devDepsPattern = RegExp(r'dev_dependencies:\s*\{([^}]+)\}');
@@ -466,7 +451,6 @@ class GenerateCommand implements BaseCommand {
   }
 
   /// Reorders sections in pubspec.yaml to ensure proper structure.
-  /// pubspec.yaml의 섹션을 재정렬하여 적절한 구조를 보장합니다.
   String _reorderSections(String content) {
     final lines = content.split('\n');
     final sections = <String, List<String>>{
@@ -540,7 +524,6 @@ class GenerateCommand implements BaseCommand {
   }
 
   /// Rebuilds the dependencies section completely.
-  /// dependencies 섹션을 완전히 재구성합니다.
   void _rebuildDependenciesSection(
     YamlEditor editor,
     Module module,
@@ -554,7 +537,7 @@ class GenerateCommand implements BaseCommand {
     final currentDeps = <String, dynamic>{};
     try {
       final depsNode = editor.parseAt(['dependencies']);
-      // YamlNode의 value를 Map으로 변환
+      // Convert YamlNode value to Map
       if (depsNode.value is Map) {
         final deps = depsNode.value as Map;
         // Preserve flutter sdk dependency
@@ -607,7 +590,6 @@ class GenerateCommand implements BaseCommand {
   }
 
   /// Rebuilds the dev_dependencies section completely.
-  /// dev_dependencies 섹션을 완전히 재구성합니다.
   void _rebuildDevDependenciesSection(
     YamlEditor editor,
     Module module,
@@ -642,7 +624,6 @@ class GenerateCommand implements BaseCommand {
   // MARK: - Helper
 
   /// Converts string to ModuleType enum.
-  /// 문자열을 ModuleType enum으로 변환합니다.
   ModuleType _parseModuleType(String typeString) {
     switch (typeString) {
       case 'feature':
@@ -659,7 +640,6 @@ class GenerateCommand implements BaseCommand {
   }
 
   /// Converts camelCase to snake_case.
-  /// camelCase를 snake_case로 변환합니다.
   ///
   /// Examples:
   /// - loginExample → login_example

@@ -6,7 +6,14 @@ import 'package:yaml_edit/yaml_edit.dart';
 import '../core/core.dart';
 import '../utils/utils.dart';
 
+/// Utility class for editing workspace configuration in pubspec.yaml.
 class WorkspaceEditor {
+  /// Adds a module to the workspace configuration in pubspec.yaml.
+  ///
+  /// [rootPath] - Root directory path of the project.
+  /// [modulePath] - Path where the module is located.
+  /// [moduleName] - Name of the module.
+  /// [moduleType] - Type of the module.
   static Future<void> addModuleToWorkspace(
     String rootPath,
     String modulePath,
@@ -42,6 +49,7 @@ class WorkspaceEditor {
     Logger.success('Added module to workspace: $moduleName');
   }
 
+  /// Adds a simple module to the workspace configuration.
   static Future<void> _addSimpleModuleToWorkspace(
     String rootPath,
     String modulePath,
