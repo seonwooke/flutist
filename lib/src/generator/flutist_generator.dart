@@ -36,7 +36,7 @@ class GenFileGenerator {
       final genFile = File('$rootPath/flutist/flutist_gen.dart');
       genFile.writeAsStringSync(genContent);
 
-      Logger.success('✅ Generated flutist_gen.dart');
+      Logger.success('Generated flutist_gen.dart');
     } catch (e) {
       Logger.error('Failed to generate flutist_gen.dart: $e');
     }
