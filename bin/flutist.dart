@@ -35,6 +35,11 @@ void main(List<String> arguments) async {
         RunCommand().execute(commandArgs);
         break;
 
+      /// flutist pub add <package_name>
+      case 'pub':
+        PubCommand().execute(commandArgs);
+        break;
+
       /// tuist help
       default:
         Logger.error('Unknown command: $commandName');
