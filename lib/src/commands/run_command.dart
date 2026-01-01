@@ -25,20 +25,31 @@ class RunCommand implements BaseCommand {
         exit(1);
       }
 
-      // Check if app/main.dart exists
+      // Check if app/lib/main.dart exists
       final mainDartPath = path.join(appPath, 'lib', 'main.dart');
       if (!File(mainDartPath).existsSync()) {
         Logger.error('app/lib/main.dart not found.');
         exit(1);
       }
 
-      Logger.info('Running Flutter app from app/...');
+      Logger.info('Running Flutter app from root...');
 
-      // Run flutter run in the app directory
+      // Check if root/lib/main.dart exists (should be created by init)
+      final rootMainDartPath = path.join(rootPath, 'lib', 'main.dart');
+      if (!File(rootMainDartPath).existsSync()) {
+        // Create it if it doesn't exist
+        final rootLibPath = path.join(rootPath, 'lib');
+        await Directory(rootLibPath).create(recursive: true);
+        await File(rootMainDartPath).writeAsString(
+          "import 'package:app/main.dart' as app;\n\nvoid main() => app.main();\n",
+        );
+      }
+
+      // Run flutter run at root level
       final process = await Process.start(
         'flutter',
         ['run', ...arguments],
-        workingDirectory: appPath,
+        workingDirectory: rootPath,
         mode: ProcessStartMode.inheritStdio,
       );
 
@@ -50,4 +61,3 @@ class RunCommand implements BaseCommand {
     }
   }
 }
-
