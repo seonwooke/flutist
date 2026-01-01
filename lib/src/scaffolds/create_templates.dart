@@ -48,7 +48,11 @@ include: $relativePath/analysis_options.yaml
 
   /// Generates README.md content for a module.
   static String moduleReadme(String moduleName, ModuleType moduleType) => '''
-# $moduleName
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/seonwooke/flutist/release/1.0.0/assets/flutist_banner.png" alt="Flutist Banner" width="50%">
+
+</div>
 
 Module in Flutist workspace.
 

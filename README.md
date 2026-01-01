@@ -1,5 +1,3 @@
-# Flutist
-
 <div align="center">
 
 <img src="assets/flutist_banner.png" alt="Flutist Banner">
