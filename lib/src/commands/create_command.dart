@@ -131,6 +131,9 @@ class CreateCommand implements BaseCommand {
     // Create analysis_options.yaml
     _createAnalysisOptions(modulePath, path);
 
+    // Create README.md
+    _createReadme(modulePath, name, ModuleType.simple);
+
     Logger.success('Created simple module: $path');
   }
 
@@ -171,6 +174,9 @@ class CreateCommand implements BaseCommand {
       if (moduleType == ModuleType.library && layer.endsWith('_example')) {
         _createMainDart(layerPath);
       }
+
+      // Create README.md for each layer
+      _createReadme(layerPath, layer, moduleType);
     }
 
     Logger.success('Created layered module: $path/$name');
@@ -399,6 +405,15 @@ class CreateCommand implements BaseCommand {
 
     analysisOptionsFile.writeAsStringSync(content);
     Logger.info('  ✓ Created analysis_options.yaml');
+  }
+
+  /// Creates README.md file for a module.
+  void _createReadme(String modulePath, String moduleName, ModuleType moduleType) {
+    final readmeFile = File('$modulePath/README.md');
+    final content = CreateTemplates.moduleReadme(moduleName, moduleType);
+
+    readmeFile.writeAsStringSync(content);
+    Logger.info('  ✓ Created README.md');
   }
 
   // MARK: - Helper

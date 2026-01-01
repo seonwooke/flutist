@@ -80,6 +80,18 @@ class InitCommand implements BaseCommand {
         InitTemplates.analysisOptionsYaml(),
       );
 
+      // Read version from pubspec.yaml
+      final pubspecContent =
+          await File(path.join(rootPath, 'pubspec.yaml')).readAsString();
+      final versionMatch =
+          RegExp(r'version:\s*([^\s]+)').firstMatch(pubspecContent);
+      final version = versionMatch?.group(1) ?? '1.0.0+1';
+
+      await FileHelper.writeFile(
+        path.join(rootPath, 'README.md'),
+        InitTemplates.rootReadme(projectName, version),
+      );
+
       // 3. Scaffolding default "app" module
       final appBasePath = path.join(rootPath, 'app');
       final appLibPath = path.join(appBasePath, 'lib');

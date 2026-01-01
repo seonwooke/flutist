@@ -8,7 +8,7 @@ version: 1.0.0+1
 publish_to: 'none'
 
 environment:
-  sdk: ^3.5.0
+  sdk: ">=3.5.0 <4.0.0"
 
 dependencies:
   flutter:
@@ -137,7 +137,7 @@ version: 1.0.0
 publish_to: "none"
 
 environment:
-  sdk: ^3.5.0
+  sdk: ">=3.5.0 <4.0.0"
 
 dependencies:
   flutter:
@@ -293,6 +293,170 @@ class {{Name}}Screen extends StatelessWidget {
 }
 ''';
 
+  /// Generates root README.md content.
+  static String rootReadme(String projectName, String version) => '''
+# $projectName
+
+<div align="center">
+
+![Flutist Logo](assets/logo.png)
+
+**A Flutter project managed by Flutist**
+
+[![Version](https://img.shields.io/badge/version-$version-blue.svg)](pubspec.yaml)
+[![Flutter](https://img.shields.io/badge/Flutter-^3.5.0-blue.svg)](https://flutter.dev)
+[![Dart](https://img.shields.io/badge/Dart-%3E%3D3.5.0%20%3C4.0.0-blue.svg)](https://dart.dev)
+
+</div>
+
+## 📋 About
+
+$projectName is a Flutter workspace project built with Flutist, a powerful project management framework for Flutter applications. This project follows a modular architecture pattern, making it easy to scale and maintain.
+
+## ✨ Features
+
+- 🏗️ **Modular Architecture** - Organized codebase with clear module separation
+- 📦 **Workspace Management** - Centralized dependency management
+- 🎨 **Code Generation** - Scaffold templates for rapid development
+- 🔗 **Dependency Graph** - Visualize module dependencies
+- 🚀 **Fast Development** - Streamlined workflow with Flutist CLI
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Flutter SDK (^3.5.0 or higher)
+- Dart SDK (^3.5.0 or higher)
+- Flutist CLI installed
+
+### Installation
+
+1. **Install dependencies:**
+   ```bash
+   flutter pub get
+   ```
+
+2. **Generate workspace files:**
+   ```bash
+   flutist generate
+   ```
+
+3. **Run the application:**
+   ```bash
+   flutist run
+   ```
+
+## 📁 Project Structure
+
+```
+$projectName/
+├── app/                    # Main application module
+├── project.dart            # Project configuration
+├── package.dart            # Centralized dependencies
+├── pubspec.yaml            # Root workspace configuration
+├── analysis_options.yaml   # Linting rules
+├── flutist/
+│   ├── templates/          # Scaffold templates
+│   └── flutist_gen.dart    # Generated code (auto-generated)
+└── README.md               # This file
+```
+
+### Key Files
+
+- **`project.dart`** - Defines all modules and their dependencies
+- **`package.dart`** - Central repository for all package dependencies
+- **`pubspec.yaml`** - Workspace configuration for Flutter
+- **`flutist/templates/`** - Custom scaffold templates for code generation
+
+## 🛠️ Available Commands
+
+| Command | Description |
+|---------|-------------|
+| `flutist init` | Initialize a new Flutist project |
+| `flutist create` | Create a new module in the project |
+| `flutist generate` | Sync all pubspec.yaml files based on project.dart |
+| `flutist run` | Run the Flutter app from root |
+| `flutist pub add <package>` | Add a dependency to package.dart |
+| `flutist scaffold <template>` | Generate code from templates |
+| `flutist graph` | Generate dependency graph visualization |
+| `flutist help` | Show help information |
+
+### Examples
+
+```bash
+# Create a new feature module
+flutist create --path features --name login --options feature
+
+# Add a new dependency
+flutist pub add http
+
+# Generate code from template
+flutist scaffold feature --name user_profile
+
+# Visualize dependencies
+flutist graph --format mermaid
+```
+
+## 📦 Module Types
+
+This project supports different module types:
+
+- **`feature`** - Feature module with Domain, Data, Presentation layers
+- **`library`** - Library module with Example, Implementation, Interface, Tests, Testing layers
+- **`standard`** - Standard module with Implementation, Tests, Testing layers
+- **`simple`** - Simple module with only lib folder
+
+## 🔧 Development
+
+### Adding Dependencies
+
+Dependencies are managed centrally in `package.dart`. To add a new dependency:
+
+```bash
+flutist pub add <package_name>
+```
+
+Then run `flutist generate` to sync the changes to all modules.
+
+### Creating Modules
+
+```bash
+# Create a simple module
+flutist create --path lib --name utils --options simple
+
+# Create a feature module
+flutist create --path features --name authentication --options feature
+```
+
+### Code Generation
+
+Use scaffold templates to generate boilerplate code:
+
+```bash
+# List available templates
+flutist scaffold list
+
+# Generate from template
+flutist scaffold feature --name login
+```
+
+## 📚 Documentation
+
+For more information about Flutist, visit the [official documentation](https://github.com/flutist/flutist).
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+---
+
+**Built with ❤️ using Flutist**
+''';
+
   /// Generates root analysis_options.yaml content.
   static String analysisOptionsYaml() => '''
 # This file configures the static analysis for this Dart project.
@@ -440,7 +604,6 @@ linter:
     avoid_unnecessary_containers: true
     avoid_web_libraries_in_flutter: true
     no_logic_in_create_state: true
-    prefer_const_literals_to_create_immutables: true
     sized_box_for_whitespace: true
     sort_child_properties_last: true
     use_build_context_synchronously: true
