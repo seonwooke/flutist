@@ -4,6 +4,7 @@ import 'package:args/args.dart';
 import 'package:yaml_edit/yaml_edit.dart';
 
 import '../core/core.dart';
+import '../generator/flutist_generator.dart';
 import '../scaffolds/create_templates.dart';
 import '../utils/utils.dart';
 import 'commands.dart';
@@ -57,8 +58,11 @@ class CreateCommand implements BaseCommand {
       Logger.info('  Name: $name');
       Logger.info('  Type: $moduleType');
 
-      /// Create module
+      // Create module
       _createModule(path, name, moduleType);
+
+      // Generate flutist_gen.dart
+      GenFileGenerator.generate(Directory.current.path);
 
       Logger.success('Module created successfully!');
     } catch (e) {
