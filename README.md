@@ -41,6 +41,41 @@
 
 Flutist is a powerful project management framework for Flutter applications, inspired by [Tuist](https://tuist.io) for iOS development. It provides a structured approach to managing large-scale Flutter projects with modular architecture, centralized dependency management, and code generation capabilities.
 
+## 🚀 Core Commands
+
+The main commands you'll use most frequently:
+
+### `flutist init`
+Initialize a new Flutist project with workspace support. Creates all configuration files and sets up the project structure.
+
+### `flutist create`
+Create new modules (feature, library, standard, simple) with predefined architectures.
+
+### `flutist generate`
+Sync all `pubspec.yaml` files based on `project.dart` and regenerate `flutist_gen.dart`.
+
+### `flutist scaffold`
+Generate code from user-defined templates. Create boilerplate code quickly with custom templates.
+
+---
+
+## 📋 All Commands
+
+| Command | Description | Usage |
+|---------|-------------|-------|
+| **`init`** | Initialize a new Flutist project | `flutist init` |
+| **`create`** | Create a new module | `flutist create --path <path> --name <name> --options <type>` |
+| **`generate`** | Sync dependencies and regenerate files | `flutist generate` |
+| **`scaffold`** | Generate code from templates | `flutist scaffold <template> --name <name>` |
+| **`run`** | Run the Flutter app | `flutist run [options]` |
+| **`pub`** | Manage dependencies | `flutist pub add <package>` |
+| **`graph`** | Visualize module dependencies | `flutist graph [--format <format>]` |
+| **`help`** | Show help information | `flutist help [command]` |
+
+For detailed information about each command, see the [Commands](#-commands) section below.
+
+---
+
 ## 📦 Installation
 
 ### Prerequisites
@@ -101,7 +136,7 @@ flutist create --path features --name login --options feature
 flutist create --path lib --name utils --options simple
 ```
 
-### 3. Add Dependencies
+### 3. Sync Dependencies
 
 ```bash
 # Add a dependency to package.dart
@@ -111,7 +146,17 @@ flutist pub add http
 flutist generate
 ```
 
-### 4. Run Your App
+### 4. Generate Code from Templates
+
+```bash
+# List available templates
+flutist scaffold list
+
+# Generate code from a template
+flutist scaffold feature --name login
+```
+
+### 5. Run Your App
 
 ```bash
 flutist run
@@ -119,9 +164,11 @@ flutist run
 
 ## 🛠️ Commands
 
-### init
+Detailed documentation for all Flutist commands.
 
-Initialize a new Flutist project with Workspace support.
+### `flutist init`
+
+**Initialize a new Flutist project with Workspace support.**
 
 **Usage:**
 ```bash
@@ -167,9 +214,9 @@ my_project/
     └── flutist_gen.dart
 ```
 
-### create
+### `flutist create`
 
-Create a new module in the Flutist project.
+**Create a new module in the Flutist project.**
 
 **Usage:**
 ```bash
@@ -231,9 +278,9 @@ flutist create -p features -n authentication -o feature
 - Updates `package.dart` with new module entries
 - Generates `README.md` for the module
 
-### generate
+### `flutist generate`
 
-Sync all `pubspec.yaml` files based on `project.dart`.
+**Sync all `pubspec.yaml` files based on `project.dart`.**
 
 **Usage:**
 ```bash
@@ -275,7 +322,7 @@ flutist generate
 ✅ Generation completed!
 ```
 
-### run
+### `flutist run`
 
 Run the Flutter app from root/app/main.dart.
 
@@ -309,7 +356,7 @@ flutist run --debug --verbose
 - Creates root `lib/main.dart` if it doesn't exist (imports app module)
 - Executes `flutter run` with provided arguments
 
-### pub
+### `flutist pub`
 
 Manage dependencies in `package.dart`.
 
@@ -349,9 +396,9 @@ flutist pub add flutter_bloc
 flutist generate
 ```
 
-### scaffold
+### `flutist scaffold`
 
-Generate code from user-defined templates.
+**Generate code from user-defined templates.**
 
 **Usage:**
 ```bash
@@ -431,7 +478,7 @@ flutist/templates/
     widget.dart.template
 ```
 
-### graph
+### `flutist graph`
 
 Generate dependency graph of modules.
 
@@ -484,7 +531,7 @@ graph TD
     app --> user_domain
 ```
 
-### help
+### `flutist help`
 
 Display help information for Flutist commands.
 
