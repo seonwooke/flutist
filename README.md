@@ -354,7 +354,7 @@ flutist run --debug --verbose
 - Checks if `app` directory exists
 - Verifies `app/lib/main.dart` exists
 - Creates root `lib/main.dart` if it doesn't exist (imports app module)
-- Executes `flutter run` with provided arguments
+- Executes `flutter run` from root directory (Flutter workspace automatically finds `app/lib/main.dart`)
 
 ### `flutist pub`
 
