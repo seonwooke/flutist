@@ -33,12 +33,26 @@ class RunCommand implements BaseCommand {
         exit(1);
       }
 
+      // Check if root/lib/main.dart exists and warn/remove it
+      final rootLibMainPath = path.join(rootPath, 'lib', 'main.dart');
+      if (File(rootLibMainPath).existsSync()) {
+        Logger.warn('Found root/lib/main.dart - this file should not exist in Flutist projects.');
+        Logger.info('Removing root/lib/main.dart...');
+        try {
+          await File(rootLibMainPath).delete();
+          Logger.success('Removed root/lib/main.dart');
+        } catch (e) {
+          Logger.error('Failed to remove root/lib/main.dart: $e');
+        }
+      }
+
       Logger.info('Running Flutter app from root...');
 
-      // Run flutter run at root level with app/lib/main.dart as target
+      // Explicitly target app/lib/main.dart to prevent Flutter from creating root/lib/main.dart
+      final mainDartTarget = path.join('app', 'lib', 'main.dart');
       final process = await Process.start(
         'flutter',
-        ['run', ...arguments],
+        ['run', '-t', mainDartTarget, ...arguments],
         workingDirectory: rootPath,
         mode: ProcessStartMode.inheritStdio,
       );
