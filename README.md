@@ -12,8 +12,8 @@
 ## 📋 Table of Contents
 
 - [About](#-about)
-- [Features](#-features)
 - [Installation](#-installation)
+- [Features](#-features)
 - [Quick Start](#-quick-start)
 - [Commands](#-commands)
   - [init](#init)
@@ -50,14 +50,7 @@ Flutist is a powerful project management framework for Flutter applications, ins
 ### Install Flutist
 
 ```bash
-# Using pub (when published)
 dart pub global activate flutist
-
-# Or from source
-git clone https://github.com/yourusername/flutist.git
-cd flutist
-dart pub get
-dart pub global activate --source path .
 ```
 
 ### Why Flutist?

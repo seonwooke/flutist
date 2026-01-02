@@ -10,19 +10,10 @@ environment:
   sdk: ">=3.5.0 <4.0.0"
 
 dependencies:
-   # Essential for CLI argument parsing
   args: ^2.4.2
-
-  # For cross-platform file path handling
   path: ^1.8.3
-
-  # For logging with colors
   io: ^1.0.5
-
-  # For editing YAML files
   yaml_edit: ^2.2.3
-  
-  # For parsing YAML files
   yaml: ^3.1.2
 
 dev_dependencies:
@@ -31,10 +22,3 @@ dev_dependencies:
 
 executables:
   flutist:
-
-topics:
-  - flutist
-  - tuist
-  - project-management
-  - dependency-management
-  - workspace
