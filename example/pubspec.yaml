@@ -14,37 +14,45 @@ dependencies:
 
 # Flutter Native Workspace configuration
 # All packages inside the workspace will be managed together
-workspace:
-  - app
-  # Authentication feature layers
-  - features/authentication/authentication_domain
-  - features/authentication/authentication_data
-  - features/authentication/authentication_presentation
-  # Profile feature layers
-  - features/profile/profile_domain
-  - features/profile/profile_data
-  - features/profile/profile_presentation
-  # Network library layers
-  - lib/network/network_example
-  - lib/network/network_interface
-  - lib/network/network_implementation
-  - lib/network/network_testing
-  - lib/network/network_tests
-  # Storage library layers
-  - lib/storage/storage_example
-  - lib/storage/storage_interface
-  - lib/storage/storage_implementation
-  - lib/storage/storage_testing
-  - lib/storage/storage_tests
-  # Models standard layers
-  - core/models/models_implementation
-  - core/models/models_tests
-  - core/models/models_testing
-  # Constants standard layers
-  - core/constants/constants_implementation
-  - core/constants/constants_tests
-  - core/constants/constants_testing
-  # Simple modules
-  - core/utils
-  - core/extensions
+# 
+# NOTE: This is an example configuration file.
+# The workspace paths below are commented out to avoid warnings about
+# non-existent paths. In a real project, these paths would be created by running:
+#   flutist init
+#   flutist create --path <path> --name <name> --options <type>
+#
+# Uncomment the workspace section below when you have created the actual modules:
+# workspace:
+#   - app
+#   # Authentication feature layers
+#   - features/authentication/authentication_domain
+#   - features/authentication/authentication_data
+#   - features/authentication/authentication_presentation
+#   # Profile feature layers
+#   - features/profile/profile_domain
+#   - features/profile/profile_data
+#   - features/profile/profile_presentation
+#   # Network library layers
+#   - lib/network/network_example
+#   - lib/network/network_interface
+#   - lib/network/network_implementation
+#   - lib/network/network_testing
+#   - lib/network/network_tests
+#   # Storage library layers
+#   - lib/storage/storage_example
+#   - lib/storage/storage_interface
+#   - lib/storage/storage_implementation
+#   - lib/storage/storage_testing
+#   - lib/storage/storage_tests
+#   # Models standard layers
+#   - core/models/models_implementation
+#   - core/models/models_tests
+#   - core/models/models_testing
+#   # Constants standard layers
+#   - core/constants/constants_implementation
+#   - core/constants/constants_tests
+#   - core/constants/constants_testing
+#   # Simple modules
+#   - core/utils
+#   - core/extensions
 

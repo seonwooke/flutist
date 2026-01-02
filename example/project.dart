@@ -6,20 +6,20 @@ import 'flutist/flutist_gen.dart';
 import 'package.dart';
 
 /// Project configuration defining all modules and their relationships.
-/// 
+///
 /// This file defines:
 /// - Which modules are part of the project
 /// - Dependencies between modules
 /// - External package dependencies for each module
-/// 
+///
 /// After modifying this file, run `flutist generate` to sync changes
 /// to module pubspec.yaml files.
 final project = Project(
   name: 'my_flutter_project',
   options: const ProjectOptions(),
-  
+
   /// All modules in the project.
-  /// 
+  ///
   /// Modules are organized hierarchically, with dependencies
   /// defined using package.dependencies and package.modules.
   modules: [
@@ -41,7 +41,7 @@ final project = Project(
         package.modules.profile,
       ],
     ),
-    
+
     // Authentication feature module
     Module(
       name: 'authentication',
@@ -65,7 +65,7 @@ final project = Project(
         package.modules.models,
       ],
     ),
-    
+
     // Profile feature module
     Module(
       name: 'profile',
@@ -83,7 +83,7 @@ final project = Project(
         package.modules.storage,
       ],
     ),
-    
+
     // Network library module
     Module(
       name: 'network',
@@ -101,7 +101,7 @@ final project = Project(
         package.modules.utils,
       ],
     ),
-    
+
     // Storage library module
     Module(
       name: 'storage',
@@ -114,7 +114,7 @@ final project = Project(
       ],
       modules: [],
     ),
-    
+
     // Models standard module
     Module(
       name: 'models',
@@ -129,7 +129,7 @@ final project = Project(
         package.modules.utils,
       ],
     ),
-    
+
     // Constants standard module
     Module(
       name: 'constants',
@@ -138,7 +138,7 @@ final project = Project(
       devDependencies: [],
       modules: [],
     ),
-    
+
     // Utils simple module
     Module(
       name: 'utils',
@@ -147,7 +147,7 @@ final project = Project(
       devDependencies: [],
       modules: [],
     ),
-    
+
     // Extensions simple module
     Module(
       name: 'extensions',
@@ -158,4 +158,3 @@ final project = Project(
     ),
   ],
 );
-

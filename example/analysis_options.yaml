@@ -1,0 +1,14 @@
+# Analysis options for example directory
+# This is an example project structure, so some paths may not exist
+
+include: package:lints/recommended.yaml
+
+analyzer:
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "**/*.mocks.dart"
+    - "**/generated/**"
+    - "build/**"
+    - "pubspec.yaml"  # Exclude pubspec.yaml from analysis to avoid workspace path warnings
+
