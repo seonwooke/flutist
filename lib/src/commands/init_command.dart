@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:path/path.dart' as path;
+import 'package:yaml/yaml.dart';
+import 'package:yaml_edit/yaml_edit.dart';
 
 import '../core/core.dart';
 import '../generator/flutist_generator.dart';
@@ -71,26 +73,40 @@ class InitCommand implements BaseCommand {
         path.join(rootPath, 'package.dart'),
         InitTemplates.packageDart(projectName),
       );
-      await FileHelper.writeFile(
-        path.join(rootPath, 'pubspec.yaml'),
-        InitTemplates.pubspecYaml(projectName),
-      );
+
+      // Handle pubspec.yaml: merge if exists, create if not
+      final pubspecPath = path.join(rootPath, 'pubspec.yaml');
+      if (pubspecExists) {
+        await _mergePubspecYaml(pubspecPath, projectName);
+      } else {
+        await FileHelper.writeFile(
+          pubspecPath,
+          InitTemplates.pubspecYaml(projectName),
+        );
+      }
+
       await FileHelper.writeFile(
         path.join(rootPath, 'analysis_options.yaml'),
         InitTemplates.analysisOptionsYaml(),
       );
 
-      // Read version from pubspec.yaml
+      // Read version from pubspec.yaml for README
       final pubspecContent =
-          await File(path.join(rootPath, 'pubspec.yaml')).readAsString();
+          await File(pubspecPath).readAsString();
       final versionMatch =
           RegExp(r'version:\s*([^\s]+)').firstMatch(pubspecContent);
       final version = versionMatch?.group(1) ?? '1.0.0+1';
 
-      await FileHelper.writeFile(
-        path.join(rootPath, 'README.md'),
-        InitTemplates.rootReadme(projectName, version),
-      );
+      // Only create README.md if it doesn't exist
+      final readmePath = path.join(rootPath, 'README.md');
+      if (!File(readmePath).existsSync()) {
+        await FileHelper.writeFile(
+          readmePath,
+          InitTemplates.rootReadme(projectName, version),
+        );
+      } else {
+        Logger.info('README.md already exists, skipping...');
+      }
 
       // 3. Scaffolding default "app" module
       final appBasePath = path.join(rootPath, 'app');
@@ -116,13 +132,8 @@ class InitCommand implements BaseCommand {
         InitTemplates.appPubspecYaml(),
       );
 
-      // 4. Add "app" module to workspace
-      await WorkspaceEditor.addModuleToWorkspace(
-        rootPath,
-        'app',
-        'app',
-        ModuleType.simple,
-      );
+      // 4. Add "app" module to workspace (if not already added)
+      await _ensureAppInWorkspace(rootPath);
 
       // 5. Create example templates
       await _createExampleTemplates(rootPath);
@@ -218,10 +229,113 @@ class InitCommand implements BaseCommand {
       InitTemplates.featureEventDartTemplate(),
     );
 
-    // screen.dart.template
-    await FileHelper.writeFile(
-      path.join(featureDir, 'screen.dart.template'),
-      InitTemplates.featureScreenDartTemplate(),
+      // screen.dart.template
+      await FileHelper.writeFile(
+        path.join(featureDir, 'screen.dart.template'),
+        InitTemplates.featureScreenDartTemplate(),
+      );
+  }
+
+  /// Merges Flutist configuration into existing pubspec.yaml.
+  Future<void> _mergePubspecYaml(String pubspecPath, String projectName) async {
+    Logger.info('Merging Flutist configuration into existing pubspec.yaml...');
+
+    final content = await File(pubspecPath).readAsString();
+    final editor = YamlEditor(content);
+    final yamlDoc = loadYaml(content) as Map;
+
+    // Add flutist dependency if not exists
+    final dependencies = yamlDoc['dependencies'] as Map?;
+    if (dependencies == null || !dependencies.containsKey('flutist')) {
+      try {
+        final latestVersion = await _getFlutistLatestVersion();
+        editor.update(['dependencies', 'flutist'], latestVersion);
+        Logger.info('  ✓ Added flutist dependency: $latestVersion');
+      } catch (e) {
+        Logger.warn('  ⚠ Failed to get flutist version, using ^1.0.1');
+        editor.update(['dependencies', 'flutist'], '^1.0.1');
+      }
+    } else {
+      Logger.info('  ✓ flutist dependency already exists');
+    }
+
+    // Ensure workspace section exists
+    if (!yamlDoc.containsKey('workspace')) {
+      editor.update(['workspace'], []);
+      Logger.info('  ✓ Added workspace section');
+    }
+
+    // Add app to workspace if not exists
+    final workspace = yamlDoc['workspace'];
+    if (workspace is List) {
+      if (!workspace.contains('app')) {
+        editor.appendToList(['workspace'], 'app');
+        Logger.info('  ✓ Added app to workspace');
+      } else {
+        Logger.info('  ✓ app already in workspace');
+      }
+    } else {
+      // workspace exists but is not a list, replace it
+      editor.update(['workspace'], ['app']);
+      Logger.info('  ✓ Updated workspace section with app');
+    }
+
+    await File(pubspecPath).writeAsString(editor.toString());
+    Logger.success('Merged pubspec.yaml');
+  }
+
+  /// Ensures app module is in workspace, avoiding duplicates.
+  Future<void> _ensureAppInWorkspace(String rootPath) async {
+    final pubspecFile = File(path.join(rootPath, 'pubspec.yaml'));
+    if (!await pubspecFile.exists()) return;
+
+    final content = await pubspecFile.readAsString();
+    final yamlDoc = loadYaml(content) as Map;
+    final workspace = yamlDoc['workspace'];
+
+    if (workspace is List && workspace.contains('app')) {
+      Logger.info('app already in workspace, skipping...');
+      return;
+    }
+
+    await WorkspaceEditor.addModuleToWorkspace(
+      rootPath,
+      'app',
+      'app',
+      ModuleType.simple,
     );
+  }
+
+  /// Gets the latest version of flutist from pub.dev.
+  Future<String> _getFlutistLatestVersion() async {
+    try {
+      final result = await Process.run(
+        'dart',
+        ['pub', 'deps', '--style=compact', '--json'],
+        workingDirectory: Directory.current.path,
+      );
+
+      if (result.exitCode == 0) {
+        // Try to get version from pub.dev
+        final pubResult = await Process.run(
+          'dart',
+          ['pub', 'add', 'flutist', '--dry-run'],
+          workingDirectory: Directory.current.path,
+        );
+
+        if (pubResult.exitCode == 0) {
+          final output = pubResult.stdout.toString();
+          final versionMatch = RegExp(r'flutist\s+(\S+)').firstMatch(output);
+          if (versionMatch != null) {
+            return versionMatch.group(1)!;
+          }
+        }
+      }
+    } catch (e) {
+      Logger.warn('Failed to get flutist version: $e');
+    }
+
+    // Fallback: use current version or latest known version
+    return '^1.0.1';
   }
 }
