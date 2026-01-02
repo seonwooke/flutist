@@ -35,18 +35,7 @@ class RunCommand implements BaseCommand {
 
       Logger.info('Running Flutter app from root...');
 
-      // Check if root/lib/main.dart exists (should be created by init)
-      final rootMainDartPath = path.join(rootPath, 'lib', 'main.dart');
-      if (!File(rootMainDartPath).existsSync()) {
-        // Create it if it doesn't exist
-        final rootLibPath = path.join(rootPath, 'lib');
-        await Directory(rootLibPath).create(recursive: true);
-        await File(rootMainDartPath).writeAsString(
-          "import 'package:app/main.dart' as app;\n\nvoid main() => app.main();\n",
-        );
-      }
-
-      // Run flutter run at root level
+      // Run flutter run at root level with app/lib/main.dart as target
       final process = await Process.start(
         'flutter',
         ['run', ...arguments],
