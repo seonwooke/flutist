@@ -2,6 +2,14 @@
 
 All notable changes to Flutist will be documented in this file.
 
+## [1.0.3] - 2025-01-02
+
+### 🐛 Fixed
+- Fixed `flutist run` command creating unnecessary `root/lib/main.dart` file
+  - Removed auto-generation logic that created `root/lib/main.dart` when missing
+  - Flutter workspace automatically finds `app/lib/main.dart` when running from root directory
+  - Updated README.md documentation to reflect correct behavior
+
 ## [1.0.2] - 2025-01-02
 
 ### ✨ Added
