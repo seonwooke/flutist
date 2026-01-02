@@ -1,0 +1,26 @@
+# Analysis options for example directory
+# This is an example project structure, so some paths may not exist
+# 
+# NOTE: This file is for example purposes only.
+# In a real project, you would use the root analysis_options.yaml
+
+analyzer:
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "**/*.mocks.dart"
+    - "**/generated/**"
+    - "build/**"
+    - "pubspec.yaml"  # Exclude pubspec.yaml from analysis to avoid workspace path warnings
+  
+  errors:
+    # Ignore missing import/file errors in example directory
+    # These are example files showing structure, not actual working code
+    uri_does_not_exist: ignore
+
+linter:
+  rules:
+    # Basic rules only for example files
+    avoid_print: false
+    prefer_single_quotes: true
+

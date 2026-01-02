@@ -2,6 +2,35 @@
 
 All notable changes to Flutist will be documented in this file.
 
+## [1.0.2] - 2025-01-02
+
+### ✨ Added
+- Example directory for pub.dev with complete project structure demonstration
+  - `README.md` with usage instructions and module type explanations
+  - `directory_structure.md` with Microfeature Architecture visualization
+  - Example `package.dart` and `project.dart` configuration files
+  - Example `pubspec.yaml` with workspace configuration
+  - Example `flutist_gen.dart` showing generated code structure
+
+### 🔧 Improved
+- **`flutist init` command**:
+  - Prevent overwriting existing `README.md` files
+  - Merge Flutist configuration into existing `pubspec.yaml` instead of overwriting
+  - Automatically add `workspace` section if missing
+  - Automatically add `app` module to workspace if not exists
+  - Automatically add `flutist` dependency with latest version when merging
+  - Fix `app.dart` import path in `main.dart` (use relative import instead of package import)
+- **README.md**:
+  - Add "Core Commands" section highlighting main 4 commands (`init`, `create`, `generate`, `scaffold`)
+  - Add "All Commands" table at the top for quick reference
+  - Improve command visibility with larger headings and bold text
+  - Add `scaffold` example to Quick Start section
+
+### 🐛 Fixed
+- Fixed import path in generated `app/lib/main.dart` (changed from `package:app/app.dart` to `app.dart`)
+- Fixed dependency getter names in example files (camelCase conversion: `shared_preferences` → `sharedPreferences`, `json_annotation` → `jsonAnnotation`)
+- Suppressed warnings in example directory with custom `analysis_options.yaml`
+
 ## [1.0.1] - 2025-01-02
 
 ### 🐛 Fixed
