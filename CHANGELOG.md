@@ -2,6 +2,14 @@
 
 All notable changes to Flutist will be documented in this file.
 
+## [1.0.4] - 2025-01-02
+
+### 🐛 Fixed
+- Fixed `flutist run` command creating `root/lib/main.dart` file
+  - Added explicit `-t` flag to target `app/lib/main.dart` when running Flutter
+  - Automatically detects and removes existing `root/lib/main.dart` if found
+  - Prevents Flutter from auto-creating `root/lib/main.dart` file
+
 ## [1.0.3] - 2025-01-02
 
 ### 🐛 Fixed
