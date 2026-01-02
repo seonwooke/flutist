@@ -50,7 +50,7 @@ final project = Project(
         // HTTP client for API calls
         package.dependencies.http,
         // Local storage for tokens
-        package.dependencies.shared_preferences,
+        package.dependencies.sharedPreferences,
         // State management
         package.dependencies.provider,
       ],
@@ -90,7 +90,7 @@ final project = Project(
       type: ModuleType.library,
       dependencies: [
         package.dependencies.http,
-        package.dependencies.json_annotation,
+        package.dependencies.jsonAnnotation,
       ],
       devDependencies: [
         package.dependencies.test,
@@ -107,7 +107,7 @@ final project = Project(
       name: 'storage',
       type: ModuleType.library,
       dependencies: [
-        package.dependencies.shared_preferences,
+        package.dependencies.sharedPreferences,
       ],
       devDependencies: [
         package.dependencies.test,
@@ -120,7 +120,7 @@ final project = Project(
       name: 'models',
       type: ModuleType.standard,
       dependencies: [
-        package.dependencies.json_annotation,
+        package.dependencies.jsonAnnotation,
       ],
       devDependencies: [
         package.dependencies.test,
