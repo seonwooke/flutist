@@ -33,7 +33,6 @@ final project = Project(
   name: '$projectName',
   options: const ProjectOptions(),
   modules: [
-    // Example)
     Module(
       name: 'app',
       type: ModuleType.simple,
@@ -42,9 +41,11 @@ final project = Project(
         // package.dependencies.intl,
       ],
       devDependencies: [
+        // Example)
         // package.dependencies.test,
       ],
       modules: [
+        // Example)
         // package.modules.login,
       ],
     ),
@@ -402,6 +403,7 @@ This project supports different module types:
 - **`library`** - Library module with Example, Implementation, Interface, Tests, Testing layers
 - **`standard`** - Standard module with Implementation, Tests, Testing layers
 - **`simple`** - Simple module with only lib folder
+- **`custom`** - Custom module with custom template
 
 ## 🔧 Development
 

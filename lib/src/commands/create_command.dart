@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:args/args.dart';
+import 'package:path/path.dart' as path;
 import 'package:yaml_edit/yaml_edit.dart';
 
 import '../core/core.dart';
@@ -128,8 +129,8 @@ class CreateCommand implements BaseCommand {
     // Create lib/ folder
     _createLibFolder(modulePath);
 
-    // Create analysis_options.yaml
-    _createAnalysisOptions(modulePath, path);
+      // Create analysis_options.yaml
+      _createAnalysisOptions(modulePath, currentDir);
 
     // Create README.md
     _createReadme(modulePath, name, ModuleType.simple);
@@ -168,7 +169,7 @@ class CreateCommand implements BaseCommand {
       _createLibFolder(layerPath);
 
       // Create analysis_options.yaml
-      _createAnalysisOptions(layerPath, '$path/$name');
+      _createAnalysisOptions(layerPath, currentDir);
 
       // Create main.dart for library example layer
       if (moduleType == ModuleType.library && layer.endsWith('_example')) {
@@ -395,13 +396,19 @@ class CreateCommand implements BaseCommand {
   }
 
   /// Creates analysis_options.yaml that includes root config.
-  void _createAnalysisOptions(String modulePath, String moduleRelativePath) {
-    // Calculate relative path to root
-    final depth = moduleRelativePath.split('/').length;
-    final relativePath = List.filled(depth, '..').join('/');
+  void _createAnalysisOptions(String modulePath, String rootDir) {
+    // Calculate relative path from modulePath to rootDir
+    // Normalize both paths to handle any path separator differences
+    final normalizedModulePath = path.normalize(modulePath);
+    final normalizedRootDir = path.normalize(rootDir);
+    
+    // Calculate the relative path
+    final relativePathToRoot = path.relative(normalizedRootDir, from: normalizedModulePath);
+    // Convert path separators to forward slashes for consistency
+    final normalizedPath = relativePathToRoot.replaceAll('\\', '/');
 
     final analysisOptionsFile = File('$modulePath/analysis_options.yaml');
-    final content = CreateTemplates.analysisOptionsYaml(relativePath);
+    final content = CreateTemplates.analysisOptionsYaml(normalizedPath);
 
     analysisOptionsFile.writeAsStringSync(content);
     Logger.info('  ✓ Created analysis_options.yaml');
