@@ -2,6 +2,15 @@
 
 All notable changes to Flutist will be documented in this file.
 
+## [1.0.9] - 2025-01-02
+
+### 🐛 Fixed
+- **`flutist create` command**:
+  - Fixed incorrect `analysis_options.yaml` include path for layered modules (feature, library, standard)
+  - Now uses `path.relative()` to correctly calculate relative path from module to root directory
+  - Previously calculated depth based on `moduleRelativePath`, which was incorrect for layered modules
+  - Example: `features/book_detail/book_detail_domain` now correctly uses `../../../analysis_options.yaml` instead of `../../analysis_options.yaml`
+
 ## [1.0.8] - 2025-01-02
 
 ### 🐛 Fixed
