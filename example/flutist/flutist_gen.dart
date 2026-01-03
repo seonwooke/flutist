@@ -7,19 +7,21 @@ import 'package:flutist/flutist.dart';
 extension PackageDependenciesX on List<Dependency> {
   /// Dependency getter for http
   Dependency get http => firstWhere((d) => d.name == 'http');
-  
+
   /// Dependency getter for provider
   Dependency get provider => firstWhere((d) => d.name == 'provider');
-  
+
   /// Dependency getter for shared_preferences
-  Dependency get sharedPreferences => firstWhere((d) => d.name == 'shared_preferences');
-  
+  Dependency get sharedPreferences =>
+      firstWhere((d) => d.name == 'shared_preferences');
+
   /// Dependency getter for json_annotation
-  Dependency get jsonAnnotation => firstWhere((d) => d.name == 'json_annotation');
-  
+  Dependency get jsonAnnotation =>
+      firstWhere((d) => d.name == 'json_annotation');
+
   /// Dependency getter for test
   Dependency get test => firstWhere((d) => d.name == 'test');
-  
+
   /// Dependency getter for mockito
   Dependency get mockito => firstWhere((d) => d.name == 'mockito');
 }
@@ -28,26 +30,25 @@ extension PackageDependenciesX on List<Dependency> {
 extension PackageModulesX on List<Module> {
   /// Module getter for authentication
   Module get authentication => firstWhere((m) => m.name == 'authentication');
-  
+
   /// Module getter for profile
   Module get profile => firstWhere((m) => m.name == 'profile');
-  
+
   /// Module getter for network
   Module get network => firstWhere((m) => m.name == 'network');
-  
+
   /// Module getter for storage
   Module get storage => firstWhere((m) => m.name == 'storage');
-  
+
   /// Module getter for models
   Module get models => firstWhere((m) => m.name == 'models');
-  
+
   /// Module getter for constants
   Module get constants => firstWhere((m) => m.name == 'constants');
-  
+
   /// Module getter for utils
   Module get utils => firstWhere((m) => m.name == 'utils');
-  
+
   /// Module getter for extensions
   Module get extensions => firstWhere((m) => m.name == 'extensions');
 }
-
