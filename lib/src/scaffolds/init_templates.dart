@@ -33,7 +33,6 @@ final project = Project(
   name: '$projectName',
   options: const ProjectOptions(),
   modules: [
-    // Example)
     Module(
       name: 'app',
       type: ModuleType.simple,
@@ -42,9 +41,11 @@ final project = Project(
         // package.dependencies.intl,
       ],
       devDependencies: [
+        // Example)
         // package.dependencies.test,
       ],
       modules: [
+        // Example)
         // package.modules.login,
       ],
     ),
