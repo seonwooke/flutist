@@ -403,6 +403,7 @@ This project supports different module types:
 - **`library`** - Library module with Example, Implementation, Interface, Tests, Testing layers
 - **`standard`** - Standard module with Implementation, Tests, Testing layers
 - **`simple`** - Simple module with only lib folder
+- **`custom`** - Custom module with custom template
 
 ## 🔧 Development
 
