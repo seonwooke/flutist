@@ -239,33 +239,32 @@ class InitCommand implements BaseCommand {
   }
 
   /// Gets the flutist package version from the current package's pubspec.yaml.
-  /// Priority: global_packages (for pub global activate) > local script path (for local development)
+  /// Priority: dart pub global list > local script path (for local development)
   Future<String> _getFlutistPackageVersion() async {
     try {
-      // Priority 1: Try to find in pub cache (for globally installed packages via pub global activate)
+      // Priority 1: Try to get version from 'dart pub global list' (for globally installed packages)
       // This is the most common case when users run "dart pub global activate flutist"
       try {
-        final homeDir =
-            Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'];
-        if (homeDir != null) {
-          final globalPackagesPath =
-              path.join(homeDir, '.pub-cache', 'global_packages', 'flutist');
-          final globalPubspecFile =
-              File(path.join(globalPackagesPath, 'pubspec.yaml'));
-          if (await globalPubspecFile.exists()) {
-            final content = await globalPubspecFile.readAsString();
-            final yamlDoc = loadYaml(content) as Map;
-            final packageName = yamlDoc['name'] as String?;
-            if (packageName == 'flutist') {
-              final version = yamlDoc['version'] as String?;
-              if (version != null) {
-                return '^${version.split('+').first}';
+        final result = await Process.run('dart', ['pub', 'global', 'list']);
+        if (result.exitCode == 0) {
+          final output = result.stdout as String;
+          // Parse output like "flutist 1.0.7"
+          final lines = output.split('\n');
+          for (final line in lines) {
+            final trimmed = line.trim();
+            if (trimmed.startsWith('flutist ')) {
+              final parts = trimmed.split(RegExp(r'\s+'));
+              if (parts.length >= 2) {
+                final version = parts[1];
+                if (version.isNotEmpty) {
+                  return '^$version';
+                }
               }
             }
           }
         }
       } catch (_) {
-        // Ignore if pub cache lookup fails
+        // Ignore if dart pub global list fails
       }
 
       // Priority 2: Try to get the script location (bin/flutist.dart) for local development
