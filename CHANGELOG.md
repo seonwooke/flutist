@@ -2,6 +2,14 @@
 
 All notable changes to Flutist will be documented in this file.
 
+## [1.0.5] - 2025-01-02
+
+### 🎨 Style
+- Applied Dart formatter to example files and codebase
+  - Formatted `example/flutist/flutist_gen.dart`
+  - Formatted `example/package.dart`
+  - Applied consistent code formatting across the project
+
 ## [1.0.4] - 2025-01-02
 
 ### 🐛 Fixed

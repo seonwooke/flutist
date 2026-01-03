@@ -36,7 +36,8 @@ class RunCommand implements BaseCommand {
       // Check if root/lib/main.dart exists and warn/remove it
       final rootLibMainPath = path.join(rootPath, 'lib', 'main.dart');
       if (File(rootLibMainPath).existsSync()) {
-        Logger.warn('Found root/lib/main.dart - this file should not exist in Flutist projects.');
+        Logger.warn(
+            'Found root/lib/main.dart - this file should not exist in Flutist projects.');
         Logger.info('Removing root/lib/main.dart...');
         try {
           await File(rootLibMainPath).delete();

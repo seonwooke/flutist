@@ -91,8 +91,7 @@ class InitCommand implements BaseCommand {
       );
 
       // Read version from pubspec.yaml for README
-      final pubspecContent =
-          await File(pubspecPath).readAsString();
+      final pubspecContent = await File(pubspecPath).readAsString();
       final versionMatch =
           RegExp(r'version:\s*([^\s]+)').firstMatch(pubspecContent);
       final version = versionMatch?.group(1) ?? '1.0.0+1';
@@ -229,11 +228,11 @@ class InitCommand implements BaseCommand {
       InitTemplates.featureEventDartTemplate(),
     );
 
-      // screen.dart.template
-      await FileHelper.writeFile(
-        path.join(featureDir, 'screen.dart.template'),
-        InitTemplates.featureScreenDartTemplate(),
-      );
+    // screen.dart.template
+    await FileHelper.writeFile(
+      path.join(featureDir, 'screen.dart.template'),
+      InitTemplates.featureScreenDartTemplate(),
+    );
   }
 
   /// Merges Flutist configuration into existing pubspec.yaml.
