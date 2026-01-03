@@ -239,9 +239,36 @@ class InitCommand implements BaseCommand {
   }
 
   /// Gets the flutist package version from the current package's pubspec.yaml.
+  /// Priority: global_packages (for pub global activate) > local script path (for local development)
   Future<String> _getFlutistPackageVersion() async {
     try {
-      // Try to get the script location (bin/flutist.dart)
+      // Priority 1: Try to find in pub cache (for globally installed packages via pub global activate)
+      // This is the most common case when users run "dart pub global activate flutist"
+      try {
+        final homeDir =
+            Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'];
+        if (homeDir != null) {
+          final globalPackagesPath =
+              path.join(homeDir, '.pub-cache', 'global_packages', 'flutist');
+          final globalPubspecFile =
+              File(path.join(globalPackagesPath, 'pubspec.yaml'));
+          if (await globalPubspecFile.exists()) {
+            final content = await globalPubspecFile.readAsString();
+            final yamlDoc = loadYaml(content) as Map;
+            final packageName = yamlDoc['name'] as String?;
+            if (packageName == 'flutist') {
+              final version = yamlDoc['version'] as String?;
+              if (version != null) {
+                return '^${version.split('+').first}';
+              }
+            }
+          }
+        }
+      } catch (_) {
+        // Ignore if pub cache lookup fails
+      }
+
+      // Priority 2: Try to get the script location (bin/flutist.dart) for local development
       String? scriptPath;
       try {
         final scriptUri = Platform.script;
@@ -252,54 +279,32 @@ class InitCommand implements BaseCommand {
         // Ignore if Platform.script fails
       }
 
-      // If we have a script path, use it
       if (scriptPath != null && scriptPath.isNotEmpty) {
         final scriptFile = File(scriptPath);
         if (await scriptFile.exists()) {
-          // Get the package root directory (go up from bin/flutist.dart)
+          // Get the package root directory (go up from bin/flutist.dart to package root)
           final packageRoot = scriptFile.parent.parent;
           final pubspecFile = File(path.join(packageRoot.path, 'pubspec.yaml'));
 
           if (await pubspecFile.exists()) {
             final content = await pubspecFile.readAsString();
             final yamlDoc = loadYaml(content) as Map;
-            final version = yamlDoc['version'] as String?;
-            if (version != null) {
-              // Return version with caret (e.g., ^1.0.5)
-              return '^${version.split('+').first}';
+            final packageName = yamlDoc['name'] as String?;
+            if (packageName == 'flutist') {
+              final version = yamlDoc['version'] as String?;
+              if (version != null) {
+                return '^${version.split('+').first}';
+              }
             }
           }
         }
-      }
-
-      // Fallback: try to find pubspec.yaml relative to resolved executable
-      // This works when the package is installed via pub.dev
-      var currentDir = Directory(path.dirname(Platform.resolvedExecutable));
-
-      // Try to find pubspec.yaml going up the directory tree (max 10 levels)
-      for (int i = 0; i < 10; i++) {
-        final pubspecFile = File(path.join(currentDir.path, 'pubspec.yaml'));
-        if (await pubspecFile.exists()) {
-          final content = await pubspecFile.readAsString();
-          final yamlDoc = loadYaml(content) as Map;
-          final packageName = yamlDoc['name'] as String?;
-          // Verify this is the flutist package
-          if (packageName == 'flutist') {
-            final version = yamlDoc['version'] as String?;
-            if (version != null) {
-              return '^${version.split('+').first}';
-            }
-          }
-        }
-        // Stop if we've reached the root
-        if (currentDir.path == currentDir.parent.path) break;
-        currentDir = currentDir.parent;
       }
     } catch (e) {
       Logger.warn('Failed to read flutist package version: $e');
     }
 
-    // Fallback version
+    // Fallback version - this should not be reached if flutist is properly installed
+    Logger.warn('Could not determine flutist version, using fallback: ^1.0.0');
     return '^1.0.0';
   }
 
