@@ -2,6 +2,16 @@
 
 All notable changes to Flutist will be documented in this file.
 
+## [1.0.7] - 2025-01-02
+
+### 🐛 Fixed
+- **`flutist init` command**:
+  - Fixed version detection when running `flutist init` after `dart pub global activate flutist`
+  - Prioritized `global_packages` lookup to correctly read installed flutist version
+  - Added package name validation to ensure correct `pubspec.yaml` is read
+  - Simplified version detection logic by removing unnecessary directory traversal
+  - Now correctly adds the installed flutist version to project dependencies instead of fallback version
+
 ## [1.0.6] - 2025-01-02
 
 ### 🔧 Improved
