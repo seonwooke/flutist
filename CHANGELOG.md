@@ -2,6 +2,15 @@
 
 All notable changes to Flutist will be documented in this file.
 
+## [1.0.6] - 2025-01-02
+
+### 🔧 Improved
+- **`flutist init` command**:
+  - 동적으로 flutist 패키지 버전을 읽어와서 사용하도록 변경
+  - 로컬 path 참조 대신 pub.dev에서 패키지를 받도록 개선
+  - `pubspec.yaml` 버전 업데이트 시 자동으로 반영되도록 개선
+  - `_getFlutistPackageVersion()` 메서드를 추가하여 현재 패키지의 `pubspec.yaml`에서 버전을 동적으로 읽어옴
+
 ## [1.0.5] - 2025-01-02
 
 ### 🎨 Style
