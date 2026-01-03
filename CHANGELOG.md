@@ -2,6 +2,15 @@
 
 All notable changes to Flutist will be documented in this file.
 
+## [1.0.8] - 2025-01-02
+
+### 🐛 Fixed
+- **`flutist init` command**:
+  - Fixed version detection using `dart pub global list` command instead of pubspec.yaml lookup
+  - `global_packages` directory doesn't contain `pubspec.yaml`, only `pubspec.lock`
+  - Now correctly reads installed flutist version from `dart pub global list` output
+  - Fixes issue where version detection failed for globally installed packages via `dart pub global activate`
+
 ## [1.0.7] - 2025-01-02
 
 ### 🐛 Fixed
