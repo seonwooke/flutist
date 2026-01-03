@@ -2,6 +2,15 @@
 
 All notable changes to Flutist will be documented in this file.
 
+## [1.0.6] - 2025-01-02
+
+### 🔧 Improved
+- **`flutist init` command**:
+  - Dynamically reads flutist package version from current package's `pubspec.yaml`
+  - Uses pub.dev package instead of local path reference
+  - Automatically reflects version updates when `pubspec.yaml` is updated
+  - Changed from hardcoded version to dynamic version reading
+
 ## [1.0.5] - 2025-01-02
 
 ### 🎨 Style
