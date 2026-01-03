@@ -1,7 +1,7 @@
 /// Template generator for project initialization.
 class InitTemplates {
   /// Generates root pubspec.yaml content.
-  static String pubspecYaml(String projectName) => '''
+  static String pubspecYaml(String projectName, String flutistVersion) => '''
 name: $projectName
 description: A new Flutter project managed by Flutist.
 version: 1.0.0+1
@@ -13,8 +13,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutist:
-    path: ../flutist
+  flutist: $flutistVersion
 
 # Flutter Native Workspace configuration
 # All packages inside the 'packages' directory will be managed together

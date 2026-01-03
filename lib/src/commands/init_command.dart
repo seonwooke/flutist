@@ -64,6 +64,9 @@ class InitCommand implements BaseCommand {
 
       Logger.info('Initializing Flutist project...');
 
+      // Get flutist package version from current package's pubspec.yaml
+      final flutistVersion = await _getFlutistPackageVersion();
+
       // 2. Create root configuration files
       await FileHelper.writeFile(
         path.join(rootPath, 'project.dart'),
@@ -77,11 +80,11 @@ class InitCommand implements BaseCommand {
       // Handle pubspec.yaml: merge if exists, create if not
       final pubspecPath = path.join(rootPath, 'pubspec.yaml');
       if (pubspecExists) {
-        await _mergePubspecYaml(pubspecPath, projectName);
+        await _mergePubspecYaml(pubspecPath, projectName, flutistVersion);
       } else {
         await FileHelper.writeFile(
           pubspecPath,
-          InitTemplates.pubspecYaml(projectName),
+          InitTemplates.pubspecYaml(projectName, flutistVersion),
         );
       }
 
@@ -235,8 +238,77 @@ class InitCommand implements BaseCommand {
     );
   }
 
+  /// Gets the flutist package version from the current package's pubspec.yaml.
+  Future<String> _getFlutistPackageVersion() async {
+    try {
+      // Try to get the script location (bin/flutist.dart)
+      String? scriptPath;
+      try {
+        final scriptUri = Platform.script;
+        if (scriptUri.scheme == 'file') {
+          scriptPath = scriptUri.toFilePath();
+        }
+      } catch (_) {
+        // Ignore if Platform.script fails
+      }
+
+      // If we have a script path, use it
+      if (scriptPath != null && scriptPath.isNotEmpty) {
+        final scriptFile = File(scriptPath);
+        if (await scriptFile.exists()) {
+          // Get the package root directory (go up from bin/flutist.dart)
+          final packageRoot = scriptFile.parent.parent;
+          final pubspecFile = File(path.join(packageRoot.path, 'pubspec.yaml'));
+
+          if (await pubspecFile.exists()) {
+            final content = await pubspecFile.readAsString();
+            final yamlDoc = loadYaml(content) as Map;
+            final version = yamlDoc['version'] as String?;
+            if (version != null) {
+              // Return version with caret (e.g., ^1.0.5)
+              return '^${version.split('+').first}';
+            }
+          }
+        }
+      }
+
+      // Fallback: try to find pubspec.yaml relative to resolved executable
+      // This works when the package is installed via pub.dev
+      var currentDir = Directory(path.dirname(Platform.resolvedExecutable));
+
+      // Try to find pubspec.yaml going up the directory tree (max 10 levels)
+      for (int i = 0; i < 10; i++) {
+        final pubspecFile = File(path.join(currentDir.path, 'pubspec.yaml'));
+        if (await pubspecFile.exists()) {
+          final content = await pubspecFile.readAsString();
+          final yamlDoc = loadYaml(content) as Map;
+          final packageName = yamlDoc['name'] as String?;
+          // Verify this is the flutist package
+          if (packageName == 'flutist') {
+            final version = yamlDoc['version'] as String?;
+            if (version != null) {
+              return '^${version.split('+').first}';
+            }
+          }
+        }
+        // Stop if we've reached the root
+        if (currentDir.path == currentDir.parent.path) break;
+        currentDir = currentDir.parent;
+      }
+    } catch (e) {
+      Logger.warn('Failed to read flutist package version: $e');
+    }
+
+    // Fallback version
+    return '^1.0.0';
+  }
+
   /// Merges Flutist configuration into existing pubspec.yaml.
-  Future<void> _mergePubspecYaml(String pubspecPath, String projectName) async {
+  Future<void> _mergePubspecYaml(
+    String pubspecPath,
+    String projectName,
+    String flutistVersion,
+  ) async {
     Logger.info('Merging Flutist configuration into existing pubspec.yaml...');
 
     final content = await File(pubspecPath).readAsString();
@@ -246,14 +318,8 @@ class InitCommand implements BaseCommand {
     // Add flutist dependency if not exists
     final dependencies = yamlDoc['dependencies'] as Map?;
     if (dependencies == null || !dependencies.containsKey('flutist')) {
-      try {
-        final latestVersion = await _getFlutistLatestVersion();
-        editor.update(['dependencies', 'flutist'], latestVersion);
-        Logger.info('  ✓ Added flutist dependency: $latestVersion');
-      } catch (e) {
-        Logger.warn('  ⚠ Failed to get flutist version, using ^1.0.1');
-        editor.update(['dependencies', 'flutist'], '^1.0.1');
-      }
+      editor.update(['dependencies', 'flutist'], flutistVersion);
+      Logger.info('  ✓ Added flutist dependency: $flutistVersion');
     } else {
       Logger.info('  ✓ flutist dependency already exists');
     }
@@ -303,38 +369,5 @@ class InitCommand implements BaseCommand {
       'app',
       ModuleType.simple,
     );
-  }
-
-  /// Gets the latest version of flutist from pub.dev.
-  Future<String> _getFlutistLatestVersion() async {
-    try {
-      final result = await Process.run(
-        'dart',
-        ['pub', 'deps', '--style=compact', '--json'],
-        workingDirectory: Directory.current.path,
-      );
-
-      if (result.exitCode == 0) {
-        // Try to get version from pub.dev
-        final pubResult = await Process.run(
-          'dart',
-          ['pub', 'add', 'flutist', '--dry-run'],
-          workingDirectory: Directory.current.path,
-        );
-
-        if (pubResult.exitCode == 0) {
-          final output = pubResult.stdout.toString();
-          final versionMatch = RegExp(r'flutist\s+(\S+)').firstMatch(output);
-          if (versionMatch != null) {
-            return versionMatch.group(1)!;
-          }
-        }
-      }
-    } catch (e) {
-      Logger.warn('Failed to get flutist version: $e');
-    }
-
-    // Fallback: use current version or latest known version
-    return '^1.0.1';
   }
 }
