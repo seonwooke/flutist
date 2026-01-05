@@ -17,8 +17,7 @@ dependencies:
 
 # Flutter Native Workspace configuration
 # All packages inside the 'packages' directory will be managed together
-workspace:
-''';
+workspace:''';
 
   /// Generates project.dart content.
   static String projectDart(String projectName) => '''
