@@ -430,6 +430,12 @@ class GenerateCommand implements BaseCommand {
       return buffer.toString().trimRight();
     });
 
+    // Convert dependencies: {} to dependencies: (empty section)
+    content = content.replaceAll(
+      RegExp(r'^dependencies:\s*\{\s*\}', multiLine: true),
+      'dependencies:',
+    );
+
     // Convert dependencies: {key: value} to multiline (if any)
     final depsPattern =
         RegExp(r'^dependencies:\s*\{([^}]+)\}', multiLine: true);
@@ -530,9 +536,6 @@ class GenerateCommand implements BaseCommand {
     Package package,
     String pubspecPath,
   ) {
-    // Ensure dependencies section exists
-    _ensureSection(editor, 'dependencies');
-
     // Get current dependencies to preserve flutter sdk
     final currentDeps = <String, dynamic>{};
     try {
@@ -549,14 +552,15 @@ class GenerateCommand implements BaseCommand {
       // Section doesn't exist yet
     }
 
-    // Clear the section and add flutter back
-    editor.update(['dependencies'], currentDeps);
+    // Collect all dependencies
+    final allDeps = <String, dynamic>{};
+    allDeps.addAll(currentDeps);
 
     // Add dependencies from project.dart
     for (final dep in module.dependencies) {
       final version = _getVersionFromPackage(package, dep.name);
       if (version != null) {
-        editor.update(['dependencies', dep.name], version);
+        allDeps[dep.name] = version;
         Logger.info('  ✓ Added dependency: ${dep.name} ($version)');
       }
     }
@@ -581,11 +585,19 @@ class GenerateCommand implements BaseCommand {
         final relativePath =
             path.relative(targetModuleDir, from: currentModuleDir);
 
-        editor.update(['dependencies', modDep.name], {'path': relativePath});
+        allDeps[modDep.name] = {'path': relativePath};
         Logger.info('  ✓ Added module: ${modDep.name} (path: $relativePath)');
       } else {
         Logger.warn('  ⚠ Could not find module: ${modDep.name}');
       }
+    }
+
+    // Update dependencies section (even if empty, we'll format it in _formatPubspecContent)
+    try {
+      editor.update(['dependencies'], allDeps);
+    } catch (e) {
+      // Section doesn't exist, create it
+      editor.update(['dependencies'], allDeps);
     }
   }
 

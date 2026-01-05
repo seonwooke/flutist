@@ -129,8 +129,8 @@ class CreateCommand implements BaseCommand {
     // Create lib/ folder
     _createLibFolder(modulePath);
 
-      // Create analysis_options.yaml
-      _createAnalysisOptions(modulePath, currentDir);
+    // Create analysis_options.yaml
+    _createAnalysisOptions(modulePath, currentDir);
 
     // Create README.md
     _createReadme(modulePath, name, ModuleType.simple);
@@ -401,9 +401,10 @@ class CreateCommand implements BaseCommand {
     // Normalize both paths to handle any path separator differences
     final normalizedModulePath = path.normalize(modulePath);
     final normalizedRootDir = path.normalize(rootDir);
-    
+
     // Calculate the relative path
-    final relativePathToRoot = path.relative(normalizedRootDir, from: normalizedModulePath);
+    final relativePathToRoot =
+        path.relative(normalizedRootDir, from: normalizedModulePath);
     // Convert path separators to forward slashes for consistency
     final normalizedPath = relativePathToRoot.replaceAll('\\', '/');
 
