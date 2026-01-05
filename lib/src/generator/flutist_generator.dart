@@ -6,7 +6,8 @@ import '../utils/utils.dart';
 /// Generator for flutist_gen.dart file.
 class GenFileGenerator {
   /// Generates the flutist_gen.dart file based on package.dart.
-  static void generate(String rootPath) {
+  /// If [projectModuleNames] is provided, only modules present in project.dart will be included.
+  static void generate(String rootPath, {List<String>? projectModuleNames}) {
     try {
       Logger.info('Generating flutist_gen.dart...');
 
@@ -21,6 +22,11 @@ class GenFileGenerator {
       final content = packageFile.readAsStringSync();
       final package = _parsePackageDart(content);
 
+      // Filter modules if projectModuleNames is provided
+      final filteredPackage = projectModuleNames != null
+          ? _filterPackageModules(package, projectModuleNames)
+          : package;
+
       // Create flutist directory if not exists
       final flutistDir = Directory('$rootPath/flutist');
       if (!flutistDir.existsSync()) {
@@ -28,7 +34,7 @@ class GenFileGenerator {
       }
 
       // Generate content
-      final genContent = _buildGenContent(package);
+      final genContent = _buildGenContent(filteredPackage);
 
       // Write to file
       final genFile = File('$rootPath/flutist/flutist_gen.dart');
@@ -38,6 +44,19 @@ class GenFileGenerator {
     } catch (e) {
       Logger.error('Failed to generate flutist_gen.dart: $e');
     }
+  }
+
+  /// Filters package modules to only include those present in project.dart.
+  static Package _filterPackageModules(Package package, List<String> projectModuleNames) {
+    final filteredModules = package.modules
+        .where((module) => projectModuleNames.contains(module.name))
+        .toList();
+
+    return Package(
+      name: package.name,
+      dependencies: package.dependencies,
+      modules: filteredModules,
+    );
   }
 
   /// Parses package.dart content.
