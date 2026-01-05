@@ -990,6 +990,23 @@ flutist scaffold feature --name user_profile
 
 ```
 
+### Real-World Example Projects
+
+#### Clean Architecture Example
+
+A complete Flutter project demonstrating Clean Architecture principles using Flutist:
+
+🔗 **[flutist_clean_architecture](https://github.com/seonwooke/flutist_clean_architecture)**
+
+This repository showcases:
+- Clean Architecture implementation with Flutist
+- Feature modules with Domain, Data, and Presentation layers
+- Centralized dependency management
+- Modular project structure
+- Best practices for large-scale Flutter applications
+
+Perfect for learning how to structure production-ready Flutter applications with Flutist!
+
 ### Feature Module Example
 
 **Creating a login feature:**
