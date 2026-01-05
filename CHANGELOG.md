@@ -2,6 +2,15 @@
 
 All notable changes to Flutist will be documented in this file.
 
+## [1.0.10] - 2025-01-02
+
+### 🐛 Fixed
+- **`flutist generate` command**:
+  - Fixed empty dependencies section being converted from `dependencies:` to `dependencies: {}`
+  - Now preserves original format when dependencies section is empty
+  - Empty dependencies sections are formatted as `dependencies:` instead of `dependencies: {}`
+  - Files with unchanged dependencies no longer show unnecessary format changes
+
 ## [1.0.9] - 2025-01-02
 
 ### 🐛 Fixed
