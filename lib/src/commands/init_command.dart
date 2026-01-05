@@ -116,13 +116,7 @@ class InitCommand implements BaseCommand {
 
       await Directory(appLibPath).create(recursive: true);
 
-      // Create main.dart
-      await FileHelper.writeFile(
-        path.join(appLibPath, 'main.dart'),
-        InitTemplates.appMainDart(),
-      );
-
-      // Create app.dart
+      // Create app.dart (main.dart is now in root/lib/)
       await FileHelper.writeFile(
         path.join(appLibPath, 'app.dart'),
         InitTemplates.appAppDart(),
@@ -134,13 +128,22 @@ class InitCommand implements BaseCommand {
         InitTemplates.appPubspecYaml(),
       );
 
-      // 4. Add "app" module to workspace (if not already added)
-      await _ensureAppInWorkspace(rootPath);
+      // 4. Create root/lib/main.dart
+      final rootLibPath = path.join(rootPath, 'lib');
+      await Directory(rootLibPath).create(recursive: true);
+      await FileHelper.writeFile(
+        path.join(rootLibPath, 'main.dart'),
+        InitTemplates.rootMainDart(),
+      );
 
-      // 5. Create example templates
+      // 5. Add "app" module to workspace and dependencies (if not already added)
+      await _ensureAppInWorkspace(rootPath);
+      await _ensureAppInDependencies(pubspecPath);
+
+      // 6. Create example templates
       await _createExampleTemplates(rootPath);
 
-      // 6. Generate flutist_gen.dart
+      // 7. Generate flutist_gen.dart
       GenFileGenerator.generate(rootPath);
 
       Logger.success('Flutist initialization complete!');
@@ -152,26 +155,21 @@ class InitCommand implements BaseCommand {
 
   Future<void> _removeFilesAndFolders(String rootPath) async {
     // Remove files and folders created by flutter create
-    final libDir = Directory(path.join(rootPath, 'lib'));
+    // Note: We keep lib/ folder as it will contain main.dart
     final testDir = Directory(path.join(rootPath, 'test'));
     final pubspecFile = File(path.join(rootPath, 'pubspec.yaml'));
     final analysisOptionsFile =
         File(path.join(rootPath, 'analysis_options.yaml'));
     final readmeFile = File(path.join(rootPath, 'README.md'));
 
-    // Remove lib folder and all its contents
-    if (libDir.existsSync()) {
-      await libDir.delete(recursive: true);
-      Logger.info('Removed lib folder');
-    }
-
     // Remove test folder and all its contents
+
     if (testDir.existsSync()) {
       await testDir.delete(recursive: true);
       Logger.info('Removed test folder');
     }
 
-    // Remove pubspec.yaml
+    // Remove pubspec.yaml (we'll create our own)
     if (pubspecFile.existsSync()) {
       await pubspecFile.delete();
       Logger.info('Removed pubspec.yaml');
@@ -328,6 +326,14 @@ class InitCommand implements BaseCommand {
       Logger.info('  ✓ flutist dependency already exists');
     }
 
+    // Add app dependency if not exists
+    if (dependencies == null || !dependencies.containsKey('app')) {
+      editor.update(['dependencies', 'app'], {'path': 'app'});
+      Logger.info('  ✓ Added app dependency: path: app');
+    } else {
+      Logger.info('  ✓ app dependency already exists');
+    }
+
     // Ensure workspace section exists
     if (!yamlDoc.containsKey('workspace')) {
       editor.update(['workspace'], []);
@@ -373,5 +379,26 @@ class InitCommand implements BaseCommand {
       'app',
       ModuleType.simple,
     );
+  }
+
+  /// Ensures app module is in dependencies as path dependency.
+  Future<void> _ensureAppInDependencies(String pubspecPath) async {
+    final pubspecFile = File(pubspecPath);
+    if (!await pubspecFile.exists()) return;
+
+    final content = await pubspecFile.readAsString();
+    final editor = YamlEditor(content);
+    final yamlDoc = loadYaml(content) as Map;
+
+    // Add app dependency if not exists
+    final dependencies = yamlDoc['dependencies'] as Map?;
+    if (dependencies == null || !dependencies.containsKey('app')) {
+      editor.update(['dependencies', 'app'], {'path': 'app'});
+      Logger.info('  ✓ Added app dependency: path: app');
+    } else {
+      Logger.info('  ✓ app dependency already exists');
+    }
+
+    await pubspecFile.writeAsString(editor.toString());
   }
 }

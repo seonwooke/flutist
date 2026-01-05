@@ -14,6 +14,8 @@ dependencies:
   flutter:
     sdk: flutter
   flutist: $flutistVersion
+  app:
+    path: app
 
 # Flutter Native Workspace configuration
 # All packages inside the 'packages' directory will be managed together
@@ -69,10 +71,10 @@ final package = Package(
 );
 ''';
 
-  /// Generates app/lib/main.dart content.
-  static String appMainDart() => '''
+  /// Generates root/lib/main.dart content.
+  static String rootMainDart() => '''
 import 'package:flutter/material.dart';
-import 'app.dart';
+import 'package:app/app.dart';
 
 void main() {
   runApp(const App());
