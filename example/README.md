@@ -114,3 +114,17 @@ Modules can depend on:
 
 See the example files for detailed configuration.
 
+## 📚 Real-World Examples
+
+### Clean Architecture Example
+
+For a complete real-world example demonstrating Clean Architecture with Flutist, check out:
+
+🔗 **[flutist_clean_architecture](https://github.com/seonwooke/flutist_clean_architecture)**
+
+This repository provides a production-ready example of:
+- Clean Architecture patterns
+- Feature module organization
+- Dependency management
+- Best practices for Flutter projects using Flutist
+

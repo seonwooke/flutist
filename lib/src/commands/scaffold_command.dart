@@ -290,7 +290,7 @@ TEMPLATE VARIABLES:
 
     _processTemplate(templateName, attributes);
 
-    Logger.success('✅ Scaffold completed!');
+    Logger.success('Scaffold completed!');
   }
 
   /// Processes a template and generates files.

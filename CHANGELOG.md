@@ -2,6 +2,25 @@
 
 All notable changes to Flutist will be documented in this file.
 
+## [1.1.1] - 2025-01-02
+
+### ✨ Added
+- **Clean Architecture example repository**:
+  - Added link to `flutist_clean_architecture` repository in README.md Examples section
+  - Added Real-World Examples section to example/README.md
+  - Showcases Clean Architecture implementation using Flutist
+
+### 🔧 Improved
+- **`flutist generate` command**:
+  - Automatically removes deleted modules from `package.dart` when module files are not found
+  - When a module's pubspec.yaml cannot be found (e.g., `home_domain`), extracts base module name (e.g., `home`) and removes it from `package.dart`
+  - Ensures `package.dart` stays in sync with actual file system structure
+  - Filters `flutist_gen.dart` modules to only include those present in `project.dart`
+  - Modules removed from `project.dart` are now also removed from `flutist_gen.dart`
+
+### 🐛 Fixed
+- Fixed logging message format in generate command
+
 ## [1.1.0] - 2025-01-02
 
 ### 🚀 Major Changes

@@ -35,10 +35,7 @@ class GenerateCommand implements BaseCommand {
       Logger.info('  Dependencies: ${packageData.dependencies.length}');
       Logger.info('  Modules: ${packageData.modules.length}');
 
-      // Step 2: Generate flutist_gen.dart
-      GenFileGenerator.generate(currentDir);
-
-      // Step 3: Parse project.dart
+      // Step 2: Parse project.dart
       final projectData = _parseProjectDart(currentDir);
 
       if (projectData == null) {
@@ -48,6 +45,12 @@ class GenerateCommand implements BaseCommand {
 
       Logger.success('Parsed project.dart');
       Logger.info('  Modules: ${projectData.modules.length}');
+
+      // Step 3: Generate flutist_gen.dart (filtered by project.dart modules)
+      final projectModuleNames =
+          projectData.modules.map((m) => m.name).toList();
+      GenFileGenerator.generate(currentDir,
+          projectModuleNames: projectModuleNames);
 
       // Step 4: Update pubspec.yaml files
       _updatePubspecFiles(currentDir, projectData, packageData);
@@ -338,7 +341,7 @@ class GenerateCommand implements BaseCommand {
       // Write back to file with formatting
       final updatedContent = _formatPubspecContent(editor.toString());
       pubspecFile.writeAsStringSync(updatedContent);
-      Logger.success('  ✅ Updated ${module.name}');
+      Logger.success('  Updated ${module.name}');
     } catch (e) {
       Logger.error('Failed to update ${module.name}: $e');
     }
