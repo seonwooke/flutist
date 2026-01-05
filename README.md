@@ -19,7 +19,6 @@
   - [init](#init)
   - [create](#create)
   - [generate](#generate)
-  - [run](#run)
   - [pub](#pub)
   - [scaffold](#scaffold)
   - [graph](#graph)
@@ -67,7 +66,6 @@ Generate code from user-defined templates. Create boilerplate code quickly with 
 | **`create`** | Create a new module | `flutist create --path <path> --name <name> --options <type>` |
 | **`generate`** | Sync dependencies and regenerate files | `flutist generate` |
 | **`scaffold`** | Generate code from templates | `flutist scaffold <template> --name <name>` |
-| **`run`** | Run the Flutter app | `flutist run [options]` |
 | **`pub`** | Manage dependencies | `flutist pub add <package>` |
 | **`graph`** | Visualize module dependencies | `flutist graph [--format <format>]` |
 | **`help`** | Show help information | `flutist help [command]` |
@@ -154,12 +152,6 @@ flutist scaffold list
 
 # Generate code from a template
 flutist scaffold feature --name login
-```
-
-### 5. Run Your App
-
-```bash
-flutist run
 ```
 
 ## 🛠️ Commands
@@ -321,40 +313,6 @@ flutist generate
 ✅ Updated login_presentation
 ✅ Generation completed!
 ```
-
-### `flutist run`
-
-Run the Flutter app from root/app/main.dart.
-
-**Usage:**
-```bash
-flutist run [flutter_run_arguments]
-```
-
-**Description:**
-Runs your Flutter application from the root directory. All arguments are passed directly to `flutter run`.
-
-**Examples:**
-```bash
-# Run in debug mode
-flutist run
-
-# Run in release mode
-flutist run --release
-
-# Run on specific device
-flutist run -d chrome
-flutist run -d ios
-
-# Run with additional flags
-flutist run --debug --verbose
-```
-
-**What it does:**
-- Checks if `app` directory exists
-- Verifies `app/lib/main.dart` exists
-- Creates root `lib/main.dart` if it doesn't exist (imports app module)
-- Executes `flutter run` from root directory (Flutter workspace automatically finds `app/lib/main.dart`)
 
 ### `flutist pub`
 
@@ -1030,8 +988,6 @@ flutist generate
 # 6. Generate code from template
 flutist scaffold feature --name user_profile
 
-# 7. Run the app
-flutist run
 ```
 
 ### Feature Module Example

@@ -31,7 +31,6 @@ AVAILABLE COMMANDS:
   init        Initialize a new Flutist project with Workspace support
   create      Create a new module in the Flutist project
   generate    Sync all pubspec.yaml files based on project.dart
-  run         Run the Flutter app from root/app/main.dart
   pub         Manage dependencies in package.dart
   scaffold    Generate code from templates
   graph       Generate dependency graph of modules
@@ -47,9 +46,6 @@ QUICK START:
   3. Generate pubspec files:
      flutist generate
 
-  4. Run your app:
-     flutist run
-
 For more information about a specific command, use:
   flutist help <command>
   flutist <command> --help
@@ -58,7 +54,6 @@ EXAMPLES:
   flutist init
   flutist create --path features --name login --options feature
   flutist generate
-  flutist run
   flutist pub add http
   flutist scaffold list
   flutist graph --format mermaid
@@ -76,9 +71,6 @@ EXAMPLES:
         break;
       case 'generate':
         _showGenerateHelp();
-        break;
-      case 'run':
-        _showRunHelp();
         break;
       case 'pub':
         _showPubHelp();
@@ -170,29 +162,6 @@ WHAT IT DOES:
 
 EXAMPLES:
   flutist generate
-''');
-  }
-
-  void _showRunHelp() {
-    print('''
-COMMAND: run
-DESCRIPTION: Run the Flutter app from root/app/main.dart
-
-USAGE:
-  flutist run [flutter_run_arguments]
-
-OVERVIEW:
-  This command runs your Flutter application from the root directory.
-  It automatically uses the app module's main.dart file.
-
-ARGUMENTS:
-  All arguments are passed directly to "flutter run"
-
-EXAMPLES:
-  flutist run
-  flutist run --debug
-  flutist run -d chrome
-  flutist run --release
 ''');
   }
 

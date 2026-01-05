@@ -27,10 +27,6 @@ void main(List<String> arguments) async {
         CreateCommand().execute(commandArgs);
         break;
 
-      case 'run':
-        RunCommand().execute(commandArgs);
-        break;
-
       case 'pub':
         PubCommand().execute(commandArgs);
         break;
