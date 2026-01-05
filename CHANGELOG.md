@@ -2,6 +2,29 @@
 
 All notable changes to Flutist will be documented in this file.
 
+## [1.1.0] - 2025-01-02
+
+### 🚀 Major Changes
+- **Project structure update**: Moved `main.dart` from `app/lib/main.dart` to `lib/main.dart`
+  - Root `lib/main.dart` now imports and runs app from `package:app/app.dart`
+  - App module is automatically added as a path dependency in root `pubspec.yaml`
+  - Enables direct execution with `flutter run` from root directory
+  - Removed `flutist run` command - use `flutter run` directly instead
+
+### ✨ Added
+- Root `lib/main.dart` generation in `flutist init` command
+- Automatic app module dependency management in root `pubspec.yaml`
+
+### 🗑️ Removed
+- **BREAKING**: `flutist run` command has been removed
+  - Users should use `flutter run` directly from the project root
+  - This change simplifies the toolchain and aligns with standard Flutter workflows
+
+### 🔧 Changed
+- `flutist init` now creates `lib/main.dart` in root directory instead of `app/lib/main.dart`
+- Root `pubspec.yaml` template now includes app module as path dependency
+- Run command references removed from documentation and help text
+
 ## [1.0.10] - 2025-01-02
 
 ### 🐛 Fixed
