@@ -14,6 +14,8 @@ dependencies:
   flutter:
     sdk: flutter
   flutist: $flutistVersion
+  app:
+    path: app
 
 # Flutter Native Workspace configuration
 # All packages inside the 'packages' directory will be managed together
@@ -69,10 +71,10 @@ final package = Package(
 );
 ''';
 
-  /// Generates app/lib/main.dart content.
-  static String appMainDart() => '''
+  /// Generates root/lib/main.dart content.
+  static String rootMainDart() => '''
+import 'package:app/app.dart';
 import 'package:flutter/material.dart';
-import 'app.dart';
 
 void main() {
   runApp(const App());
@@ -338,11 +340,6 @@ $projectName is a Flutter workspace project built with Flutist, a powerful proje
    flutist generate
    ```
 
-3. **Run the application:**
-   ```bash
-   flutist run
-   ```
-
 ## 📁 Project Structure
 
 ```
@@ -372,7 +369,6 @@ $projectName/
 | `flutist init` | Initialize a new Flutist project |
 | `flutist create` | Create a new module in the project |
 | `flutist generate` | Sync all pubspec.yaml files based on project.dart |
-| `flutist run` | Run the Flutter app from root |
 | `flutist pub add <package>` | Add a dependency to package.dart |
 | `flutist scaffold <template>` | Generate code from templates |
 | `flutist graph` | Generate dependency graph visualization |
