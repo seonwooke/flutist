@@ -4,7 +4,7 @@
 
 **A Flutter project management framework inspired by Tuist**
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](pubspec.yaml)
+[![Version](https://img.shields.io/badge/version-1.1.2-blue.svg)](pubspec.yaml)
 [![Dart](https://img.shields.io/badge/Dart-%3E%3D3.5.0%20%3C4.0.0-blue.svg)](https://dart.dev)
 
 </div>
@@ -190,9 +190,10 @@ my_project/
 ├── pubspec.yaml
 ├── analysis_options.yaml
 ├── README.md
+├── lib/
+│   └── main.dart
 ├── app/
 │   ├── lib/
-│   │   ├── main.dart
 │   │   └── app.dart
 │   └── pubspec.yaml
 └── flutist/
@@ -521,9 +522,10 @@ my_project/
 ├── pubspec.yaml              # Workspace configuration
 ├── analysis_options.yaml     # Linting rules
 ├── README.md                 # Project documentation
+├── lib/                      # Root application code
+│   └── main.dart
 ├── app/                      # Main application module
 │   ├── lib/
-│   │   ├── main.dart
 │   │   └── app.dart
 │   └── pubspec.yaml
 ├── features/                 # Feature modules
@@ -536,7 +538,7 @@ my_project/
 │       ├── models_implementation/
 │       ├── models_tests/
 │       └── models_testing/
-├── lib/                      # Simple modules
+├── modules/                  # Simple modules
 │   └── utils/
 │       └── lib/
 └── flutist/
@@ -1156,12 +1158,7 @@ cd flutist
 dart pub get
 ```
 
-3. Run tests:
-```bash
-dart test
-```
-
-4. Make your changes and test:
+3. Make your changes and test:
 ```bash
 # Test locally
 dart run bin/flutist.dart <command>

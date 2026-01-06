@@ -2,6 +2,16 @@
 
 All notable changes to Flutist will be documented in this file.
 
+## [1.1.2] - 2025-01-02
+
+### 📝 Documentation
+- Updated README.md version badge to reflect current version (1.1.1)
+- Fixed project structure documentation:
+  - Corrected `main.dart` location to `root/lib/main.dart` (was incorrectly shown in `app/lib/main.dart`)
+  - Clarified that `app.dart` belongs in `app/lib/app.dart`
+- Removed `dart test` section from Development Setup (tests not yet implemented)
+- Fixed duplicate `lib/` directory in project structure example
+
 ## [1.1.1] - 2025-01-02
 
 ### ✨ Added
