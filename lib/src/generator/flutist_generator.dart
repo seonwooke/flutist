@@ -47,7 +47,8 @@ class GenFileGenerator {
   }
 
   /// Filters package modules to only include those present in project.dart.
-  static Package _filterPackageModules(Package package, List<String> projectModuleNames) {
+  static Package _filterPackageModules(
+      Package package, List<String> projectModuleNames) {
     final filteredModules = package.modules
         .where((module) => projectModuleNames.contains(module.name))
         .toList();
