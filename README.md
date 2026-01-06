@@ -4,6 +4,7 @@
 
 **A Flutter project management framework inspired by Tuist**
 
+[![Docs](https://img.shields.io/badge/Docs-blue.svg?logo=book&logoColor=white)](https://deepwiki.com/seonwooke/flutist)
 [![Version](https://img.shields.io/badge/version-1.1.2-blue.svg)](pubspec.yaml)
 [![Dart](https://img.shields.io/badge/Dart-%3E%3D3.5.0%20%3C4.0.0-blue.svg)](https://dart.dev)
 
@@ -72,7 +73,7 @@ flutist scaffold feature --name login
 | **`graph`** | Visualize module dependencies | `flutist graph [--format <format>]` |
 | **`help`** | Show help information | `flutist help [command]` |
 
-For detailed documentation, visit the [documentation site](#) (coming soon).
+For detailed documentation, visit the [documentation site](https://deepwiki.com/seonwooke/flutist).
 
 ## 📁 Project Structure
 
@@ -129,7 +130,7 @@ This repository showcases:
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-For development setup and guidelines, see the [documentation site](#) (coming soon).
+For development setup and guidelines, see the [documentation site](https://deepwiki.com/seonwooke/flutist).
 
 ## 📄 License
 
