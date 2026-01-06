@@ -2,6 +2,14 @@
 
 All notable changes to Flutist will be documented in this file.
 
+## [1.1.3] - 2025-01-02
+
+### 📝 Documentation
+- Simplified README.md to core content (removed detailed documentation for future docs site)
+- Added Docs badge with book icon linking to DeepWiki documentation
+- Updated all documentation links to https://deepwiki.com/seonwooke/flutist
+- Updated pubspec.yaml documentation field to point to DeepWiki
+
 ## [1.1.2] - 2025-01-02
 
 ### 📝 Documentation

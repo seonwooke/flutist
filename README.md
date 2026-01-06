@@ -5,7 +5,7 @@
 **A Flutter project management framework inspired by Tuist**
 
 [![Docs](https://img.shields.io/badge/Docs-blue.svg?logo=book&logoColor=white)](https://deepwiki.com/seonwooke/flutist)
-[![Version](https://img.shields.io/badge/version-1.1.2-blue.svg)](pubspec.yaml)
+[![Version](https://img.shields.io/badge/version-1.1.3-blue.svg)](pubspec.yaml)
 [![Dart](https://img.shields.io/badge/Dart-%3E%3D3.5.0%20%3C4.0.0-blue.svg)](https://dart.dev)
 
 </div>
