@@ -42,10 +42,10 @@ final project = Project(
       ],
     ),
 
-    // Authentication feature module
+    // Authentication clean module
     Module(
       name: 'authentication',
-      type: ModuleType.feature,
+      type: ModuleType.clean,
       dependencies: [
         // HTTP client for API calls
         package.dependencies.http,
@@ -66,10 +66,10 @@ final project = Project(
       ],
     ),
 
-    // Profile feature module
+    // Profile clean module
     Module(
       name: 'profile',
-      type: ModuleType.feature,
+      type: ModuleType.clean,
       dependencies: [
         package.dependencies.http,
         package.dependencies.provider,
@@ -84,10 +84,10 @@ final project = Project(
       ],
     ),
 
-    // Network library module
+    // Network micro module
     Module(
       name: 'network',
-      type: ModuleType.library,
+      type: ModuleType.micro,
       dependencies: [
         package.dependencies.http,
         package.dependencies.jsonAnnotation,
@@ -102,10 +102,10 @@ final project = Project(
       ],
     ),
 
-    // Storage library module
+    // Storage micro module
     Module(
       name: 'storage',
-      type: ModuleType.library,
+      type: ModuleType.micro,
       dependencies: [
         package.dependencies.sharedPreferences,
       ],
@@ -115,10 +115,10 @@ final project = Project(
       modules: [],
     ),
 
-    // Models standard module
+    // Models lite module
     Module(
       name: 'models',
-      type: ModuleType.standard,
+      type: ModuleType.lite,
       dependencies: [
         package.dependencies.jsonAnnotation,
       ],
@@ -130,10 +130,10 @@ final project = Project(
       ],
     ),
 
-    // Constants standard module
+    // Constants lite module
     Module(
       name: 'constants',
-      type: ModuleType.standard,
+      type: ModuleType.lite,
       dependencies: [],
       devDependencies: [],
       modules: [],
