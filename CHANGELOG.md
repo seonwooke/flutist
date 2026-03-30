@@ -29,6 +29,11 @@ All notable changes to Flutist will be documented in this file.
   - When `strictMode: true`, generation aborts if violations are found
   - When `strictMode: false`, generation proceeds without validation
 
+- **`flutist test` command**: Run tests across all modules in parallel
+  - Automatically finds modules with `test/` directories
+  - `--module <name>` option to test a specific module
+  - Aggregated pass/fail summary with exit code 1 on failure
+
 ### 🔧 Refactored
 
 - Removed unused `template.dart` (Template, Attribute, TemplateItem classes)
