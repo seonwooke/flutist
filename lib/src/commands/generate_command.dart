@@ -3,10 +3,8 @@ import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'package:yaml_edit/yaml_edit.dart';
 
-import '../checker/checker.dart';
 import '../core/core.dart';
-import '../generator/flutist_generator.dart';
-import '../parser/parser.dart';
+import '../engine/engine.dart';
 import '../utils/utils.dart';
 import 'commands.dart';
 

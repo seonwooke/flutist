@@ -5,7 +5,7 @@ import 'package:path/path.dart' as path;
 import 'package:yaml_edit/yaml_edit.dart';
 
 import '../core/core.dart';
-import '../generator/flutist_generator.dart';
+import '../engine/engine.dart';
 import '../scaffolds/create_templates.dart';
 import '../utils/utils.dart';
 import 'commands.dart';

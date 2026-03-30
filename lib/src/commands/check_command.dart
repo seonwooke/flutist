@@ -1,8 +1,6 @@
 import 'dart:io';
 
-import '../checker/checker.dart';
-import '../generator/flutist_generator.dart';
-import '../parser/parser.dart';
+import '../engine/engine.dart';
 import '../utils/utils.dart';
 import 'commands.dart';
 
