@@ -36,8 +36,8 @@ class CreateCommand implements BaseCommand {
       ..addOption(
         'options',
         abbr: 'o',
-        help: 'Module type: feature, library, standard, simple',
-        allowed: ['feature', 'library', 'standard', 'simple'],
+        help: 'Module type: clean, micro, lite, simple',
+        allowed: ['clean', 'micro', 'lite', 'simple'],
         mandatory: true,
       );
 
@@ -172,7 +172,7 @@ class CreateCommand implements BaseCommand {
       _createAnalysisOptions(layerPath, currentDir);
 
       // Create main.dart for library example layer
-      if (moduleType == ModuleType.library && layer.endsWith('_example')) {
+      if (moduleType == ModuleType.micro && layer.endsWith('_example')) {
         _createMainDart(layerPath);
       }
 
@@ -454,7 +454,7 @@ class CreateCommand implements BaseCommand {
   /// Returns the list of layer names for the given module type.
   List<String> _getLayersForType(ModuleType moduleType, String moduleName) {
     switch (moduleType) {
-      case ModuleType.feature:
+      case ModuleType.clean:
         // Domain, Data, Presentation
         return [
           '${moduleName}_domain',
@@ -462,19 +462,20 @@ class CreateCommand implements BaseCommand {
           '${moduleName}_presentation',
         ];
 
-      case ModuleType.library:
-        // Example, Interface, Implementation, Testing, Tests
+      case ModuleType.micro:
+        // Example, Interface, Implementation, Tests, Testing
         return [
           '${moduleName}_example',
           '${moduleName}_interface',
           '${moduleName}_implementation',
-          '${moduleName}_testing',
           '${moduleName}_tests',
+          '${moduleName}_testing',
         ];
 
-      case ModuleType.standard:
-        // Implementation, Tests, Testing
+      case ModuleType.lite:
+        // Interface, Implementation, Tests, Testing
         return [
+          '${moduleName}_interface',
           '${moduleName}_implementation',
           '${moduleName}_tests',
           '${moduleName}_testing',

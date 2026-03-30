@@ -377,8 +377,8 @@ $projectName/
 ### Examples
 
 ```bash
-# Create a new feature module
-flutist create --path features --name login --options feature
+# Create a new clean module
+flutist create --path features --name login --options clean
 
 # Add a new dependency
 flutist pub add http
@@ -394,9 +394,9 @@ flutist graph --format mermaid
 
 This project supports different module types:
 
-- **`feature`** - Feature module with Domain, Data, Presentation layers
-- **`library`** - Library module with Example, Implementation, Interface, Tests, Testing layers
-- **`standard`** - Standard module with Implementation, Tests, Testing layers
+- **`clean`** - Clean Architecture module with Domain, Data, Presentation layers
+- **`micro`** - Microfeature Architecture module with Example, Interface, Implementation, Tests, Testing layers
+- **`lite`** - Microfeature lite module with Interface, Implementation, Tests, Testing layers
 - **`simple`** - Simple module with only lib folder
 - **`custom`** - Custom module with custom template
 
@@ -418,8 +418,8 @@ Then run `flutist generate` to sync the changes to all modules.
 # Create a simple module
 flutist create --path lib --name utils --options simple
 
-# Create a feature module
-flutist create --path features --name authentication --options feature
+# Create a clean module
+flutist create --path features --name authentication --options clean
 ```
 
 ### Code Generation

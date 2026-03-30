@@ -2,14 +2,14 @@ import 'core.dart';
 
 /// Defines the structural type of a module in a Flutist project.
 enum ModuleType {
-  /// Feature module with Domain, Data, Presentation 3-layer structure.
-  feature,
+  /// Clean Architecture module with Domain, Data, Presentation 3-layer structure.
+  clean,
 
-  /// Library module with Example, Implementation, Interface, Tests, Testing 5-layer structure.
-  library,
+  /// Microfeature Architecture module with Example, Interface, Implementation, Tests, Testing 5-layer structure.
+  micro,
 
-  /// Standard module with Implementation, Tests, Testing 3-layer structure.
-  standard,
+  /// Microfeature lite module with Interface, Implementation, Tests, Testing 4-layer structure.
+  lite,
 
   /// Simple module with only lib folder.
   simple,
@@ -20,12 +20,12 @@ enum ModuleType {
   /// Parses a string to [ModuleType].
   static ModuleType fromString(String value) {
     switch (value) {
-      case 'feature':
-        return ModuleType.feature;
-      case 'library':
-        return ModuleType.library;
-      case 'standard':
-        return ModuleType.standard;
+      case 'clean':
+        return ModuleType.clean;
+      case 'micro':
+        return ModuleType.micro;
+      case 'lite':
+        return ModuleType.lite;
       case 'simple':
         return ModuleType.simple;
       case 'custom':
@@ -55,7 +55,7 @@ class Module {
 
   Module({
     required this.name,
-    this.type = ModuleType.library,
+    this.type = ModuleType.micro,
     this.dependencies = const [],
     this.devDependencies = const [],
     this.modules = const [],
