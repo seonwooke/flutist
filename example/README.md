@@ -26,15 +26,15 @@ Root workspace configuration that includes all modules.
 
 2. **Create modules:**
    ```bash
-   # Create a feature module
-   flutist create --path features --name authentication --options feature
-   
-   # Create a library module
-   flutist create --path lib --name network --options library
-   
-   # Create a standard module
-   flutist create --path core --name models --options standard
-   
+   # Create a clean module (Clean Architecture)
+   flutist create --path features --name authentication --options clean
+
+   # Create a micro module (Microfeature Architecture)
+   flutist create --path lib --name network --options micro
+
+   # Create a lite module (Microfeature lite)
+   flutist create --path core --name models --options lite
+
    # Create a simple module
    flutist create --path core --name utils --options simple
    ```
@@ -48,8 +48,8 @@ Root workspace configuration that includes all modules.
        Dependency(name: 'provider', version: '^6.1.1'),
      ],
      modules: [
-       Module(name: 'authentication', type: ModuleType.feature),
-       Module(name: 'network', type: ModuleType.library),
+       Module(name: 'authentication', type: ModuleType.clean),
+       Module(name: 'network', type: ModuleType.micro),
      ],
    );
    ```
@@ -71,7 +71,7 @@ Root workspace configuration that includes all modules.
        ),
        Module(
          name: 'authentication',
-         type: ModuleType.feature,
+         type: ModuleType.clean,
          dependencies: [
            package.dependencies.http,
          ],
@@ -90,17 +90,17 @@ Root workspace configuration that includes all modules.
 
 ## 📚 Module Types
 
-### Feature Module
-3-layer architecture: Domain, Data, Presentation
+### Clean Module
+3-layer Clean Architecture: Domain, Data, Presentation
 - Use for user-facing features with complex business logic
 
-### Library Module
-5-layer architecture: Example, Interface, Implementation, Testing, Tests
-- Use for reusable libraries and shared utilities
+### Micro Module
+5-layer Microfeature Architecture: Example, Interface, Implementation, Tests, Testing
+- Use for reusable libraries and shared services
 
-### Standard Module
-3-layer architecture: Implementation, Tests, Testing
-- Use for domain models and shared business logic
+### Lite Module
+4-layer Microfeature lite: Interface, Implementation, Tests, Testing
+- Use for internal modules with clear API boundaries
 
 ### Simple Module
 Single layer: lib/

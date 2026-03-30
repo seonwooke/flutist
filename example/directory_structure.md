@@ -19,7 +19,7 @@ my_flutter_project/
 │       └── app.dart
 │
 ├── features/                    # Feature modules directory
-│   └── authentication/         # Feature module (3-layer)
+│   └── authentication/         # Clean module (3-layer)
 │       ├── authentication_domain/
 │       │   ├── pubspec.yaml
 │       │   └── lib/
@@ -46,7 +46,7 @@ my_flutter_project/
 │                   └── login_form.dart
 │
 ├── lib/                         # Library modules directory
-│   └── network/                 # Library module (5-layer)
+│   └── network/                 # Micro module (5-layer)
 │       ├── network_example/
 │       │   ├── pubspec.yaml
 │       │   └── lib/
@@ -73,7 +73,12 @@ my_flutter_project/
 │               └── network_client_test.dart
 │
 ├── core/                        # Core modules directory
-│   ├── models/                  # Standard module (3-layer)
+│   ├── models/                  # Lite module (4-layer)
+│   │   ├── models_interface/
+│   │   │   ├── pubspec.yaml
+│   │   │   └── lib/
+│   │   │       └── models.dart
+│   │   │
 │   │   ├── models_implementation/
 │   │   │   ├── pubspec.yaml
 │   │   │   └── lib/
@@ -120,7 +125,7 @@ app/
 - Main application entry point
 - Typically depends on feature modules
 
-### 2. Feature Module: `features/authentication/`
+### 2. Clean Module: `features/authentication/`
 ```
 authentication/
 ├── authentication_domain/       # Business logic
@@ -142,7 +147,7 @@ authentication/
 - Domain → Data → Presentation dependency flow
 - Use for user-facing features
 
-### 3. Library Module: `lib/network/`
+### 3. Micro Module: `lib/network/`
 ```
 network/
 ├── network_example/             # Example usage
@@ -164,9 +169,12 @@ network/
 - Interface → Implementation dependency
 - Use for reusable libraries
 
-### 4. Standard Module: `core/models/`
+### 4. Lite Module: `core/models/`
 ```
 models/
+├── models_interface/            # Public API
+│   └── lib/
+│
 ├── models_implementation/       # Core functionality
 │   └── lib/
 │
@@ -176,8 +184,8 @@ models/
 └── models_testing/              # Test utilities
     └── lib/
 ```
-- 3-layer architecture
-- Use for domain models and shared logic
+- 4-layer architecture
+- Use for internal modules with clear API boundaries
 
 ### 5. Simple Module: `core/utils/`
 ```
@@ -193,9 +201,9 @@ utils/
 
 ```
 app
-  └── depends on → authentication (feature)
-      └── depends on → network (library)
-          └── depends on → models (standard)
+  └── depends on → authentication (clean)
+      └── depends on → network (micro)
+          └── depends on → models (lite)
               └── depends on → utils (simple)
 ```
 
@@ -214,6 +222,7 @@ workspace:
   - lib/network/network_implementation
   - lib/network/network_testing
   - lib/network/network_tests
+  - core/models/models_interface
   - core/models/models_implementation
   - core/models/models_tests
   - core/models/models_testing

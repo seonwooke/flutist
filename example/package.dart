@@ -48,17 +48,17 @@ final package = Package(
   /// These modules are defined here and can be used as dependencies
   /// in project.dart to establish module relationships.
   modules: [
-    // Feature modules
-    Module(name: 'authentication', type: ModuleType.feature),
-    Module(name: 'profile', type: ModuleType.feature),
+    // Clean modules
+    Module(name: 'authentication', type: ModuleType.clean),
+    Module(name: 'profile', type: ModuleType.clean),
 
-    // Library modules
-    Module(name: 'network', type: ModuleType.library),
-    Module(name: 'storage', type: ModuleType.library),
+    // Micro modules
+    Module(name: 'network', type: ModuleType.micro),
+    Module(name: 'storage', type: ModuleType.micro),
 
-    // Standard modules
-    Module(name: 'models', type: ModuleType.standard),
-    Module(name: 'constants', type: ModuleType.standard),
+    // Lite modules
+    Module(name: 'models', type: ModuleType.lite),
+    Module(name: 'constants', type: ModuleType.lite),
 
     // Simple modules
     Module(name: 'utils', type: ModuleType.simple),
