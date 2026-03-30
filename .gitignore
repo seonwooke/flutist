@@ -29,3 +29,9 @@ migrate_working_dir/
 .flutter-plugins-dependencies
 /build/
 /coverage/
+
+# Claude Code
+.claude/
+
+# Internal planning
+PLAN_v2.md
