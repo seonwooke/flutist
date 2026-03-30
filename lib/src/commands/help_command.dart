@@ -52,7 +52,7 @@ For more information about a specific command, use:
 
 EXAMPLES:
   flutist init
-  flutist create --path features --name login --options feature
+  flutist create --path features --name login --options clean
   flutist generate
   flutist pub add http
   flutist scaffold list
@@ -127,18 +127,18 @@ USAGE:
 REQUIRED OPTIONS:
   --path, -p <path>     Directory path where the module will be created
   --name, -n <name>     Name of the module
-  --options, -o <type>   Module type (feature, library, standard, simple)
+  --options, -o <type>   Module type (clean, micro, lite, simple)
 
 MODULE TYPES:
-  feature    Feature module with full structure
-  library    Library module for shared code
-  standard   Standard module structure
+  clean      Clean Architecture module (Domain, Data, Presentation)
+  micro      Microfeature Architecture module (Example, Interface, Impl, Tests, Testing)
+  lite       Microfeature lite module (Interface, Impl, Tests, Testing)
   simple     Simple module with minimal structure
 
 EXAMPLES:
-  flutist create --path features --name login --options feature
-  flutist create --path lib --name utils --options library
-  flutist create -p shared -n models -o standard
+  flutist create --path features --name login --options clean
+  flutist create --path lib --name network --options micro
+  flutist create -p core -n models -o lite
 ''');
   }
 

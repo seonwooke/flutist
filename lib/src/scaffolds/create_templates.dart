@@ -102,25 +102,26 @@ When working on this module:
 
   static String _getModuleTypeDescription(ModuleType type) {
     switch (type) {
-      case ModuleType.feature:
+      case ModuleType.clean:
         return '''
-This is a **feature module** with a 3-layer architecture:
+This is a **clean module** with a 3-layer Clean Architecture:
 - **Domain Layer** - Business logic and entities
 - **Data Layer** - Data sources and repositories
 - **Presentation Layer** - UI components and state management
 ''';
-      case ModuleType.library:
+      case ModuleType.micro:
         return '''
-This is a **library module** with a 5-layer architecture:
+This is a **micro module** with a 5-layer Microfeature Architecture:
 - **Example Layer** - Example usage and demos
-- **Implementation Layer** - Core implementation
 - **Interface Layer** - Public API and contracts
+- **Implementation Layer** - Core implementation
 - **Tests Layer** - Unit and widget tests
 - **Testing Layer** - Test utilities and mocks
 ''';
-      case ModuleType.standard:
+      case ModuleType.lite:
         return '''
-This is a **standard module** with a 3-layer architecture:
+This is a **lite module** with a 4-layer Microfeature lite Architecture:
+- **Interface Layer** - Public API and contracts
 - **Implementation Layer** - Core functionality
 - **Tests Layer** - Unit and integration tests
 - **Testing Layer** - Test utilities and helpers
@@ -139,7 +140,7 @@ This is a **custom module** with custom template structure.
 
   static String _getModuleStructure(ModuleType type, String moduleName) {
     switch (type) {
-      case ModuleType.feature:
+      case ModuleType.clean:
         return '''
 ```
 $moduleName/
@@ -151,7 +152,7 @@ $moduleName/
     └── lib/
 ```
 ''';
-      case ModuleType.library:
+      case ModuleType.micro:
         return '''
 ```
 $moduleName/
@@ -167,10 +168,12 @@ $moduleName/
     └── lib/
 ```
 ''';
-      case ModuleType.standard:
+      case ModuleType.lite:
         return '''
 ```
 $moduleName/
+├── ${moduleName}_interface/      # Interface layer
+│   └── lib/
 ├── ${moduleName}_implementation/ # Implementation layer
 │   └── lib/
 ├── ${moduleName}_tests/          # Tests layer
