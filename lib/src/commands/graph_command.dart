@@ -138,16 +138,10 @@ FORMATS:
       if (nameMatch == null) continue;
       final name = nameMatch.group(1)!;
 
-      // Parse dependencies
-      final dependencies = _parseDependencyNames(moduleContent, 'dependencies');
-      final devDependencies =
-          _parseDependencyNames(moduleContent, 'devDependencies');
       final modules = _parseModuleReferences(moduleContent);
 
       nodes.add(ModuleNode(
         name: name,
-        dependencies: dependencies,
-        devDependencies: devDependencies,
         modules: modules,
       ));
     }
@@ -166,25 +160,6 @@ FORMATS:
     return code;
   }
 
-  List<String> _parseDependencyNames(String content, String fieldName) {
-    final names = <String>[];
-    final arrayPattern = RegExp(
-      '$fieldName:\\s*\\[(.*?)\\]',
-      dotAll: true,
-    );
-    final match = arrayPattern.firstMatch(content);
-    if (match == null) return names;
-
-    final arrayContent = match.group(1)!;
-    final depPattern = RegExp(r'package\.dependencies\.(\w+)');
-
-    for (final depMatch in depPattern.allMatches(arrayContent)) {
-      names.add(depMatch.group(1)!);
-    }
-
-    return names;
-  }
-
   List<String> _parseModuleReferences(String content) {
     final names = <String>[];
     final arrayPattern = RegExp(
@@ -199,12 +174,7 @@ FORMATS:
 
     for (final modMatch in modPattern.allMatches(arrayContent)) {
       final camelName = modMatch.group(1)!;
-      // Convert camelCase to snake_case
-      final snakeName = camelName.replaceAllMapped(
-        RegExp(r'[A-Z]'),
-        (m) => '_${m.group(0)!.toLowerCase()}',
-      );
-      names.add(snakeName.startsWith('_') ? snakeName.substring(1) : snakeName);
+      names.add(StringCase.toSnakeCase(camelName));
     }
 
     return names;
@@ -388,19 +358,11 @@ class ModuleNode {
   /// Module name.
   final String name;
 
-  /// List of dependency names.
-  final List<String> dependencies;
-
-  /// List of dev dependency names.
-  final List<String> devDependencies;
-
   /// List of module dependency names.
   final List<String> modules;
 
   ModuleNode({
     required this.name,
-    required this.dependencies,
-    required this.devDependencies,
     required this.modules,
   });
 }

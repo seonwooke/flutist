@@ -502,10 +502,10 @@ TEMPLATE VARIABLES:
       final value = entry.value;
 
       // Generate different case variations
-      final snakeCase = _toSnakeCase(value);
-      final pascalCase = _toPascalCase(value);
+      final snakeCase = StringCase.toSnakeCase(value);
+      final pascalCase = StringCase.toPascalCase(value);
       final upperCase = snakeCase.toUpperCase();
-      final camelCase = _toCamelCase(value);
+      final camelCase = StringCase.toCamelCase(value);
 
       // Replace all variations
       result = result
@@ -541,42 +541,4 @@ TEMPLATE VARIABLES:
     }
   }
 
-  /// Converts any string to snake_case.
-  String _toSnakeCase(String input) {
-    var result = input.replaceAllMapped(
-      RegExp(r'[A-Z]'),
-      (match) => '_${match.group(0)!.toLowerCase()}',
-    );
-
-    if (result.startsWith('_')) {
-      result = result.substring(1);
-    }
-
-    result = result.replaceAll(' ', '_').replaceAll('-', '_');
-
-    return result.toLowerCase();
-  }
-
-  /// Converts snake_case to PascalCase.
-  String _toPascalCase(String snakeCase) {
-    final parts = snakeCase.split('_');
-    return parts.map((part) {
-      if (part.isEmpty) return part;
-      return part[0].toUpperCase() + part.substring(1).toLowerCase();
-    }).join('');
-  }
-
-  /// Converts snake_case to camelCase.
-  String _toCamelCase(String snakeCase) {
-    final parts = snakeCase.split('_');
-    if (parts.isEmpty) return snakeCase;
-
-    final first = parts.first.toLowerCase();
-    final rest = parts.skip(1).map((part) {
-      if (part.isEmpty) return part;
-      return part[0].toUpperCase() + part.substring(1).toLowerCase();
-    });
-
-    return first + rest.join('');
-  }
 }

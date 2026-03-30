@@ -75,87 +75,11 @@ class GenerateCommand implements BaseCommand {
 
     try {
       final content = packageFile.readAsStringSync();
-
-      // Parse package name
-      final nameMatch = RegExp(r"name:\s*'([^']+)'").firstMatch(content);
-      final packageName = nameMatch?.group(1) ?? 'workspace';
-
-      // Parse dependencies
-      final dependencies = _parseDependencies(content);
-
-      // Parse modules
-      final modules = _parseModules(content);
-
-      return Package(
-        name: packageName,
-        dependencies: dependencies,
-        modules: modules,
-      );
+      return GenFileGenerator.parsePackageDart(content);
     } catch (e) {
       Logger.error('Failed to parse package.dart: $e');
       return null;
     }
-  }
-
-  /// Parses dependencies from package.dart content.
-  List<Dependency> _parseDependencies(String content) {
-    final dependencies = <Dependency>[];
-
-    // Find dependencies array
-    final dependenciesPattern = RegExp(
-      r'dependencies:\s*\[(.*?)\]',
-      dotAll: true,
-    );
-    final match = dependenciesPattern.firstMatch(content);
-
-    if (match == null) return dependencies;
-
-    final dependenciesContent = match.group(1)!;
-
-    // Find each Dependency(...) entry
-    final dependencyPattern = RegExp(
-      r"Dependency\s*\(\s*name:\s*'([^']+)'\s*,\s*version:\s*'([^']+)'\s*\)",
-    );
-
-    for (final depMatch in dependencyPattern.allMatches(dependenciesContent)) {
-      final name = depMatch.group(1)!;
-      final version = depMatch.group(2)!;
-
-      dependencies.add(Dependency(name: name, version: version));
-    }
-
-    return dependencies;
-  }
-
-  /// Parses modules from package.dart content.
-  List<Module> _parseModules(String content) {
-    final modules = <Module>[];
-
-    // Find modules array
-    final modulesPattern = RegExp(
-      r'modules:\s*\[(.*?)\]',
-      dotAll: true,
-    );
-    final match = modulesPattern.firstMatch(content);
-
-    if (match == null) return modules;
-
-    final modulesContent = match.group(1)!;
-
-    // Find each Module(...) entry
-    final modulePattern = RegExp(
-      r"Module\s*\(\s*name:\s*'([^']+)'\s*,\s*type:\s*ModuleType\.(\w+)\s*\)",
-    );
-
-    for (final modMatch in modulePattern.allMatches(modulesContent)) {
-      final name = modMatch.group(1)!;
-      final typeString = modMatch.group(2)!;
-      final type = _parseModuleType(typeString);
-
-      modules.add(Module(name: name, type: type));
-    }
-
-    return modules;
   }
 
   /// Parses the project.dart file.
@@ -211,7 +135,7 @@ class GenerateCommand implements BaseCommand {
       final typeMatch =
           RegExp(r'type:\s*ModuleType\.(\w+)').firstMatch(moduleContent);
       if (typeMatch == null) continue;
-      final type = _parseModuleType(typeMatch.group(1)!);
+      final type = ModuleType.fromString(typeMatch.group(1)!);
 
       // Parse dependencies
       final dependencies =
@@ -258,7 +182,7 @@ class GenerateCommand implements BaseCommand {
     for (final depMatch in depPattern.allMatches(arrayContent)) {
       final camelName = depMatch.group(1)!;
       // Convert camelCase back to snake_case
-      final snakeName = _toSnakeCase(camelName);
+      final snakeName = StringCase.toSnakeCase(camelName);
 
       // Create a placeholder Dependency (version will be filled from package.dart later)
       dependencies.add(Dependency(name: snakeName, version: ''));
@@ -288,7 +212,7 @@ class GenerateCommand implements BaseCommand {
     for (final modMatch in modPattern.allMatches(arrayContent)) {
       final camelName = modMatch.group(1)!;
       // Convert camelCase back to snake_case
-      final snakeName = _toSnakeCase(camelName);
+      final snakeName = StringCase.toSnakeCase(camelName);
 
       // Create a placeholder Module (type will be filled from package.dart later)
       modules.add(Module(name: snakeName, type: ModuleType.simple));
@@ -636,33 +560,4 @@ class GenerateCommand implements BaseCommand {
     }
   }
 
-  // MARK: - Helper
-
-  /// Converts string to ModuleType enum.
-  ModuleType _parseModuleType(String typeString) {
-    switch (typeString) {
-      case 'feature':
-        return ModuleType.feature;
-      case 'library':
-        return ModuleType.library;
-      case 'standard':
-        return ModuleType.standard;
-      case 'simple':
-        return ModuleType.simple;
-      default:
-        throw ArgumentError('Invalid module type: $typeString');
-    }
-  }
-
-  /// Converts camelCase to snake_case.
-  ///
-  /// Examples:
-  /// - loginExample → login_example
-  /// - userDomainImplementation → user_domain_implementation
-  String _toSnakeCase(String camelCase) {
-    return camelCase.replaceAllMapped(
-      RegExp(r'[A-Z]'),
-      (match) => '_${match.group(0)!.toLowerCase()}',
-    );
-  }
 }
