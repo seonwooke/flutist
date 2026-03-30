@@ -2,6 +2,77 @@
 
 All notable changes to Flutist will be documented in this file.
 
+## [2.0.0] - 2026-03-30
+
+### 🚀 Breaking Changes
+
+- **Module Type Renaming**:
+  - `feature` → `clean` (Clean Architecture: Domain / Data / Presentation)
+  - `library` → `micro` (Microfeature Architecture: Example / Interface / Impl / Tests / Testing)
+  - `standard` → `lite` (Microfeature lite: Interface / Impl / Tests / Testing)
+  - `simple` remains unchanged
+- **Lite module now has 4 layers** (was 3):
+  - Added Interface layer for dependency inversion
+  - New structure: Interface / Implementation / Tests / Testing
+
+### ✨ New Features
+
+- **`flutist check` command**: Validates architecture rules for module dependencies
+  - Implementation direct reference detection (with compositionRoots exception)
+  - Circular dependency detection
+  - Testing/Example layer reference restrictions
+  - Clean module layer direction enforcement
+- **`ProjectOptions` configuration**:
+  - `strictMode` (default: `true`): Enforces architecture rules during `flutist generate`
+  - `compositionRoots` (default: `['app']`): Modules allowed to reference Implementation directly
+- **Architecture validation in `flutist generate`**:
+  - When `strictMode: true`, generation aborts if violations are found
+  - When `strictMode: false`, generation proceeds without validation
+
+### 🔧 Refactored
+
+- Removed unused `template.dart` (Template, Attribute, TemplateItem classes)
+- Added `ModuleType.fromString()` to replace 3 duplicate `_parseModuleType` methods
+- Added `StringCase` utility class for shared case conversions
+- Extracted `ProjectParser` from `GenerateCommand` for shared parsing
+- Merged `checker/`, `generator/`, `parser/` into unified `engine/` directory
+- Reused `GenFileGenerator.parsePackageDart()` across commands
+
+### 🧪 Tests
+
+- Added unit test suite (61 tests):
+  - `StringCase` case conversion + round-trip verification
+  - `ModuleType.fromString()` validation + old name rejection
+  - `ArchitectureChecker` all 5 rules + edge cases
+  - `ProjectParser` file I/O + options parsing
+  - `GenFileGenerator` package.dart parsing + round-trip verification
+
+### 📦 Migration Guide
+
+Update all references to old module type names:
+
+```dart
+// Before (1.x)
+Module(name: 'login', type: ModuleType.feature)
+Module(name: 'network', type: ModuleType.library)
+Module(name: 'models', type: ModuleType.standard)
+
+// After (2.0.0)
+Module(name: 'login', type: ModuleType.clean)
+Module(name: 'network', type: ModuleType.micro)
+Module(name: 'models', type: ModuleType.lite)
+```
+
+Update CLI commands:
+
+```bash
+# Before
+flutist create --options feature
+
+# After
+flutist create --options clean
+```
+
 ## [1.1.3] - 2025-01-02
 
 ### 📝 Documentation
