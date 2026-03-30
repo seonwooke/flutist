@@ -34,11 +34,14 @@ flutist init
 ### 2. Create a Module
 
 ```bash
-# Create a feature module
-flutist create --path features --name login --options feature
+# Create a clean module (Clean Architecture)
+flutist create --path features --name login --options clean
+
+# Create a micro module (Microfeature Architecture)
+flutist create --path lib --name network --options micro
 
 # Create a simple module
-flutist create --path lib --name utils --options simple
+flutist create --path core --name utils --options simple
 ```
 
 ### 3. Manage Dependencies
@@ -68,6 +71,7 @@ flutist scaffold feature --name login
 | **`init`** | Initialize a new Flutist project | `flutist init` |
 | **`create`** | Create a new module | `flutist create --path <path> --name <name> --options <type>` |
 | **`generate`** | Sync dependencies and regenerate files | `flutist generate` |
+| **`check`** | Check architecture rules | `flutist check` |
 | **`scaffold`** | Generate code from templates | `flutist scaffold <template> --name <name>` |
 | **`pub`** | Manage dependencies | `flutist pub add <package>` |
 | **`graph`** | Visualize module dependencies | `flutist graph [--format <format>]` |

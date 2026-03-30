@@ -22,7 +22,7 @@
 /// flutist init
 ///
 /// # Create a module
-/// flutist create --path features --name login --options library
+/// flutist create --path features --name login --options clean
 ///
 /// # Sync dependencies
 /// flutist generate
