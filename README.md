@@ -72,6 +72,7 @@ flutist scaffold feature --name login
 | **`create`** | Create a new module | `flutist create --path <path> --name <name> --options <type>` |
 | **`generate`** | Sync dependencies and regenerate files | `flutist generate` |
 | **`check`** | Check architecture rules | `flutist check` |
+| **`test`** | Run tests for all modules in parallel | `flutist test` |
 | **`scaffold`** | Generate code from templates | `flutist scaffold <template> --name <name>` |
 | **`pub`** | Manage dependencies | `flutist pub add <package>` |
 | **`graph`** | Visualize module dependencies | `flutist graph [--format <format>]` |
