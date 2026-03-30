@@ -7,3 +7,4 @@ export 'help_command.dart';
 export 'init_command.dart';
 export 'pub_command.dart';
 export 'scaffold_command.dart';
+export 'test_command.dart';

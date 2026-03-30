@@ -39,6 +39,10 @@ void main(List<String> arguments) async {
         ScaffoldCommand().execute(commandArgs);
         break;
 
+      case 'test':
+        TestCommand().execute(commandArgs);
+        break;
+
       case 'graph':
         GraphCommand().execute(commandArgs);
         break;

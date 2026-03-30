@@ -34,6 +34,7 @@ AVAILABLE COMMANDS:
   check       Check architecture rules for module dependencies
   pub         Manage dependencies in package.dart
   scaffold    Generate code from templates
+  test        Run tests for all modules in parallel
   graph       Generate dependency graph of modules
   help        Display help information for Flutist commands
 
@@ -81,6 +82,9 @@ EXAMPLES:
         break;
       case 'scaffold':
         _showScaffoldHelp();
+        break;
+      case 'test':
+        _showTestHelp();
         break;
       case 'graph':
         _showGraphHelp();
@@ -220,6 +224,28 @@ EXAMPLES:
   flutist pub add http
   flutist pub add provider --version ^2.0.0
   flutist pub add bloc
+''');
+  }
+
+  void _showTestHelp() {
+    print('''
+COMMAND: test
+DESCRIPTION: Run tests for all modules in parallel
+
+USAGE:
+  flutist test [options]
+
+OPTIONS:
+  -m, --module <name>   Run tests for a specific module only
+  -h, --help            Show help information
+
+OVERVIEW:
+  Finds all modules with a test/ directory and runs dart test
+  in parallel. Reports results with pass/fail summary.
+
+EXAMPLES:
+  flutist test
+  flutist test --module login
 ''');
   }
 
