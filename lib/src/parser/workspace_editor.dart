@@ -26,23 +26,13 @@ class WorkspaceEditor {
     final content = await pubspecFile.readAsString();
     final editor = YamlEditor(content);
 
-    switch (moduleType) {
-      case ModuleType.feature:
-        break;
-      case ModuleType.library:
-        break;
-      case ModuleType.standard:
-        break;
-      case ModuleType.simple:
-        await _addSimpleModuleToWorkspace(
-          rootPath,
-          modulePath,
-          moduleName,
-          editor,
-        );
-        break;
-      case ModuleType.custom:
-        break;
+    if (moduleType == ModuleType.simple) {
+      await _addSimpleModuleToWorkspace(
+        rootPath,
+        modulePath,
+        moduleName,
+        editor,
+      );
     }
 
     await pubspecFile.writeAsString(editor.toString());

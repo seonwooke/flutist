@@ -20,7 +20,7 @@ class GenFileGenerator {
       }
 
       final content = packageFile.readAsStringSync();
-      final package = _parsePackageDart(content);
+      final package = parsePackageDart(content);
 
       // Filter modules if projectModuleNames is provided
       final filteredPackage = projectModuleNames != null
@@ -61,7 +61,7 @@ class GenFileGenerator {
   }
 
   /// Parses package.dart content.
-  static Package _parsePackageDart(String content) {
+  static Package parsePackageDart(String content) {
     // Parse package name
     final nameMatch = RegExp(r"name:\s*'([^']+)'").firstMatch(content);
     final packageName = nameMatch?.group(1) ?? 'workspace';
@@ -127,7 +127,7 @@ class GenFileGenerator {
     for (final modMatch in modulePattern.allMatches(modulesContent)) {
       final name = modMatch.group(1)!;
       final typeString = modMatch.group(2)!;
-      final type = _parseModuleType(typeString);
+      final type = ModuleType.fromString(typeString);
       modules.add(Module(name: name, type: type));
     }
 
@@ -150,7 +150,7 @@ class GenFileGenerator {
     buffer.writeln('extension PackageDependenciesX on List<Dependency> {');
 
     for (final dep in package.dependencies) {
-      final getterName = _toCamelCase(dep.name);
+      final getterName = StringCase.toCamelCase(dep.name);
       buffer.writeln("  /// Dependency getter for ${dep.name}");
       buffer.writeln(
           "  Dependency get $getterName => firstWhere((d) => d.name == '${dep.name}');");
@@ -164,7 +164,7 @@ class GenFileGenerator {
     buffer.writeln('extension PackageModulesX on List<Module> {');
 
     for (final module in package.modules) {
-      final getterName = _toCamelCase(module.name);
+      final getterName = StringCase.toCamelCase(module.name);
       buffer.writeln("  /// Module getter for ${module.name}");
       buffer.writeln(
           "  Module get $getterName => firstWhere((m) => m.name == '${module.name}');");
@@ -175,33 +175,4 @@ class GenFileGenerator {
     return buffer.toString();
   }
 
-  /// Converts snake_case to camelCase.
-  static String _toCamelCase(String snakeCase) {
-    final parts = snakeCase.split('_');
-    if (parts.length == 1) return snakeCase;
-
-    final first = parts.first;
-    final rest = parts.skip(1).map((part) {
-      if (part.isEmpty) return part;
-      return part[0].toUpperCase() + part.substring(1);
-    });
-
-    return first + rest.join('');
-  }
-
-  /// Converts string to ModuleType enum.
-  static ModuleType _parseModuleType(String typeString) {
-    switch (typeString) {
-      case 'feature':
-        return ModuleType.feature;
-      case 'library':
-        return ModuleType.library;
-      case 'standard':
-        return ModuleType.standard;
-      case 'simple':
-        return ModuleType.simple;
-      default:
-        throw ArgumentError('Invalid module type: $typeString');
-    }
-  }
 }

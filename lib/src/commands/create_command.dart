@@ -51,7 +51,7 @@ class CreateCommand implements BaseCommand {
       final typeString = result['options'] as String;
 
       // Convert to ModuleType
-      final moduleType = _parseModuleType(typeString);
+      final moduleType = ModuleType.fromString(typeString);
 
       // Log start
       Logger.info('📦 Creating module...');
@@ -425,8 +425,6 @@ class CreateCommand implements BaseCommand {
     Logger.info('  ✓ Created README.md');
   }
 
-  // MARK: - Helper
-
   /// Checks if a module with the same path and name already exists.
   void _checkModuleExists(
     String currentDir,
@@ -450,22 +448,6 @@ class CreateCommand implements BaseCommand {
         Logger.error('   Directory already exists: $parentPath');
         exit(1);
       }
-    }
-  }
-
-  /// Converts string to ModuleType enum.
-  ModuleType _parseModuleType(String typeString) {
-    switch (typeString) {
-      case 'feature':
-        return ModuleType.feature;
-      case 'library':
-        return ModuleType.library;
-      case 'standard':
-        return ModuleType.standard;
-      case 'simple':
-        return ModuleType.simple;
-      default:
-        throw ArgumentError('Invalid module type: $typeString');
     }
   }
 

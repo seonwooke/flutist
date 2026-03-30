@@ -15,7 +15,25 @@ enum ModuleType {
   simple,
 
   /// Custom module with custom template.
-  custom,
+  custom;
+
+  /// Parses a string to [ModuleType].
+  static ModuleType fromString(String value) {
+    switch (value) {
+      case 'feature':
+        return ModuleType.feature;
+      case 'library':
+        return ModuleType.library;
+      case 'standard':
+        return ModuleType.standard;
+      case 'simple':
+        return ModuleType.simple;
+      case 'custom':
+        return ModuleType.custom;
+      default:
+        throw ArgumentError('Invalid module type: $value');
+    }
+  }
 }
 
 /// Represents a module in a Flutist project.
