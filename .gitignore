@@ -30,8 +30,5 @@ migrate_working_dir/
 /build/
 /coverage/
 
-# Claude Code
+# Custom
 .claude/
-
-# Internal planning
-PLAN_v2.md
