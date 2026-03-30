@@ -4,7 +4,7 @@ import 'package:path/path.dart' as path;
 import 'package:yaml_edit/yaml_edit.dart';
 
 import '../core/core.dart';
-import '../generator/flutist_generator.dart';
+import '../engine/engine.dart';
 import '../utils/utils.dart';
 import 'commands.dart';
 
@@ -36,7 +36,7 @@ class GenerateCommand implements BaseCommand {
       Logger.info('  Modules: ${packageData.modules.length}');
 
       // Step 2: Parse project.dart
-      final projectData = _parseProjectDart(currentDir);
+      final projectData = ProjectParser.parse(currentDir);
 
       if (projectData == null) {
         Logger.error('Failed to parse project.dart');
@@ -46,7 +46,34 @@ class GenerateCommand implements BaseCommand {
       Logger.success('Parsed project.dart');
       Logger.info('  Modules: ${projectData.modules.length}');
 
-      // Step 3: Generate flutist_gen.dart (filtered by project.dart modules)
+      // Step 3: Architecture rule check (if strictMode enabled)
+      if (projectData.options.strictMode) {
+        Logger.info('Checking architecture rules...');
+        final checker = ArchitectureChecker(
+          project: projectData,
+          package: packageData,
+        );
+        final results = checker.check();
+        final errors = results
+            .where((r) => r.severity == CheckSeverity.error)
+            .toList();
+
+        if (errors.isNotEmpty) {
+          Logger.info('');
+          for (final error in errors) {
+            Logger.error('[ERROR] ${error.rule}');
+            Logger.error('  ${error.message}');
+            Logger.info('');
+          }
+          Logger.error(
+              'Generation aborted. ${errors.length} architecture violation(s) found.');
+          Logger.info('Fix violations or set strictMode: false in ProjectOptions.');
+          exit(1);
+        }
+        Logger.success('Architecture rules passed');
+      }
+
+      // Step 4: Generate flutist_gen.dart (filtered by project.dart modules)
       final projectModuleNames =
           projectData.modules.map((m) => m.name).toList();
       GenFileGenerator.generate(currentDir,
@@ -82,144 +109,7 @@ class GenerateCommand implements BaseCommand {
     }
   }
 
-  /// Parses the project.dart file.
-  Project? _parseProjectDart(String currentDir) {
-    Logger.info('Parsing project.dart...');
 
-    final projectFile = File('$currentDir/project.dart');
-
-    if (!projectFile.existsSync()) {
-      Logger.error('project.dart not found');
-      return null;
-    }
-
-    try {
-      final content = projectFile.readAsStringSync();
-
-      // Parse project name
-      final nameMatch = RegExp(r"name:\s*'([^']+)'").firstMatch(content);
-      final projectName = nameMatch?.group(1) ?? 'workspace';
-
-      // Parse modules
-      final modules = _parseProjectModules(content);
-
-      return Project(
-        name: projectName,
-        modules: modules,
-      );
-    } catch (e) {
-      Logger.error('Failed to parse project.dart: $e');
-      return null;
-    }
-  }
-
-  /// Parses modules from project.dart content.
-  List<Module> _parseProjectModules(String content) {
-    final modules = <Module>[];
-
-    // Find all Module(...) blocks
-    final modulePattern = RegExp(
-      r'Module\s*\((.*?)\),',
-      dotAll: true,
-    );
-
-    for (final match in modulePattern.allMatches(content)) {
-      final moduleContent = match.group(1)!;
-
-      // Parse module name
-      final nameMatch = RegExp(r"name:\s*'([^']+)'").firstMatch(moduleContent);
-      if (nameMatch == null) continue;
-      final name = nameMatch.group(1)!;
-
-      // Parse module type
-      final typeMatch =
-          RegExp(r'type:\s*ModuleType\.(\w+)').firstMatch(moduleContent);
-      if (typeMatch == null) continue;
-      final type = ModuleType.fromString(typeMatch.group(1)!);
-
-      // Parse dependencies
-      final dependencies =
-          _parseModuleDependencies(moduleContent, 'dependencies');
-
-      // Parse devDependencies
-      final devDependencies =
-          _parseModuleDependencies(moduleContent, 'devDependencies');
-
-      // Parse modules
-      final moduleRefs = _parseModuleReferences(moduleContent);
-
-      modules.add(Module(
-        name: name,
-        type: type,
-        dependencies: dependencies,
-        devDependencies: devDependencies,
-        modules: moduleRefs,
-      ));
-    }
-
-    return modules;
-  }
-
-  /// Parses dependency references from a module's dependencies or devDependencies array.
-  List<Dependency> _parseModuleDependencies(
-      String moduleContent, String fieldName) {
-    final dependencies = <Dependency>[];
-
-    // Find the dependencies array
-    final arrayPattern = RegExp(
-      '$fieldName:\\s*\\[(.*?)\\]',
-      dotAll: true,
-    );
-    final match = arrayPattern.firstMatch(moduleContent);
-
-    if (match == null) return dependencies;
-
-    final arrayContent = match.group(1)!;
-
-    // Find package.dependencies.xxx patterns
-    final depPattern = RegExp(r'package\.dependencies\.(\w+)');
-
-    for (final depMatch in depPattern.allMatches(arrayContent)) {
-      final camelName = depMatch.group(1)!;
-      // Convert camelCase back to snake_case
-      final snakeName = StringCase.toSnakeCase(camelName);
-
-      // Create a placeholder Dependency (version will be filled from package.dart later)
-      dependencies.add(Dependency(name: snakeName, version: ''));
-    }
-
-    return dependencies;
-  }
-
-  /// Parses module references from a module's modules array.
-  List<Module> _parseModuleReferences(String moduleContent) {
-    final modules = <Module>[];
-
-    // Find the modules array
-    final arrayPattern = RegExp(
-      r'modules:\s*\[(.*?)\]',
-      dotAll: true,
-    );
-    final match = arrayPattern.firstMatch(moduleContent);
-
-    if (match == null) return modules;
-
-    final arrayContent = match.group(1)!;
-
-    // Find package.modules.xxx patterns
-    final modPattern = RegExp(r'package\.modules\.(\w+)');
-
-    for (final modMatch in modPattern.allMatches(arrayContent)) {
-      final camelName = modMatch.group(1)!;
-      // Convert camelCase back to snake_case
-      final snakeName = StringCase.toSnakeCase(camelName);
-
-      // Create a placeholder Module (type will be filled from package.dart later)
-      modules.add(Module(name: snakeName, type: ModuleType.simple));
-    }
-
-    return modules;
-  }
 
   /// Updates pubspec.yaml files for all modules.
   void _updatePubspecFiles(

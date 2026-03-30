@@ -31,6 +31,7 @@ AVAILABLE COMMANDS:
   init        Initialize a new Flutist project with Workspace support
   create      Create a new module in the Flutist project
   generate    Sync all pubspec.yaml files based on project.dart
+  check       Check architecture rules for module dependencies
   pub         Manage dependencies in package.dart
   scaffold    Generate code from templates
   graph       Generate dependency graph of modules
@@ -71,6 +72,9 @@ EXAMPLES:
         break;
       case 'generate':
         _showGenerateHelp();
+        break;
+      case 'check':
+        _showCheckHelp();
         break;
       case 'pub':
         _showPubHelp();
@@ -162,6 +166,34 @@ WHAT IT DOES:
 
 EXAMPLES:
   flutist generate
+''');
+  }
+
+  void _showCheckHelp() {
+    print('''
+COMMAND: check
+DESCRIPTION: Check architecture rules for module dependencies
+
+USAGE:
+  flutist check
+
+OVERVIEW:
+  Validates that module dependencies follow architecture rules.
+  Also runs automatically during `flutist generate` when strictMode is enabled.
+
+RULES:
+  • Implementation layers must not be referenced directly (use Interface instead)
+  • Circular dependencies are not allowed
+  • Testing layers should only be referenced by test modules
+  • Example layers should not be referenced as dependencies
+  • Clean module layers must follow direction: Presentation → Data → Domain
+
+OPTIONS (in ProjectOptions):
+  strictMode: true          Enable/disable enforcement (default: true)
+  compositionRoots: ['app'] Modules allowed to reference Implementation directly
+
+EXAMPLES:
+  flutist check
 ''');
   }
 

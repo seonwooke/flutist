@@ -23,6 +23,10 @@ void main(List<String> arguments) async {
         GenerateCommand().execute(commandArgs);
         break;
 
+      case 'check':
+        CheckCommand().execute(commandArgs);
+        break;
+
       case 'create':
         CreateCommand().execute(commandArgs);
         break;

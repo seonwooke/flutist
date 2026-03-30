@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'package:yaml/yaml.dart';
 
-import '../generator/flutist_generator.dart';
+import '../engine/engine.dart';
 import '../utils/utils.dart';
 import 'commands.dart';
 
