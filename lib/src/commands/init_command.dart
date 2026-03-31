@@ -127,13 +127,18 @@ class InitCommand implements BaseCommand {
         InitTemplates.appPubspecYaml(),
       );
 
-      // 4. Create root/lib/main.dart
+      // 4. Create root/lib/main.dart (only if it doesn't exist)
       final rootLibPath = path.join(rootPath, 'lib');
       await Directory(rootLibPath).create(recursive: true);
-      await FileHelper.writeFile(
-        path.join(rootLibPath, 'main.dart'),
-        InitTemplates.rootMainDart(),
-      );
+      final mainDartPath = path.join(rootLibPath, 'main.dart');
+      if (!File(mainDartPath).existsSync()) {
+        await FileHelper.writeFile(
+          mainDartPath,
+          InitTemplates.rootMainDart(),
+        );
+      } else {
+        Logger.info('lib/main.dart already exists, skipping...');
+      }
 
       // 5. Add "app" module to workspace and dependencies (if not already added)
       await _ensureAppInWorkspace(rootPath);
