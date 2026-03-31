@@ -90,6 +90,7 @@ class CreateCommand implements BaseCommand {
     if (moduleType == ModuleType.simple) {
       // Simple: Create directly in path (no layers)
       _createSimpleModule(currentDir, path, name);
+      createdModulePaths.add('$path/$name');
       createdModuleNames.add(name);
     } else {
       // Other types: Create parent folder + layers
@@ -115,7 +116,7 @@ class CreateCommand implements BaseCommand {
 
   /// Creates a simple module (no layers).
   void _createSimpleModule(String currentDir, String path, String name) {
-    final modulePath = '$currentDir/$path';
+    final modulePath = '$currentDir/$path/$name';
     final moduleDir = Directory(modulePath);
 
     // Create directory if not exists
@@ -135,7 +136,7 @@ class CreateCommand implements BaseCommand {
     // Create README.md
     _createReadme(modulePath, name, ModuleType.simple);
 
-    Logger.success('Created simple module: $path');
+    Logger.success('Created simple module: $path/$name');
   }
 
   /// Creates a layered module (feature, library, standard).
@@ -433,10 +434,10 @@ class CreateCommand implements BaseCommand {
     ModuleType moduleType,
   ) {
     if (moduleType == ModuleType.simple) {
-      // Check if pubspec.yaml exists in path
-      final pubspecPath = '$currentDir/$path/pubspec.yaml';
+      // Check if pubspec.yaml exists in path/name
+      final pubspecPath = '$currentDir/$path/$name/pubspec.yaml';
       if (File(pubspecPath).existsSync()) {
-        Logger.error('Module already exists at: $path');
+        Logger.error('Module already exists at: $path/$name');
         Logger.error('   Found: $pubspecPath');
         exit(1);
       }
