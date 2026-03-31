@@ -40,8 +40,24 @@ class ArchitectureChecker {
     return results;
   }
 
+  /// Extracts the feature prefix from a layer name.
+  /// e.g., 'login_implementation' → 'login', 'login_example' → 'login'
+  String _featurePrefix(String name, String suffix) {
+    return name.substring(0, name.length - suffix.length);
+  }
+
+  /// Checks whether two module names belong to the same feature.
+  bool _isSameFeature(String moduleName, String moduleSuffix,
+      String depName, String depSuffix) {
+    return _featurePrefix(moduleName, moduleSuffix) ==
+        _featurePrefix(depName, depSuffix);
+  }
+
   /// Checks that non-composition-root modules don't directly depend on
   /// implementation layers. They should depend on interface layers instead.
+  ///
+  /// Exceptions: _example and _tests modules may depend on their own
+  /// feature's _implementation (Tuist microfeature standard).
   List<CheckResult> _checkImplementationReferences(
     Module module,
     List<String> compositionRoots,
@@ -59,6 +75,22 @@ class ArchitectureChecker {
           message:
               '${module.name} → ${dep.name} (composition root, allowed)',
         ));
+      } else if (module.name.endsWith('_example') &&
+          _isSameFeature(module.name, '_example', dep.name, '_implementation')) {
+        results.add(CheckResult(
+          severity: CheckSeverity.ok,
+          rule: 'implementation_reference',
+          message:
+              '${module.name} → ${dep.name} (same feature example, allowed)',
+        ));
+      } else if (module.name.endsWith('_tests') &&
+          _isSameFeature(module.name, '_tests', dep.name, '_implementation')) {
+        results.add(CheckResult(
+          severity: CheckSeverity.ok,
+          rule: 'implementation_reference',
+          message:
+              '${module.name} → ${dep.name} (same feature tests, allowed)',
+        ));
       } else {
         final suggested = dep.name.replaceAll('_implementation', '_interface');
         results.add(CheckResult(
@@ -74,19 +106,30 @@ class ArchitectureChecker {
     return results;
   }
 
-  /// Checks that testing layers are only referenced by test modules.
+  /// Checks that testing layers are only referenced by test or example modules
+  /// within the same feature.
   List<CheckResult> _checkTestingReferences(Module module) {
     final results = <CheckResult>[];
     final isTestModule = module.name.endsWith('_tests');
+    final isExampleModule = module.name.endsWith('_example');
 
     for (final dep in module.modules) {
       if (!dep.name.endsWith('_testing')) continue;
 
-      if (isTestModule) {
+      if (isTestModule &&
+          _isSameFeature(module.name, '_tests', dep.name, '_testing')) {
         results.add(CheckResult(
           severity: CheckSeverity.ok,
           rule: 'testing_reference',
-          message: '${module.name} → ${dep.name} (test module, allowed)',
+          message: '${module.name} → ${dep.name} (same feature tests, allowed)',
+        ));
+      } else if (isExampleModule &&
+          _isSameFeature(module.name, '_example', dep.name, '_testing')) {
+        results.add(CheckResult(
+          severity: CheckSeverity.ok,
+          rule: 'testing_reference',
+          message:
+              '${module.name} → ${dep.name} (same feature example, allowed)',
         ));
       } else {
         results.add(CheckResult(
@@ -94,7 +137,7 @@ class ArchitectureChecker {
           rule: 'testing_reference',
           message:
               '${module.name} depends on ${dep.name}\n'
-              '  → Testing layers should only be referenced by test modules',
+              '  → Testing layers should only be referenced by same feature test/example modules',
         ));
       }
     }

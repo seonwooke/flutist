@@ -58,6 +58,55 @@ void main() {
       final errors = _errors(checker.check());
       expect(errors, isEmpty);
     });
+
+    test('allows same feature example to depend on implementation', () {
+      final checker = _checker(modules: [
+        Module(name: 'network_example', modules: [
+          Module(name: 'network_implementation'),
+        ]),
+      ]);
+
+      final implErrors =
+          _byRule(_errors(checker.check()), 'implementation_reference');
+      expect(implErrors, isEmpty);
+    });
+
+    test('allows same feature tests to depend on implementation', () {
+      final checker = _checker(modules: [
+        Module(name: 'network_tests', modules: [
+          Module(name: 'network_implementation'),
+        ]),
+      ]);
+
+      final implErrors =
+          _byRule(_errors(checker.check()), 'implementation_reference');
+      expect(implErrors, isEmpty);
+    });
+
+    test('errors when example depends on different feature implementation',
+        () {
+      final checker = _checker(modules: [
+        Module(name: 'login_example', modules: [
+          Module(name: 'network_implementation'),
+        ]),
+      ]);
+
+      final implErrors =
+          _byRule(_errors(checker.check()), 'implementation_reference');
+      expect(implErrors, hasLength(1));
+    });
+
+    test('errors when tests depends on different feature implementation', () {
+      final checker = _checker(modules: [
+        Module(name: 'login_tests', modules: [
+          Module(name: 'network_implementation'),
+        ]),
+      ]);
+
+      final implErrors =
+          _byRule(_errors(checker.check()), 'implementation_reference');
+      expect(implErrors, hasLength(1));
+    });
   });
 
   group('Testing reference check', () {
@@ -73,15 +122,52 @@ void main() {
       expect(errors.first.rule, 'testing_reference');
     });
 
-    test('allows test module to depend on testing', () {
+    test('allows test module to depend on same feature testing', () {
       final checker = _checker(modules: [
         Module(name: 'network_tests', modules: [
           Module(name: 'network_testing'),
         ]),
       ]);
 
-      final errors = _errors(checker.check());
-      expect(errors, isEmpty);
+      final testingErrors =
+          _byRule(_errors(checker.check()), 'testing_reference');
+      expect(testingErrors, isEmpty);
+    });
+
+    test('allows example module to depend on same feature testing', () {
+      final checker = _checker(modules: [
+        Module(name: 'network_example', modules: [
+          Module(name: 'network_testing'),
+        ]),
+      ]);
+
+      final testingErrors =
+          _byRule(_errors(checker.check()), 'testing_reference');
+      expect(testingErrors, isEmpty);
+    });
+
+    test('errors when tests depends on different feature testing', () {
+      final checker = _checker(modules: [
+        Module(name: 'login_tests', modules: [
+          Module(name: 'network_testing'),
+        ]),
+      ]);
+
+      final testingErrors =
+          _byRule(_errors(checker.check()), 'testing_reference');
+      expect(testingErrors, hasLength(1));
+    });
+
+    test('errors when example depends on different feature testing', () {
+      final checker = _checker(modules: [
+        Module(name: 'login_example', modules: [
+          Module(name: 'network_testing'),
+        ]),
+      ]);
+
+      final testingErrors =
+          _byRule(_errors(checker.check()), 'testing_reference');
+      expect(testingErrors, hasLength(1));
     });
   });
 
