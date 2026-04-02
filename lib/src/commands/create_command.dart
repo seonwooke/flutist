@@ -75,10 +75,47 @@ class CreateCommand implements BaseCommand {
     }
   }
 
+  /// Validates module name and path for common mistakes.
+  void _validateInput(String path, String name, ModuleType moduleType) {
+    // Warn if name already contains a layer suffix (e.g., --name auth_implementation)
+    if (moduleType != ModuleType.simple) {
+      final layerSuffixes = [
+        '_implementation', '_interface', '_domain', '_data',
+        '_presentation', '_example', '_tests', '_testing',
+      ];
+      for (final suffix in layerSuffixes) {
+        if (name.endsWith(suffix)) {
+          Logger.warn(
+            '⚠ Module name "$name" already contains layer suffix "$suffix".');
+          Logger.warn(
+            '  This will produce "$name$suffix" layers. '
+            'Did you mean --name ${name.substring(0, name.length - suffix.length)}?');
+          exit(1);
+        }
+      }
+    }
+
+    // Warn if path's last segment matches name (e.g., --path features/auth --name auth)
+    if (moduleType != ModuleType.simple) {
+      final pathSegments = path.split('/');
+      if (pathSegments.isNotEmpty && pathSegments.last == name) {
+        Logger.warn(
+          '⚠ Path "$path" already ends with module name "$name".');
+        Logger.warn(
+          '  This will create "$path/$name/" with extra nesting. '
+          'Did you mean --path ${pathSegments.sublist(0, pathSegments.length - 1).join('/')}?');
+        exit(1);
+      }
+    }
+  }
+
   /// Creates the module with specified structure.
   void _createModule(String path, String name, ModuleType moduleType) {
     // Get current working directory
     final currentDir = Directory.current.path;
+
+    // Validate input for common mistakes
+    _validateInput(path, name, moduleType);
 
     // Check if module already exists
     _checkModuleExists(currentDir, path, name, moduleType);
@@ -127,8 +164,8 @@ class CreateCommand implements BaseCommand {
     // Create pubspec.yaml
     _createPubspec(modulePath, name);
 
-    // Create lib/ folder
-    _createLibFolder(modulePath);
+    // Create lib/ folder with barrel file
+    _createLibFolder(modulePath, name);
 
     // Create analysis_options.yaml
     _createAnalysisOptions(modulePath, currentDir);
@@ -166,8 +203,8 @@ class CreateCommand implements BaseCommand {
       // Create pubspec.yaml
       _createPubspec(layerPath, layer);
 
-      // Create lib/ folder
-      _createLibFolder(layerPath);
+      // Create lib/ folder with barrel file
+      _createLibFolder(layerPath, layer);
 
       // Create analysis_options.yaml
       _createAnalysisOptions(layerPath, currentDir);
@@ -192,12 +229,19 @@ class CreateCommand implements BaseCommand {
     pubspecFile.writeAsStringSync(content);
   }
 
-  /// Creates lib/ folder.
-  void _createLibFolder(String modulePath) {
+  /// Creates lib/ folder with barrel file.
+  void _createLibFolder(String modulePath, String moduleName) {
     final libDir = Directory('$modulePath/lib');
     if (!libDir.existsSync()) {
       libDir.createSync();
       Logger.info('  ✓ Created lib/ folder');
+    }
+
+    // Create barrel file (lib/module_name.dart)
+    final barrelFile = File('$modulePath/lib/$moduleName.dart');
+    if (!barrelFile.existsSync()) {
+      barrelFile.writeAsStringSync('');
+      Logger.info('  ✓ Created lib/$moduleName.dart');
     }
   }
 
