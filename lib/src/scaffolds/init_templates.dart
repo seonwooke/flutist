@@ -22,7 +22,10 @@ dependencies:
 workspace:''';
 
   /// Generates project.dart content.
-  static String projectDart(String projectName) => '''
+  static String projectDart(String projectName,
+          {bool isNewProject = true}) =>
+      isNewProject
+          ? '''
 // ignore_for_file: unused_import
 
 import 'package:flutist/flutist.dart';
@@ -50,6 +53,22 @@ final project = Project(
         // package.modules.login,
       ],
     ),
+  ],
+);
+'''
+          : '''
+// ignore_for_file: unused_import
+
+import 'package:flutist/flutist.dart';
+
+import 'flutist/flutist_gen.dart';
+import 'package.dart';
+
+final project = Project(
+  name: '$projectName',
+  options: const ProjectOptions(),
+  modules: [
+    // Add your modules here using flutist create
   ],
 );
 ''';

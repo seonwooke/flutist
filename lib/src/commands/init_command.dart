@@ -80,7 +80,7 @@ class InitCommand implements BaseCommand {
       // 2. Create root configuration files
       await FileHelper.writeFile(
         path.join(rootPath, 'project.dart'),
-        InitTemplates.projectDart(projectName),
+        InitTemplates.projectDart(projectName, isNewProject: isNewProject),
       );
       await FileHelper.writeFile(
         path.join(rootPath, 'package.dart'),
