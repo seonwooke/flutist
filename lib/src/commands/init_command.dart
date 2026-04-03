@@ -364,9 +364,12 @@ class InitCommand implements BaseCommand {
       }
     }
 
-    // Ensure workspace section exists
+    // Ensure workspace section exists (block style: "- item" not "[item]")
     if (!yamlDoc.containsKey('workspace')) {
-      editor.update(['workspace'], []);
+      editor.update(
+        ['workspace'],
+        wrapAsYamlNode([], collectionStyle: CollectionStyle.BLOCK),
+      );
       Logger.info('  ✓ Added workspace section');
     }
 
@@ -382,7 +385,10 @@ class InitCommand implements BaseCommand {
         }
       } else {
         // workspace exists but is not a list, replace it
-        editor.update(['workspace'], ['app']);
+        editor.update(
+          ['workspace'],
+          wrapAsYamlNode(['app'], collectionStyle: CollectionStyle.BLOCK),
+        );
         Logger.info('  ✓ Updated workspace section with app');
       }
     }

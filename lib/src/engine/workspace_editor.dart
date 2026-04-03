@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:path/path.dart' as path;
+import 'package:yaml/yaml.dart';
 import 'package:yaml_edit/yaml_edit.dart';
 
 import '../core/core.dart';
@@ -51,7 +52,11 @@ class WorkspaceEditor {
     try {
       editor.appendToList(['workspace'], relativeModulePath);
     } catch (e) {
-      editor.update(['workspace'], [relativeModulePath]);
+      editor.update(
+        ['workspace'],
+        wrapAsYamlNode([relativeModulePath],
+            collectionStyle: CollectionStyle.BLOCK),
+      );
     }
   }
 }
