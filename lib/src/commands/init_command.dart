@@ -84,7 +84,7 @@ class InitCommand implements BaseCommand {
       );
       await FileHelper.writeFile(
         path.join(rootPath, 'package.dart'),
-        InitTemplates.packageDart(projectName),
+        InitTemplates.packageDart(projectName, isNewProject: isNewProject),
       );
 
       // Handle pubspec.yaml: merge if exists, create if not

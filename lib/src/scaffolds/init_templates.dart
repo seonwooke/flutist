@@ -74,7 +74,10 @@ final project = Project(
 ''';
 
   /// Generates package.dart content.
-  static String packageDart(String projectName) => '''
+  static String packageDart(String projectName,
+          {bool isNewProject = true}) =>
+      isNewProject
+          ? '''
 import 'package:flutist/flutist.dart';
 
 final package = Package(
@@ -87,8 +90,20 @@ final package = Package(
   modules: [
     // TODO: Add modules here
   ],
-);
-''';
+);'''
+          : '''
+import 'package:flutist/flutist.dart';
+
+final package = Package(
+  name: '$projectName',
+  dependencies: [
+    // Add your dependencies here
+    // Dependency(name: 'package_name', version: '^1.0.0'),
+  ],
+  modules: [
+    // Add your modules here using flutist create
+  ],
+);''';
 
   /// Generates root/lib/main.dart content.
   static String rootMainDart() => '''
