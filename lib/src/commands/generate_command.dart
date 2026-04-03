@@ -372,16 +372,19 @@ class GenerateCommand implements BaseCommand {
     String pubspecPath,
     Map<String, String> modulePathMap,
   ) {
-    // Get current dependencies to preserve flutter sdk
+    // Get current dependencies to preserve SDK dependencies
     final currentDeps = <String, dynamic>{};
     try {
       final depsNode = editor.parseAt(['dependencies']);
       // Convert YamlNode value to Map
       if (depsNode.value is Map) {
         final deps = depsNode.value as Map;
-        // Preserve flutter sdk dependency
-        if (deps.containsKey('flutter')) {
-          currentDeps['flutter'] = deps['flutter'];
+        // Preserve all SDK dependencies (flutter, flutter_localizations, etc.)
+        for (final entry in deps.entries) {
+          if (entry.value is Map &&
+              (entry.value as Map).containsKey('sdk')) {
+            currentDeps[entry.key as String] = entry.value;
+          }
         }
       }
     } catch (e) {
