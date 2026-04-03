@@ -110,6 +110,90 @@ my_project/
     └── flutist_gen.dart      # Generated code
 ```
 
+## 🧩 Module Types
+
+Flutist supports 4 module types, each generating a different directory structure:
+
+### Clean (`--options clean`)
+
+Clean Architecture with 3 layers. Best for feature modules with clear separation of concerns.
+
+```
+flutist create --path features --name login --options clean
+
+features/login/
+├── login_domain/          # Business logic, entities, use cases
+│   ├── lib/
+│   │   └── login_domain.dart
+│   └── pubspec.yaml
+├── login_data/            # Repositories, data sources, DTOs
+│   ├── lib/
+│   │   └── login_data.dart
+│   └── pubspec.yaml
+└── login_presentation/    # UI, BLoC/Cubit, pages
+    ├── lib/
+    │   └── login_presentation.dart
+    └── pubspec.yaml
+```
+
+### Micro (`--options micro`)
+
+Microfeature Architecture with 5 layers. Best for reusable libraries shared across features.
+
+```
+flutist create --path packages --name network --options micro
+
+packages/network/
+├── network_example/           # Demo app for the module
+│   ├── lib/
+│   │   ├── network_example.dart
+│   │   └── main.dart
+│   └── pubspec.yaml
+├── network_interface/         # Public API (abstract classes, models)
+│   ├── lib/
+│   │   └── network_interface.dart
+│   └── pubspec.yaml
+├── network_implementation/    # Concrete implementations
+│   ├── lib/
+│   │   └── network_implementation.dart
+│   └── pubspec.yaml
+├── network_tests/             # Integration/unit tests
+│   ├── lib/
+│   │   └── network_tests.dart
+│   └── pubspec.yaml
+└── network_testing/           # Test helpers, mocks, fakes
+    ├── lib/
+    │   └── network_testing.dart
+    └── pubspec.yaml
+```
+
+### Lite (`--options lite`)
+
+Microfeature lite with 4 layers (no example). Best for internal APIs that don't need a demo app.
+
+```
+flutist create --path packages --name auth --options lite
+
+packages/auth/
+├── auth_interface/
+├── auth_implementation/
+├── auth_tests/
+└── auth_testing/
+```
+
+### Simple (`--options simple`)
+
+Single module with no layers. Best for utilities, shared models, or the app module itself.
+
+```
+flutist create --path packages --name core --options simple
+
+packages/core/
+├── lib/
+│   └── core.dart
+└── pubspec.yaml
+```
+
 ## ✨ Features
 
 - **🏗️ Modular Architecture**: Organize your codebase into clear, reusable modules
