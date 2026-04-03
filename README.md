@@ -83,6 +83,8 @@ flutist scaffold feature --name login
 | **`graph`** | Visualize module dependencies | `flutist graph [--format <format>]` |
 | **`help`** | Show help information | `flutist help [command]` |
 
+> **Note:** `flutist generate` manages dependencies declared in `package.dart` and `project.dart`. SDK dependencies (`flutter_localizations`, etc.) and Flutter-specific settings (`flutter: generate: true`) should be added directly to each module's `pubspec.yaml` — they are preserved during generation.
+
 For detailed documentation, visit the [documentation site](https://deepwiki.com/seonwooke/flutist).
 
 ## 📁 Project Structure
