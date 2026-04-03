@@ -103,10 +103,15 @@ class InitCommand implements BaseCommand {
         );
       }
 
-      await FileHelper.writeFile(
-        path.join(rootPath, 'analysis_options.yaml'),
-        InitTemplates.analysisOptionsYaml(),
-      );
+      final analysisOptionsPath = path.join(rootPath, 'analysis_options.yaml');
+      if (!File(analysisOptionsPath).existsSync()) {
+        await FileHelper.writeFile(
+          analysisOptionsPath,
+          InitTemplates.analysisOptionsYaml(),
+        );
+      } else {
+        Logger.info('analysis_options.yaml already exists, skipping...');
+      }
 
       // Read version from pubspec.yaml for README
       final pubspecContent = await File(pubspecPath).readAsString();
