@@ -24,12 +24,17 @@ dart pub global activate flutist
 
 ## 🚀 Quick Start
 
-### 1. Initialize a New Project
+### 1. Initialize a Project
 
 ```bash
 cd my_flutter_project
 flutist init
 ```
+
+Flutist will ask whether this is a **new project** or an **existing project migration**:
+
+- **New project**: Creates `app` module, adds it to workspace, scaffolds `lib/main.dart`
+- **Existing project**: Only creates configuration files (`project.dart`, `package.dart`) and workspace setup — preserves your existing code, `analysis_options.yaml`, and `lib/main.dart`
 
 ### 2. Create a Module
 
@@ -68,7 +73,7 @@ flutist scaffold feature --name login
 
 | Command | Description | Usage |
 |---------|-------------|-------|
-| **`init`** | Initialize a new Flutist project | `flutist init` |
+| **`init`** | Initialize a new or existing project | `flutist init` |
 | **`create`** | Create a new module | `flutist create --path <path> --name <name> --options <type>` |
 | **`generate`** | Sync dependencies and regenerate files | `flutist generate` |
 | **`check`** | Check architecture rules | `flutist check` |
@@ -77,6 +82,8 @@ flutist scaffold feature --name login
 | **`pub`** | Manage dependencies | `flutist pub add <package>` |
 | **`graph`** | Visualize module dependencies | `flutist graph [--format <format>]` |
 | **`help`** | Show help information | `flutist help [command]` |
+
+> **Note:** `flutist generate` manages dependencies declared in `package.dart` and `project.dart`. SDK dependencies (`flutter_localizations`, etc.) and Flutter-specific settings (`flutter: generate: true`) should be added directly to each module's `pubspec.yaml` — they are preserved during generation.
 
 For detailed documentation, visit the [documentation site](https://deepwiki.com/seonwooke/flutist).
 
@@ -103,6 +110,90 @@ my_project/
 └── flutist/
     ├── templates/            # Scaffold templates
     └── flutist_gen.dart      # Generated code
+```
+
+## 🧩 Module Types
+
+Flutist supports 4 module types, each generating a different directory structure:
+
+### Clean (`--options clean`)
+
+Clean Architecture with 3 layers. Best for feature modules with clear separation of concerns.
+
+```
+flutist create --path features --name login --options clean
+
+features/login/
+├── login_domain/          # Business logic, entities, use cases
+│   ├── lib/
+│   │   └── login_domain.dart
+│   └── pubspec.yaml
+├── login_data/            # Repositories, data sources, DTOs
+│   ├── lib/
+│   │   └── login_data.dart
+│   └── pubspec.yaml
+└── login_presentation/    # UI, BLoC/Cubit, pages
+    ├── lib/
+    │   └── login_presentation.dart
+    └── pubspec.yaml
+```
+
+### Micro (`--options micro`)
+
+Microfeature Architecture with 5 layers. Best for reusable libraries shared across features.
+
+```
+flutist create --path packages --name network --options micro
+
+packages/network/
+├── network_example/           # Demo app for the module
+│   ├── lib/
+│   │   ├── network_example.dart
+│   │   └── main.dart
+│   └── pubspec.yaml
+├── network_interface/         # Public API (abstract classes, models)
+│   ├── lib/
+│   │   └── network_interface.dart
+│   └── pubspec.yaml
+├── network_implementation/    # Concrete implementations
+│   ├── lib/
+│   │   └── network_implementation.dart
+│   └── pubspec.yaml
+├── network_tests/             # Integration/unit tests
+│   ├── lib/
+│   │   └── network_tests.dart
+│   └── pubspec.yaml
+└── network_testing/           # Test helpers, mocks, fakes
+    ├── lib/
+    │   └── network_testing.dart
+    └── pubspec.yaml
+```
+
+### Lite (`--options lite`)
+
+Microfeature lite with 4 layers (no example). Best for internal APIs that don't need a demo app.
+
+```
+flutist create --path packages --name auth --options lite
+
+packages/auth/
+├── auth_interface/
+├── auth_implementation/
+├── auth_tests/
+└── auth_testing/
+```
+
+### Simple (`--options simple`)
+
+Single module with no layers. Best for utilities, shared models, or the app module itself.
+
+```
+flutist create --path packages --name core --options simple
+
+packages/core/
+├── lib/
+│   └── core.dart
+└── pubspec.yaml
 ```
 
 ## ✨ Features

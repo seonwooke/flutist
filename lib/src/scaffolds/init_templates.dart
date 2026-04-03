@@ -22,7 +22,10 @@ dependencies:
 workspace:''';
 
   /// Generates project.dart content.
-  static String projectDart(String projectName) => '''
+  static String projectDart(String projectName,
+          {bool isNewProject = true}) =>
+      isNewProject
+          ? '''
 // ignore_for_file: unused_import
 
 import 'package:flutist/flutist.dart';
@@ -52,10 +55,47 @@ final project = Project(
     ),
   ],
 );
+'''
+          : '''
+// ignore_for_file: unused_import
+
+import 'package:flutist/flutist.dart';
+
+import 'flutist/flutist_gen.dart';
+import 'package.dart';
+
+// How to use:
+// 1. Create a module: flutist create --path <path> --name <name> --options <type>
+// 2. Add the module below with its dependencies
+// 3. Run: flutist generate
+
+final project = Project(
+  name: '$projectName',
+  options: const ProjectOptions(),
+  modules: [
+    // Example)
+    // Module(
+    //   name: 'login_domain',
+    //   type: ModuleType.clean,
+    //   dependencies: [
+    //     package.dependencies.intl,
+    //   ],
+    //   devDependencies: [
+    //     package.dependencies.test,
+    //   ],
+    //   modules: [
+    //     package.modules.core,
+    //   ],
+    // ),
+  ],
+);
 ''';
 
   /// Generates package.dart content.
-  static String packageDart(String projectName) => '''
+  static String packageDart(String projectName,
+          {bool isNewProject = true}) =>
+      isNewProject
+          ? '''
 import 'package:flutist/flutist.dart';
 
 final package = Package(
@@ -68,8 +108,28 @@ final package = Package(
   modules: [
     // TODO: Add modules here
   ],
-);
-''';
+);'''
+          : '''
+import 'package:flutist/flutist.dart';
+
+// Central dependency registry for the project.
+// How to use:
+// 1. Add dependencies: flutist pub add <package_name>
+//    (or manually add Dependency entries below)
+// 2. Reference them in project.dart: package.dependencies.<name>
+// 3. Run: flutist generate
+
+final package = Package(
+  name: '$projectName',
+  dependencies: [
+    // Example)
+    // Dependency(name: 'intl', version: '^20.2.0'),
+    // Dependency(name: 'test', version: '^1.28.0'),
+  ],
+  modules: [
+    // Modules are auto-registered when you run flutist create
+  ],
+);''';
 
   /// Generates root/lib/main.dart content.
   static String rootMainDart() => '''

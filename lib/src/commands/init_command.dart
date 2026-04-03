@@ -61,7 +61,18 @@ class InitCommand implements BaseCommand {
         }
       }
 
-      Logger.info('Initializing Flutist project...');
+      // Ask project type
+      Logger.info('Is this a new project or an existing project migration?');
+      Logger.info('  1) New project');
+      Logger.info('  2) Existing project migration');
+      final projectTypeAnswer = stdin.readLineSync()?.trim();
+      final isNewProject = projectTypeAnswer != '2';
+
+      if (isNewProject) {
+        Logger.info('Setting up as new project...');
+      } else {
+        Logger.info('Setting up as existing project migration...');
+      }
 
       // Get flutist package version from current package's pubspec.yaml
       final flutistVersion = await _getFlutistPackageVersion();
@@ -69,17 +80,22 @@ class InitCommand implements BaseCommand {
       // 2. Create root configuration files
       await FileHelper.writeFile(
         path.join(rootPath, 'project.dart'),
-        InitTemplates.projectDart(projectName),
+        InitTemplates.projectDart(projectName, isNewProject: isNewProject),
       );
       await FileHelper.writeFile(
         path.join(rootPath, 'package.dart'),
-        InitTemplates.packageDart(projectName),
+        InitTemplates.packageDart(projectName, isNewProject: isNewProject),
       );
 
       // Handle pubspec.yaml: merge if exists, create if not
       final pubspecPath = path.join(rootPath, 'pubspec.yaml');
       if (pubspecExists) {
-        await _mergePubspecYaml(pubspecPath, projectName, flutistVersion);
+        await _mergePubspecYaml(
+          pubspecPath,
+          projectName,
+          flutistVersion,
+          isNewProject: isNewProject,
+        );
       } else {
         await FileHelper.writeFile(
           pubspecPath,
@@ -87,10 +103,15 @@ class InitCommand implements BaseCommand {
         );
       }
 
-      await FileHelper.writeFile(
-        path.join(rootPath, 'analysis_options.yaml'),
-        InitTemplates.analysisOptionsYaml(),
-      );
+      final analysisOptionsPath = path.join(rootPath, 'analysis_options.yaml');
+      if (!File(analysisOptionsPath).existsSync()) {
+        await FileHelper.writeFile(
+          analysisOptionsPath,
+          InitTemplates.analysisOptionsYaml(),
+        );
+      } else {
+        Logger.info('analysis_options.yaml already exists, skipping...');
+      }
 
       // Read version from pubspec.yaml for README
       final pubspecContent = await File(pubspecPath).readAsString();
@@ -109,35 +130,42 @@ class InitCommand implements BaseCommand {
         Logger.info('README.md already exists, skipping...');
       }
 
-      // 3. Scaffolding default "app" module
-      final appBasePath = path.join(rootPath, 'app');
-      final appLibPath = path.join(appBasePath, 'lib');
+      if (isNewProject) {
+        // 3. Scaffolding default "app" module (new project only)
+        final appBasePath = path.join(rootPath, 'app');
+        final appLibPath = path.join(appBasePath, 'lib');
 
-      await Directory(appLibPath).create(recursive: true);
+        await Directory(appLibPath).create(recursive: true);
 
-      // Create app.dart (main.dart is now in root/lib/)
-      await FileHelper.writeFile(
-        path.join(appLibPath, 'app.dart'),
-        InitTemplates.appAppDart(),
-      );
+        // Create app.dart (main.dart is now in root/lib/)
+        await FileHelper.writeFile(
+          path.join(appLibPath, 'app.dart'),
+          InitTemplates.appAppDart(),
+        );
 
-      // Create app/pubspec.yaml
-      await FileHelper.writeFile(
-        path.join(appBasePath, 'pubspec.yaml'),
-        InitTemplates.appPubspecYaml(),
-      );
+        // Create app/pubspec.yaml
+        await FileHelper.writeFile(
+          path.join(appBasePath, 'pubspec.yaml'),
+          InitTemplates.appPubspecYaml(),
+        );
 
-      // 4. Create root/lib/main.dart
-      final rootLibPath = path.join(rootPath, 'lib');
-      await Directory(rootLibPath).create(recursive: true);
-      await FileHelper.writeFile(
-        path.join(rootLibPath, 'main.dart'),
-        InitTemplates.rootMainDart(),
-      );
+        // 4. Create root/lib/main.dart (only if it doesn't exist)
+        final rootLibPath = path.join(rootPath, 'lib');
+        await Directory(rootLibPath).create(recursive: true);
+        final mainDartPath = path.join(rootLibPath, 'main.dart');
+        if (!File(mainDartPath).existsSync()) {
+          await FileHelper.writeFile(
+            mainDartPath,
+            InitTemplates.rootMainDart(),
+          );
+        } else {
+          Logger.info('lib/main.dart already exists, skipping...');
+        }
 
-      // 5. Add "app" module to workspace and dependencies (if not already added)
-      await _ensureAppInWorkspace(rootPath);
-      await _ensureAppInDependencies(pubspecPath);
+        // 5. Add "app" module to workspace and dependencies
+        await _ensureAppInWorkspace(rootPath);
+        await _ensureAppInDependencies(pubspecPath);
+      }
 
       // 6. Create example templates
       await _createExampleTemplates(rootPath);
@@ -308,8 +336,9 @@ class InitCommand implements BaseCommand {
   Future<void> _mergePubspecYaml(
     String pubspecPath,
     String projectName,
-    String flutistVersion,
-  ) async {
+    String flutistVersion, {
+    required bool isNewProject,
+  }) async {
     Logger.info('Merging Flutist configuration into existing pubspec.yaml...');
 
     final content = await File(pubspecPath).readAsString();
@@ -325,36 +354,53 @@ class InitCommand implements BaseCommand {
       Logger.info('  ✓ flutist dependency already exists');
     }
 
-    // Add app dependency if not exists
-    if (dependencies == null || !dependencies.containsKey('app')) {
-      editor.update(['dependencies', 'app'], {'path': 'app'});
-      Logger.info('  ✓ Added app dependency: path: app');
-    } else {
-      Logger.info('  ✓ app dependency already exists');
+    if (isNewProject) {
+      // Add app dependency if not exists (new project only)
+      if (dependencies == null || !dependencies.containsKey('app')) {
+        editor.update(['dependencies', 'app'], {'path': 'app'});
+        Logger.info('  ✓ Added app dependency: path: app');
+      } else {
+        Logger.info('  ✓ app dependency already exists');
+      }
     }
 
-    // Ensure workspace section exists
+    // Ensure workspace section exists (block style: "- item" not "[item]")
     if (!yamlDoc.containsKey('workspace')) {
-      editor.update(['workspace'], []);
+      editor.update(
+        ['workspace'],
+        wrapAsYamlNode([], collectionStyle: CollectionStyle.BLOCK),
+      );
       Logger.info('  ✓ Added workspace section');
     }
 
-    // Add app to workspace if not exists
-    final workspace = yamlDoc['workspace'];
-    if (workspace is List) {
-      if (!workspace.contains('app')) {
-        editor.appendToList(['workspace'], 'app');
-        Logger.info('  ✓ Added app to workspace');
+    if (isNewProject) {
+      // Add app to workspace if not exists (new project only)
+      final workspace = yamlDoc['workspace'];
+      if (workspace is List) {
+        if (!workspace.contains('app')) {
+          editor.appendToList(['workspace'], 'app');
+          Logger.info('  ✓ Added app to workspace');
+        } else {
+          Logger.info('  ✓ app already in workspace');
+        }
       } else {
-        Logger.info('  ✓ app already in workspace');
+        // workspace exists but is not a list, replace it
+        editor.update(
+          ['workspace'],
+          wrapAsYamlNode(['app'], collectionStyle: CollectionStyle.BLOCK),
+        );
+        Logger.info('  ✓ Updated workspace section with app');
       }
-    } else {
-      // workspace exists but is not a list, replace it
-      editor.update(['workspace'], ['app']);
-      Logger.info('  ✓ Updated workspace section with app');
     }
 
-    await File(pubspecPath).writeAsString(editor.toString());
+    // Ensure blank line before workspace section
+    var result = editor.toString();
+    result = result.replaceAllMapped(
+      RegExp(r'([^\n])\nworkspace:'),
+      (match) => '${match.group(1)}\n\nworkspace:',
+    );
+
+    await File(pubspecPath).writeAsString(result);
     Logger.success('Merged pubspec.yaml');
   }
 

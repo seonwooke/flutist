@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:path/path.dart' as path;
+import 'package:yaml/yaml.dart';
 import 'package:yaml_edit/yaml_edit.dart';
 
 import '../core/core.dart';
@@ -111,27 +112,77 @@ class GenerateCommand implements BaseCommand {
 
 
 
+  /// Builds a map of module name → absolute directory path by scanning
+  /// workspace entries in root pubspec.yaml and reading each module's
+  /// pubspec.yaml name field.
+  Map<String, String> _buildModulePathMap(String currentDir) {
+    final map = <String, String>{};
+    final rootPubspecFile = File('$currentDir/pubspec.yaml');
+
+    if (!rootPubspecFile.existsSync()) return map;
+
+    try {
+      final content = rootPubspecFile.readAsStringSync();
+      final yamlDoc = loadYaml(content) as Map;
+      final workspace = yamlDoc['workspace'];
+
+      if (workspace is! List) return map;
+
+      for (final entry in workspace) {
+        final entryPath = '$currentDir/$entry';
+        final pubspecFile = File('$entryPath/pubspec.yaml');
+
+        if (pubspecFile.existsSync()) {
+          try {
+            final pubspecContent = pubspecFile.readAsStringSync();
+            final pubspecYaml = loadYaml(pubspecContent) as Map;
+            final name = pubspecYaml['name'] as String?;
+            if (name != null) {
+              map[name] = entryPath;
+            }
+          } catch (_) {
+            // Skip unparseable pubspec.yaml
+          }
+        }
+      }
+    } catch (e) {
+      Logger.warn('Failed to build module path map: $e');
+    }
+
+    return map;
+  }
+
   /// Updates pubspec.yaml files for all modules.
   void _updatePubspecFiles(
       String currentDir, Project project, Package package) {
     Logger.info('Updating pubspec.yaml files...');
 
+    // Build module path map from workspace once
+    final modulePathMap = _buildModulePathMap(currentDir);
+
     for (final module in project.modules) {
-      _updateModulePubspec(currentDir, module, package);
+      _updateModulePubspec(currentDir, module, package, modulePathMap);
     }
 
     Logger.success('Updated all pubspec.yaml files');
   }
 
   /// Updates pubspec.yaml for a single module.
-  void _updateModulePubspec(String currentDir, Module module, Package package) {
+  void _updateModulePubspec(
+    String currentDir,
+    Module module,
+    Package package,
+    Map<String, String> modulePathMap,
+  ) {
     // Find the module's pubspec.yaml location
-    final pubspecPath = _findModulePubspecPath(currentDir, module);
+    final moduleDirPath = modulePathMap[module.name];
 
-    if (pubspecPath == null) {
-      Logger.warn('Could not find pubspec.yaml for module: ${module.name}');
+    if (moduleDirPath == null) {
+      Logger.warn('Could not find module: ${module.name}');
       return;
     }
+
+    final pubspecPath = '$moduleDirPath/pubspec.yaml';
 
     Logger.info('Updating ${module.name}/pubspec.yaml...');
 
@@ -147,7 +198,8 @@ class GenerateCommand implements BaseCommand {
       final editor = YamlEditor(content);
 
       // Clear and rebuild dependencies section
-      _rebuildDependenciesSection(editor, module, package, pubspecPath);
+      _rebuildDependenciesSection(
+          editor, module, package, pubspecPath, modulePathMap);
 
       // Clear and rebuild dev_dependencies section
       _rebuildDevDependenciesSection(editor, module, package);
@@ -159,40 +211,6 @@ class GenerateCommand implements BaseCommand {
     } catch (e) {
       Logger.error('Failed to update ${module.name}: $e');
     }
-  }
-
-  /// Finds the pubspec.yaml path for a module.
-  String? _findModulePubspecPath(String currentDir, Module module) {
-    // Try different possible locations based on module name pattern
-
-    // Check if it's a simple module (e.g., 'app')
-    final simplePath = '$currentDir/${module.name}/pubspec.yaml';
-    if (File(simplePath).existsSync()) {
-      return simplePath;
-    }
-
-    // Check if it's a layered module (e.g., 'login_example' in 'features/login/login_example')
-    // Extract parent name (e.g., 'login' from 'login_example')
-    final parts = module.name.split('_');
-    if (parts.length >= 2) {
-      // Try common base paths
-      final basePaths = ['features', 'core', 'data', 'domain'];
-
-      for (final basePath in basePaths) {
-        // Try to find parent folder
-        for (int i = parts.length - 1; i >= 1; i--) {
-          final parentName = parts.sublist(0, i).join('_');
-          final layeredPath =
-              '$currentDir/$basePath/$parentName/${module.name}/pubspec.yaml';
-
-          if (File(layeredPath).existsSync()) {
-            return layeredPath;
-          }
-        }
-      }
-    }
-
-    return null;
   }
 
   /// Gets version for a dependency from package.dart.
@@ -352,17 +370,21 @@ class GenerateCommand implements BaseCommand {
     Module module,
     Package package,
     String pubspecPath,
+    Map<String, String> modulePathMap,
   ) {
-    // Get current dependencies to preserve flutter sdk
+    // Get current dependencies to preserve SDK dependencies
     final currentDeps = <String, dynamic>{};
     try {
       final depsNode = editor.parseAt(['dependencies']);
       // Convert YamlNode value to Map
       if (depsNode.value is Map) {
         final deps = depsNode.value as Map;
-        // Preserve flutter sdk dependency
-        if (deps.containsKey('flutter')) {
-          currentDeps['flutter'] = deps['flutter'];
+        // Preserve all SDK dependencies (flutter, flutter_localizations, etc.)
+        for (final entry in deps.entries) {
+          if (entry.value is Map &&
+              (entry.value as Map).containsKey('sdk')) {
+            currentDeps[entry.key as String] = entry.value;
+          }
         }
       }
     } catch (e) {
@@ -383,6 +405,8 @@ class GenerateCommand implements BaseCommand {
     }
 
     // Add module dependencies (with calculated relative path)
+    final currentModuleDir = path.dirname(pubspecPath);
+
     for (final modDep in module.modules) {
       // Skip self-reference
       if (modDep.name == module.name) {
@@ -390,15 +414,10 @@ class GenerateCommand implements BaseCommand {
         continue;
       }
 
-      final targetPubspecPath = _findModulePubspecPath(
-        path.dirname(path.dirname(pubspecPath)), // Go to root
-        modDep,
-      );
+      final targetModuleDir = modulePathMap[modDep.name];
 
-      if (targetPubspecPath != null) {
+      if (targetModuleDir != null) {
         // Calculate relative path
-        final currentModuleDir = path.dirname(pubspecPath);
-        final targetModuleDir = path.dirname(targetPubspecPath);
         final relativePath =
             path.relative(targetModuleDir, from: currentModuleDir);
 
