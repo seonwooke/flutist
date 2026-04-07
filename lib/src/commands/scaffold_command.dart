@@ -222,6 +222,10 @@ EXAMPLES:
         help: 'Name for the generated files',
         mandatory: true,
       )
+      ..addOption(
+        'path',
+        help: 'Output path (overrides template.yaml default)',
+      )
       ..addFlag(
         'help',
         abbr: 'h',
