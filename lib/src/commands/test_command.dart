@@ -182,17 +182,15 @@ EXAMPLES:
         passedModules++;
       } else {
         Logger.error('[✗] ${result.target.name}');
-        // Show failure output
-        final lines = result.output.split('\n');
-        for (final line in lines) {
-          if (line.contains('FAILED') ||
-              line.contains('Error') ||
-              line.contains('failed')) {
+        if (result.output.isNotEmpty) {
+          for (final line in result.output.trimRight().split('\n')) {
             Logger.error('  $line');
           }
         }
         if (result.error.isNotEmpty) {
-          Logger.error('  ${result.error.trim()}');
+          for (final line in result.error.trimRight().split('\n')) {
+            Logger.error('  $line');
+          }
         }
         failedModules++;
       }
