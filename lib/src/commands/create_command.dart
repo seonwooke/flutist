@@ -145,11 +145,10 @@ class CreateCommand implements BaseCommand {
     _updateRootPubspec(currentDir, createdModulePaths);
 
     // Update project.dart modules
-    // Layers are leaf packages — always registered as ModuleType.simple
-    _updateProjectDart(currentDir, createdModuleNames, ModuleType.simple);
+    _updateProjectDart(currentDir, createdModuleNames, moduleType);
 
     // Update package.dart modules
-    _updatePackageDart(currentDir, createdModuleNames, ModuleType.simple);
+    _updatePackageDart(currentDir, createdModuleNames, moduleType);
   }
 
   /// Creates a simple module (no layers).
