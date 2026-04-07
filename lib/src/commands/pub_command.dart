@@ -40,11 +40,10 @@ class PubCommand implements BaseCommand {
   Future<void> _handleAdd(List<String> arguments) async {
     if (arguments.isEmpty) {
       Logger.error('No package name provided.');
-      Logger.info('Usage: flutist pub add <package_name>');
+      Logger.info('Usage: flutist pub add <package_name> [<package_name2> ...]');
       exit(1);
     }
 
-    final packageName = arguments[0];
     final rootPath = Directory.current.path;
     final packageDartPath = path.join(rootPath, 'package.dart');
 
@@ -56,32 +55,32 @@ class PubCommand implements BaseCommand {
     }
 
     try {
-      Logger.info('Adding dependency: $packageName');
+      for (final packageName in arguments) {
+        Logger.info('Adding dependency: $packageName');
 
-      // Get latest version using dart pub add
-      final version = await _getLatestVersion(packageName, rootPath);
+        // Get latest version using dart pub add
+        final version = await _getLatestVersion(packageName, rootPath);
 
-      if (version == null) {
-        Logger.error('Failed to get version for package: $packageName');
-        exit(1);
+        if (version == null) {
+          Logger.error('Failed to get version for package: $packageName');
+          exit(1);
+        }
+
+        Logger.info('Found version: $version');
+
+        // Read and parse package.dart
+        final packageContent = await File(packageDartPath).readAsString();
+        final updatedContent =
+            _addDependencyToPackage(packageContent, packageName, version);
+
+        // Write updated content
+        await File(packageDartPath).writeAsString(updatedContent);
+
+        Logger.success('Added $packageName ($version) to package.dart');
       }
 
-      Logger.info('Found version: $version');
-
-      // Read and parse package.dart
-      final packageContent = await File(packageDartPath).readAsString();
-      final updatedContent =
-          _addDependencyToPackage(packageContent, packageName, version);
-
-      // Write updated content
-      await File(packageDartPath).writeAsString(updatedContent);
-
-      Logger.success('Added $packageName ($version) to package.dart');
-
-      // Generate flutist_gen.dart
+      // Generate flutist_gen.dart once after all packages are added
       GenFileGenerator.generate(rootPath);
-
-      Logger.success('Generated flutist_gen.dart');
     } catch (e) {
       Logger.error('Failed to add dependency: $e');
       exit(1);
@@ -219,8 +218,9 @@ environment:
       }
     }
 
-    return packageContent.substring(0, dependenciesStart) +
-        newDependency +
-        packageContent.substring(dependenciesEnd);
+    return '${packageContent.substring(0, dependenciesStart)}'
+        '$newDependency'
+        '\n  '
+        '${packageContent.substring(dependenciesEnd)}';
   }
 }

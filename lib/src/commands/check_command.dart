@@ -67,6 +67,8 @@ class CheckCommand implements BaseCommand {
       Logger.error('$errorCount error(s), $okCount passed.');
       if (projectData.options.strictMode) {
         exit(1);
+      } else {
+        Logger.warn('strictMode is false — violations are reported but not enforced.');
       }
     } else {
       Logger.success('All checks passed. ($okCount passed)');

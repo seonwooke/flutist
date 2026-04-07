@@ -5,7 +5,7 @@
 **A Flutter project management framework inspired by Tuist**
 
 [![Docs](https://img.shields.io/badge/Docs-blue.svg?logo=book&logoColor=white)](https://deepwiki.com/seonwooke/flutist)
-[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](pubspec.yaml)
+[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](pubspec.yaml)
 [![Dart](https://img.shields.io/badge/Dart-%3E%3D3.5.0%20%3C4.0.0-blue.svg)](https://dart.dev)
 
 </div>
@@ -52,8 +52,11 @@ flutist create --path core --name utils --options simple
 ### 3. Manage Dependencies
 
 ```bash
-# Add a dependency
+# Add a single dependency
 flutist pub add http
+
+# Add multiple dependencies at once
+flutist pub add http dio riverpod
 
 # Sync dependencies to all modules
 flutist generate
@@ -221,6 +224,18 @@ This repository showcases:
 - Centralized dependency management
 - Modular project structure
 - Best practices for large-scale Flutter applications
+
+#### Microfeature Architecture Example
+
+A complete Flutter project demonstrating Microfeature Architecture principles using Flutist:
+
+🔗 **[flutist_microfeature_architecture](https://github.com/seonwooke/flutist_microfeature_architecture)**
+
+This repository showcases:
+- Microfeature Architecture implementation with Flutist
+- Reusable library modules with Interface, Implementation, Tests, and Testing layers
+- Centralized dependency management
+- Modular project structure
 
 ## 🤝 Contributing
 
