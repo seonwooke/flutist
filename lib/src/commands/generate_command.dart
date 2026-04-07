@@ -47,30 +47,34 @@ class GenerateCommand implements BaseCommand {
       Logger.success('Parsed project.dart');
       Logger.info('  Modules: ${projectData.modules.length}');
 
-      // Step 3: Architecture rule check (if strictMode enabled)
-      if (projectData.options.strictMode) {
-        Logger.info('Checking architecture rules...');
-        final checker = ArchitectureChecker(
-          project: projectData,
-          package: packageData,
-        );
-        final results = checker.check();
-        final errors = results
-            .where((r) => r.severity == CheckSeverity.error)
-            .toList();
+      // Step 3: Architecture rule check (always runs; strictMode controls whether to abort)
+      Logger.info('Checking architecture rules...');
+      final checker = ArchitectureChecker(
+        project: projectData,
+        package: packageData,
+      );
+      final results = checker.check();
+      final errors = results
+          .where((r) => r.severity == CheckSeverity.error)
+          .toList();
 
-        if (errors.isNotEmpty) {
+      if (errors.isNotEmpty) {
+        Logger.info('');
+        for (final error in errors) {
+          Logger.error('[ERROR] ${error.rule}');
+          Logger.error('  ${error.message}');
           Logger.info('');
-          for (final error in errors) {
-            Logger.error('[ERROR] ${error.rule}');
-            Logger.error('  ${error.message}');
-            Logger.info('');
-          }
+        }
+        if (projectData.options.strictMode) {
           Logger.error(
               'Generation aborted. ${errors.length} architecture violation(s) found.');
           Logger.info('Fix violations or set strictMode: false in ProjectOptions.');
           exit(1);
+        } else {
+          Logger.warn(
+              '${errors.length} architecture violation(s) found. Continuing because strictMode is false.');
         }
+      } else {
         Logger.success('Architecture rules passed');
       }
 
