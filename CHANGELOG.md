@@ -2,6 +2,49 @@
 
 All notable changes to Flutist will be documented in this file.
 
+## [2.1.0] - 2026-04-07
+
+### ✨ New Features
+
+- **`flutist init`: 신규/기존 프로젝트 선택**
+  - 초기화 시 새 프로젝트 / 기존 프로젝트 마이그레이션을 선택할 수 있음
+  - 기존 프로젝트: app 모듈 생성 스킵, workspace app 항목 스킵, 빈 project.dart/package.dart 생성
+- **`flutist pub add`: 다중 패키지 지원**
+  - `flutist pub add http dio` 형태로 한 번에 여러 패키지 추가 가능
+- **기존 프로젝트용 템플릿 사용 가이드 주석**
+  - `project.dart`, `package.dart`에 워크플로우 3단계 주석 및 예시 추가
+
+### 🐛 Fixed
+
+- **`flutist create`**: simple 모듈 경로에 모듈 이름 누락 수정 (`packages/` → `packages/core`)
+- **`flutist create`**: 레이어 모듈명 suffix 중복 입력 시 경고 및 종료
+- **`flutist create`**: path 마지막 세그먼트가 name과 같을 때 중첩 경고 및 종료
+- **`flutist create`**: 모듈 생성 시 barrel file(`lib/module_name.dart`) 자동 생성
+- **`flutist generate`**: cross-path 모듈 의존성 해석 — 하드코딩된 basePaths 제거, workspace 스캔으로 동적 해석
+- **`flutist generate`**: `flutter`, `flutter_localizations` 등 모든 SDK 의존성 보존 (기존에는 `flutter`만 보존)
+- **`flutist init`**: `lib/main.dart` 이미 존재하면 덮어쓰지 않음
+- **`flutist init`**: `analysis_options.yaml` 이미 존재하면 덮어쓰지 않음
+- **`flutist init`**: workspace 항목이 block style로 추가됨 (`- path/to/module`)
+- **`flutist pub add`**: 반복 실행 시 `],`가 같은 줄에 붙는 포맷 깨짐 수정
+- **`flutist pub add`**: `Generated flutist_gen.dart` 메시지 중복 출력 수정
+- **`flutist scaffold`**: `--path` 옵션이 문서에만 존재하고 실제 동작하지 않던 버그 수정
+- **`flutist test`**: 실패 시 키워드 필터링 없이 전체 stdout/stderr 출력
+- **아키텍처 체커**: 같은 피처의 `_example`, `_tests`가 `_implementation`, `_testing`에 의존하는 것을 허용 (Tuist microfeature 표준)
+
+### 🔧 Changed
+
+- **`strictMode` 동작 변경**: `strictMode: false`여도 아키텍처 위반을 항상 감지하고 출력함. `strictMode`는 위반 시 중단 여부만 제어
+  - `true` (기본): 위반 발견 시 generate/check 중단 (exit 1)
+  - `false`: 위반 출력 후 계속 진행 (마이그레이션 과도기용)
+
+### 📝 Documentation
+
+- README: SDK 의존성 및 Flutter 빌드 설정 관련 주의사항 추가
+- README: 모듈 타입별 디렉토리 구조 문서화
+- README: init 워크플로우 (신규/기존 프로젝트) 문서화
+
+---
+
 ## [2.0.0] - 2026-03-30
 
 ### 🚀 Breaking Changes
