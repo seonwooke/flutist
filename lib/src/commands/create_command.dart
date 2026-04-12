@@ -110,25 +110,58 @@ class CreateCommand implements BaseCommand {
     _checkModuleExists(currentDir, path, name, scaffoldType);
 
     List<String> createdModulePaths = [];
-    List<String> createdModuleNames = [];
+    Map<String, List<String>> layerDeps = {};
 
     if (scaffoldType == ScaffoldType.simple) {
       _createSimpleModule(currentDir, path, name);
       createdModulePaths.add('$path/$name');
-      createdModuleNames.add(name);
+      layerDeps[name] = [];
     } else {
       final layers = _getLayersForType(scaffoldType, name);
       _createLayeredModule(currentDir, path, name, scaffoldType, layers);
 
       for (final layer in layers) {
         createdModulePaths.add('$path/$name/$layer');
-        createdModuleNames.add(layer);
       }
+      layerDeps = _getLayerDepsForType(scaffoldType, name);
     }
 
     _updateRootPubspec(currentDir, createdModulePaths);
-    _updateProjectDart(currentDir, createdModuleNames);
-    _updatePackageDart(currentDir, createdModuleNames);
+    _updateProjectDart(currentDir, layerDeps);
+    _updatePackageDart(currentDir, layerDeps.keys.toList());
+  }
+
+  /// Returns the layer dependency map for B6 auto-wiring.
+  Map<String, List<String>> _getLayerDepsForType(
+      ScaffoldType scaffoldType, String name) {
+    switch (scaffoldType) {
+      case ScaffoldType.clean:
+        return {
+          '${name}_domain': [],
+          '${name}_data': ['${name}_domain'],
+          '${name}_presentation': ['${name}_data'],
+        };
+
+      case ScaffoldType.micro:
+        return {
+          '${name}_interface': [],
+          '${name}_implementation': ['${name}_interface'],
+          '${name}_testing': ['${name}_interface'],
+          '${name}_tests': ['${name}_implementation', '${name}_testing'],
+          '${name}_example': ['${name}_implementation', '${name}_testing'],
+        };
+
+      case ScaffoldType.lite:
+        return {
+          '${name}_interface': [],
+          '${name}_implementation': ['${name}_interface'],
+          '${name}_testing': ['${name}_interface'],
+          '${name}_tests': ['${name}_implementation', '${name}_testing'],
+        };
+
+      default:
+        return {};
+    }
   }
 
   /// Creates a simple module (no layers).
@@ -241,7 +274,8 @@ class CreateCommand implements BaseCommand {
   }
 
   /// Updates the project.dart file with new module entries.
-  void _updateProjectDart(String currentDir, List<String> moduleNames) {
+  void _updateProjectDart(
+      String currentDir, Map<String, List<String>> layerDeps) {
     Logger.info('Updating project.dart...');
 
     final projectFile = File('$currentDir/project.dart');
@@ -287,15 +321,16 @@ class CreateCommand implements BaseCommand {
       final afterBracket = content.substring(insertIndex);
 
       final moduleEntries = StringBuffer();
-      for (final moduleName in moduleNames) {
+      for (final entry in layerDeps.entries) {
         moduleEntries.write('\n');
-        moduleEntries.write(CreateTemplates.projectModule(moduleName));
+        moduleEntries.write(
+            CreateTemplates.projectModule(entry.key, entry.value));
       }
 
       final newContent = '$beforeBracket$moduleEntries\n  $afterBracket';
       projectFile.writeAsStringSync(newContent);
 
-      for (final moduleName in moduleNames) {
+      for (final moduleName in layerDeps.keys) {
         Logger.info('  ✓ Added to project.dart: $moduleName');
       }
 

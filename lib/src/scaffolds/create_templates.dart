@@ -1,4 +1,5 @@
 import '../core/core.dart';
+import '../utils/utils.dart';
 
 /// Template generator for module creation.
 class CreateTemplates {
@@ -25,13 +26,19 @@ void main() {
 ''';
 
   /// Generates Module entry for project.dart.
-  static String projectModule(String moduleName) => '''
-    Module(
+  ///
+  /// [moduleRefs] - list of module names this module depends on (B6 auto-wiring).
+  static String projectModule(String moduleName, [List<String> moduleRefs = const []]) {
+    final modulesContent = moduleRefs.isEmpty
+        ? '[]'
+        : '[\n${moduleRefs.map((m) => '        package.modules.${StringCase.toCamelCase(m)},').join('\n')}\n      ]';
+    return '''    Module(
       name: '$moduleName',
       dependencies: [],
       devDependencies: [],
-      modules: [],
+      modules: $modulesContent,
     ),''';
+  }
 
   /// Generates Module entry for package.dart.
   static String packageModule(String moduleName) => '''
