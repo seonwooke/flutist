@@ -67,20 +67,18 @@ flutist pub add http dio riverpod
 flutist generate
 ```
 
-### 4. Generate Code from Templates
+### 4. Generate Code from Custom Templates
 
 ```bash
 # List available templates
 flutist scaffold list
 
-# Generate from the built-in example template
+# Generate from a template
 flutist scaffold feature --name login
-flutist scaffold feature --name login --path lib/widgets --stateful true
-
-# Templates live in flutist/templates/ — customize freely
+flutist scaffold feature --name login --path lib/features
 ```
 
-Templates support **pipe filters** (`{{name | pascal_case}}`), **conditional generation** (`if: "stateful == 'true'"`), **inline file content** (`type: string`), and **custom attributes** passed via CLI.
+Templates live in `flutist/templates/`. Define your own templates to match your project conventions — just like Tuist.
 
 ## 📋 Commands
 
@@ -198,6 +196,68 @@ core/utils/
 - **🔗 Dependency Visualization**: Visualize module dependencies with graphs
 - **⚡ Workspace Support**: Leverage Flutter's native workspace feature
 - **🎨 Code Generation**: Create custom templates for rapid development
+
+## 🎨 Scaffold Templates
+
+Scaffold lets you define reusable code generation templates for your project — like Tuist scaffold.
+
+Templates live in `flutist/templates/<name>/`. Each template has a `template.yaml` that describes what to generate.
+
+```
+flutist/templates/
+└── feature/
+    ├── template.yaml           # Template configuration
+    └── widget.dart.template    # Template file with {{variables}}
+```
+
+**`template.yaml` structure:**
+
+```yaml
+description: "My custom template"
+
+attributes:
+  - name: name
+    required: true
+  - name: path
+    required: false
+    default: "lib/features"
+
+items:
+  # Generate from an external .template file
+  - type: file
+    path: "{{path}}/{{name | snake_case}}_page.dart"
+    templatePath: "page.dart.template"
+
+  # Generate inline without a .template file
+  - type: string
+    path: "{{path}}/{{name | snake_case}}/README.md"
+    contents: |
+      # {{name | pascal_case}}
+
+  # Conditional generation
+  - type: file
+    path: "{{path}}/{{name | snake_case}}_test.dart"
+    templatePath: "test.dart.template"
+    if: "withTest == 'true'"
+```
+
+**Template variables:**
+
+| Syntax | Output |
+|--------|--------|
+| `{{name}}` | `snake_case` |
+| `{{name \| pascal_case}}` | `PascalCase` |
+| `{{name \| camel_case}}` | `camelCase` |
+| `{{name \| upper_case}}` | `UPPER_CASE` |
+| `{{myAttr}}` | Custom attribute value |
+
+**Custom attributes** defined in `template.yaml` are passed via CLI:
+
+```bash
+flutist scaffold feature --name login --path lib/features --withTest true
+```
+
+`flutist init` creates a starter template at `flutist/templates/feature/` — customize it to match your conventions.
 
 ## 📚 Examples
 
