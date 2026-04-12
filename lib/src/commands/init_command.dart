@@ -231,34 +231,19 @@ class InitCommand implements BaseCommand {
     final featureDir = path.join(templatesDir, 'feature');
     await Directory(featureDir).create(recursive: true);
 
-    // template.yaml
     await FileHelper.writeFile(
       path.join(featureDir, 'template.yaml'),
       InitTemplates.featureTemplateYaml(),
     );
 
-    // bloc.dart.template
     await FileHelper.writeFile(
-      path.join(featureDir, 'bloc.dart.template'),
-      InitTemplates.featureBlocDartTemplate(),
+      path.join(featureDir, 'stateless.dart.template'),
+      InitTemplates.featureStatelessDartTemplate(),
     );
 
-    // state.dart.template
     await FileHelper.writeFile(
-      path.join(featureDir, 'state.dart.template'),
-      InitTemplates.featureStateDartTemplate(),
-    );
-
-    // event.dart.template
-    await FileHelper.writeFile(
-      path.join(featureDir, 'event.dart.template'),
-      InitTemplates.featureEventDartTemplate(),
-    );
-
-    // screen.dart.template
-    await FileHelper.writeFile(
-      path.join(featureDir, 'screen.dart.template'),
-      InitTemplates.featureScreenDartTemplate(),
+      path.join(featureDir, 'stateful.dart.template'),
+      InitTemplates.featureStatefulDartTemplate(),
     );
   }
 

@@ -206,148 +206,75 @@ resolution: workspace
 ''';
 
   /// Generates feature template.yaml content.
+  ///
+  /// Example template created by `flutist init` to demonstrate the scaffold
+  /// system. Uses only Flutter core — no third-party dependencies.
+  /// Customize freely in flutist/templates/.
   static String featureTemplateYaml() => '''
-description: "Feature module with BLoC pattern"
+description: "Widget template — customize this to match your project conventions"
 
 attributes:
   - name: name
     required: true
   - name: path
+    description: "Output path"
     required: false
-    default: "features"
+    default: "lib/widgets"
+  - name: stateful
+    description: "Generate StatefulWidget instead of StatelessWidget (true/false)"
+    required: false
+    default: "false"
 
 items:
   - type: file
-    path: "{{path}}/{{name}}/bloc/{{name}}_bloc.dart"
-    templatePath: "bloc.dart.template"
-  
+    path: "{{path}}/{{name | snake_case}}_widget.dart"
+    templatePath: "stateless.dart.template"
+    if: "stateful == 'false'"
+
   - type: file
-    path: "{{path}}/{{name}}/bloc/{{name}}_state.dart"
-    templatePath: "state.dart.template"
-  
-  - type: file
-    path: "{{path}}/{{name}}/bloc/{{name}}_event.dart"
-    templatePath: "event.dart.template"
-  
-  - type: file
-    path: "{{path}}/{{name}}/presentation/{{name}}_screen.dart"
-    templatePath: "screen.dart.template"
+    path: "{{path}}/{{name | snake_case}}_widget.dart"
+    templatePath: "stateful.dart.template"
+    if: "stateful == 'true'"
+
+  # string type: inline content without an external .template file
+  - type: string
+    path: "{{path}}/{{name | snake_case}}/README.md"
+    contents: |
+      # {{name | pascal_case}}
+
+      Auto-generated widget. Edit this template at flutist/templates/feature/.
 ''';
 
-  static String featureBlocDartTemplate() => '''
-import 'package:flutter_bloc/flutter_bloc.dart';
-
-import '{{name}}_event.dart';
-import '{{name}}_state.dart';
-
-/// BLoC for {{Name}} feature.
-class {{Name}}Bloc extends Bloc<{{Name}}Event, {{Name}}State> {
-  {{Name}}Bloc() : super({{Name}}Initial()) {
-    on<{{Name}}Started>(_onStarted);
-    on<{{Name}}Loaded>(_onLoaded);
-  }
-
-  Future<void> _onStarted(
-    {{Name}}Started event,
-    Emitter<{{Name}}State> emit,
-  ) async {
-    emit({{Name}}Loading());
-    
-    try {
-      // TODO: Implement business logic
-      
-      emit({{Name}}Success());
-    } catch (e) {
-      emit({{Name}}Error(e.toString()));
-    }
-  }
-
-  Future<void> _onLoaded(
-    {{Name}}Loaded event,
-    Emitter<{{Name}}State> emit,
-  ) async {
-    // TODO: Handle loaded event
-  }
-}
-''';
-
-  /// Generates feature state template content.
-  static String featureStateDartTemplate() => '''
-/// States for {{Name}} BLoC.
-sealed class {{Name}}State {}
-
-/// Initial state.
-final class {{Name}}Initial extends {{Name}}State {}
-
-/// Loading state.
-final class {{Name}}Loading extends {{Name}}State {}
-
-/// Success state.
-final class {{Name}}Success extends {{Name}}State {}
-
-/// Error state.
-final class {{Name}}Error extends {{Name}}State {
-  final String message;
-  
-  {{Name}}Error(this.message);
-}
-''';
-
-  /// Generates feature event template content.
-  static String featureEventDartTemplate() => '''
-/// Events for {{Name}} BLoC.
-sealed class {{Name}}Event {}
-
-/// Event triggered when the feature starts.
-final class {{Name}}Started extends {{Name}}Event {}
-
-/// Event triggered when data is loaded.
-final class {{Name}}Loaded extends {{Name}}Event {
-  // TODO: Add necessary fields
-}
-''';
-
-  /// Generates feature screen template content.
-  static String featureScreenDartTemplate() => '''
+  /// Generates StatelessWidget template content.
+  static String featureStatelessDartTemplate() => '''
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../bloc/{{name}}_bloc.dart';
-import '../bloc/{{name}}_event.dart';
-import '../bloc/{{name}}_state.dart';
-
-/// Screen for {{Name}} feature.
-class {{Name}}Screen extends StatelessWidget {
-  const {{Name}}Screen({super.key});
+class {{name | pascal_case}}Widget extends StatelessWidget {
+  const {{name | pascal_case}}Widget({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => {{Name}}Bloc()..add({{Name}}Started()),
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('{{Name}}'),
-        ),
-        body: BlocBuilder<{{Name}}Bloc, {{Name}}State>(
-          builder: (context, state) {
-            return switch (state) {
-              {{Name}}Initial() => const Center(
-                  child: Text('Welcome to {{Name}}'),
-                ),
-              {{Name}}Loading() => const Center(
-                  child: CircularProgressIndicator(),
-                ),
-              {{Name}}Success() => const Center(
-                  child: Text('Success!'),
-                ),
-              {{Name}}Error(:final message) => Center(
-                  child: Text('Error: \$message'),
-                ),
-            };
-          },
-        ),
-      ),
-    );
+    return const Placeholder();
+  }
+}
+''';
+
+  /// Generates StatefulWidget template content.
+  static String featureStatefulDartTemplate() => '''
+import 'package:flutter/material.dart';
+
+class {{name | pascal_case}}Widget extends StatefulWidget {
+  const {{name | pascal_case}}Widget({super.key});
+
+  @override
+  State<{{name | pascal_case}}Widget> createState() =>
+      _{{name | pascal_case}}WidgetState();
+}
+
+class _{{name | pascal_case}}WidgetState extends State<{{name | pascal_case}}Widget> {
+  @override
+  Widget build(BuildContext context) {
+    return const Placeholder();
   }
 }
 ''';
