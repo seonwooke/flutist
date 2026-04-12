@@ -18,6 +18,7 @@ class ProjectParser {
       final content = projectFile.readAsStringSync();
 
       _checkDeprecatedTypeField(content);
+      _warnIfInlineDeclarations(content);
 
       final nameMatch = RegExp(r"name:\s*'([^']+)'").firstMatch(content);
       final projectName = nameMatch?.group(1) ?? 'workspace';
@@ -25,14 +26,49 @@ class ProjectParser {
       final options = _parseProjectOptions(content);
       final modules = _parseModules(content);
 
+      if (modules.isEmpty && _hasModuleOutsideComments(content)) {
+        Logger.warn(
+            'project.dart contains Module() but none were parsed. '
+            'Check that declarations use multiline format.');
+      }
+
       return Project(
         name: projectName,
         options: options,
         modules: modules,
       );
     } catch (e) {
-      Logger.error('Failed to parse project.dart: $e');
+      Logger.error(ErrorHelper.describe(e, 'project.dart'));
       return null;
+    }
+  }
+
+  /// Returns true if content has `Module(` on a non-comment line.
+  static bool _hasModuleOutsideComments(String content) {
+    for (final line in content.split('\n')) {
+      final trimmed = line.trim();
+      if (!trimmed.startsWith('//') && trimmed.contains('Module(')) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Warns if project.dart appears to use inline declarations.
+  ///
+  /// Detects patterns like `modules: [Module(name: 'foo')]` on a single line.
+  /// Skips comment lines to avoid false positives.
+  static void _warnIfInlineDeclarations(String content) {
+    for (final line in content.split('\n')) {
+      final trimmed = line.trim();
+      if (trimmed.startsWith('//')) continue;
+      if (RegExp(r'\[.*Module\s*\(.*\).*\]').hasMatch(line)) {
+        Logger.warn('project.dart appears to use inline declarations.');
+        Logger.warn(
+            'Flutist only parses multiline format. '
+            'Split each Module onto separate lines.');
+        return;
+      }
     }
   }
 
@@ -131,7 +167,12 @@ class ProjectParser {
     final match = arrayPattern.firstMatch(moduleContent);
     if (match == null) return dependencies;
 
-    final arrayContent = match.group(1)!;
+    final rawContent = match.group(1)!;
+    // Strip comment lines to avoid parsing commented-out dependencies
+    final arrayContent = rawContent
+        .split('\n')
+        .where((line) => !line.trim().startsWith('//'))
+        .join('\n');
     final depPattern = RegExp(r'package\.dependencies\.(\w+)');
 
     for (final depMatch in depPattern.allMatches(arrayContent)) {
@@ -154,7 +195,12 @@ class ProjectParser {
     final match = arrayPattern.firstMatch(moduleContent);
     if (match == null) return modules;
 
-    final arrayContent = match.group(1)!;
+    final rawContent = match.group(1)!;
+    // Strip comment lines to avoid parsing commented-out module references
+    final arrayContent = rawContent
+        .split('\n')
+        .where((line) => !line.trim().startsWith('//'))
+        .join('\n');
     final modPattern = RegExp(r'package\.modules\.(\w+)');
 
     for (final modMatch in modPattern.allMatches(arrayContent)) {
