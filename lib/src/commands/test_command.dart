@@ -142,10 +142,19 @@ EXAMPLES:
     }
   }
 
-  /// Runs dart test in a module directory.
+  /// Detects whether a module requires flutter test or dart test.
+  bool _isFlutterModule(String modulePath) {
+    final pubspecFile = File(p.join(modulePath, 'pubspec.yaml'));
+    if (!pubspecFile.existsSync()) return false;
+    final content = pubspecFile.readAsStringSync();
+    return content.contains('flutter:') && content.contains('sdk: flutter');
+  }
+
+  /// Runs dart test or flutter test in a module directory.
   Future<_TestResult> _runModuleTest(_TestTarget target) async {
+    final useFlutter = _isFlutterModule(target.path);
     final process = await Process.start(
-      'dart',
+      useFlutter ? 'flutter' : 'dart',
       ['test'],
       workingDirectory: target.path,
     );
