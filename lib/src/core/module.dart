@@ -1,37 +1,39 @@
 import 'core.dart';
 
-/// Defines the structural type of a module in a Flutist project.
-enum ModuleType {
-  /// Clean Architecture module with Domain, Data, Presentation 3-layer structure.
+/// Defines the scaffold template type used when creating a module.
+/// Used exclusively by `flutist create --options` and internal logic.
+/// Not stored in project.dart or package.dart.
+enum ScaffoldType {
+  /// Clean Architecture: Domain / Data / Presentation (3 layers).
   clean,
 
-  /// Microfeature Architecture module with Example, Interface, Implementation, Tests, Testing 5-layer structure.
+  /// Microfeature Architecture: Example / Interface / Implementation / Tests / Testing (5 layers).
   micro,
 
-  /// Microfeature lite module with Interface, Implementation, Tests, Testing 4-layer structure.
+  /// Microfeature lite: Interface / Implementation / Tests / Testing (4 layers).
   lite,
 
-  /// Simple module with only lib folder.
+  /// Single package with no layers.
   simple,
 
-  /// Custom module with custom template.
+  /// Custom template structure.
   custom;
 
-  /// Parses a string to [ModuleType].
-  static ModuleType fromString(String value) {
+  /// Parses a string to [ScaffoldType].
+  static ScaffoldType fromString(String value) {
     switch (value) {
       case 'clean':
-        return ModuleType.clean;
+        return ScaffoldType.clean;
       case 'micro':
-        return ModuleType.micro;
+        return ScaffoldType.micro;
       case 'lite':
-        return ModuleType.lite;
+        return ScaffoldType.lite;
       case 'simple':
-        return ModuleType.simple;
+        return ScaffoldType.simple;
       case 'custom':
-        return ModuleType.custom;
+        return ScaffoldType.custom;
       default:
-        throw ArgumentError('Invalid module type: $value');
+        throw ArgumentError('Invalid scaffold type: $value');
     }
   }
 }
@@ -40,9 +42,6 @@ enum ModuleType {
 class Module {
   /// Module name.
   final String name;
-
-  /// Module type.
-  final ModuleType type;
 
   /// Regular dependencies for 'dependencies' section.
   final List<Dependency> dependencies;
@@ -55,7 +54,6 @@ class Module {
 
   Module({
     required this.name,
-    this.type = ModuleType.micro,
     this.dependencies = const [],
     this.devDependencies = const [],
     this.modules = const [],

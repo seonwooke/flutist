@@ -4,7 +4,6 @@ import 'package:path/path.dart' as path;
 import 'package:yaml/yaml.dart';
 import 'package:yaml_edit/yaml_edit.dart';
 
-import '../core/core.dart';
 import '../engine/engine.dart';
 import '../scaffolds/init_templates.dart';
 import '../utils/utils.dart';
@@ -422,7 +421,6 @@ class InitCommand implements BaseCommand {
       rootPath,
       'app',
       'app',
-      ModuleType.simple,
     );
   }
 

@@ -121,14 +121,12 @@ class GenFileGenerator {
     final modulesContent = match.group(1)!;
 
     final modulePattern = RegExp(
-      r"Module\s*\(\s*name:\s*'([^']+)'\s*,\s*type:\s*ModuleType\.(\w+)\s*\)",
+      r"Module\s*\(\s*name:\s*'([^']+)'\s*\)",
     );
 
     for (final modMatch in modulePattern.allMatches(modulesContent)) {
       final name = modMatch.group(1)!;
-      final typeString = modMatch.group(2)!;
-      final type = ModuleType.fromString(typeString);
-      modules.add(Module(name: name, type: type));
+      modules.add(Module(name: name));
     }
 
     return modules;

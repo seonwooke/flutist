@@ -39,7 +39,6 @@ final project = Project(
   modules: [
     Module(
       name: 'app',
-      type: ModuleType.simple,
       dependencies: [
         // Example)
         // package.dependencies.intl,
@@ -76,7 +75,6 @@ final project = Project(
     // Example)
     // Module(
     //   name: 'login_domain',
-    //   type: ModuleType.clean,
     //   dependencies: [
     //     package.dependencies.intl,
     //   ],

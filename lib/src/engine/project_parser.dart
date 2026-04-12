@@ -17,6 +17,8 @@ class ProjectParser {
     try {
       final content = projectFile.readAsStringSync();
 
+      _checkDeprecatedTypeField(content);
+
       final nameMatch = RegExp(r"name:\s*'([^']+)'").firstMatch(content);
       final projectName = nameMatch?.group(1) ?? 'workspace';
 
@@ -34,14 +36,31 @@ class ProjectParser {
     }
   }
 
+  /// Checks for deprecated 'type:' field and exits with migration guidance.
+  static void _checkDeprecatedTypeField(String content) {
+    final typePattern = RegExp(r"type:\s*ModuleType\.\w+");
+    final match = typePattern.firstMatch(content);
+    if (match == null) return;
+
+    final namePattern = RegExp(r"name:\s*'([^']+)'");
+    final names = namePattern.allMatches(content).map((m) => m.group(1)!).toList();
+    final moduleName = names.length > 1 ? names[1] : 'unknown';
+
+    Logger.error(
+      "project.dart uses deprecated 'type:' field (introduced in v2.x).\n"
+      "  Module: $moduleName\n"
+      "  → Remove 'type: ModuleType.xxx,' from all Module entries in project.dart.\n"
+      "  → See: https://github.com/seonwooke/flutist/blob/main/CHANGELOG.md",
+    );
+    exit(1);
+  }
+
   /// Parses ProjectOptions from project.dart content.
   static ProjectOptions _parseProjectOptions(String content) {
-    // Parse strictMode
     final strictMatch =
         RegExp(r'strictMode:\s*(true|false)').firstMatch(content);
     final strictMode = strictMatch?.group(1) != 'false';
 
-    // Parse compositionRoots
     final rootsMatch = RegExp(
       r"compositionRoots:\s*\[(.*?)\]",
       dotAll: true,
@@ -81,11 +100,6 @@ class ProjectParser {
       if (nameMatch == null) continue;
       final name = nameMatch.group(1)!;
 
-      final typeMatch =
-          RegExp(r'type:\s*ModuleType\.(\w+)').firstMatch(moduleContent);
-      if (typeMatch == null) continue;
-      final type = ModuleType.fromString(typeMatch.group(1)!);
-
       final dependencies =
           _parseModuleDependencies(moduleContent, 'dependencies');
       final devDependencies =
@@ -94,7 +108,6 @@ class ProjectParser {
 
       modules.add(Module(
         name: name,
-        type: type,
         dependencies: dependencies,
         devDependencies: devDependencies,
         modules: moduleRefs,
@@ -147,7 +160,7 @@ class ProjectParser {
     for (final modMatch in modPattern.allMatches(arrayContent)) {
       final camelName = modMatch.group(1)!;
       final snakeName = StringCase.toSnakeCase(camelName);
-      modules.add(Module(name: snakeName, type: ModuleType.simple));
+      modules.add(Module(name: snakeName));
     }
 
     return modules;
