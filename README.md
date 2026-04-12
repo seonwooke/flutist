@@ -5,7 +5,7 @@
 **A Flutter project management framework inspired by Tuist**
 
 [![Docs](https://img.shields.io/badge/Docs-blue.svg?logo=book&logoColor=white)](https://deepwiki.com/seonwooke/flutist)
-[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](pubspec.yaml)
+[![Version](https://img.shields.io/badge/version-3.0.0-blue.svg)](pubspec.yaml)
 [![Dart](https://img.shields.io/badge/Dart-%3E%3D3.5.0%20%3C4.0.0-blue.svg)](https://dart.dev)
 
 </div>
@@ -45,9 +45,14 @@ flutist create --path features --name login --options clean
 # Create a micro module (Microfeature Architecture)
 flutist create --path lib --name network --options micro
 
-# Create a simple module
-flutist create --path core --name utils --options simple
+# Create a lite module (Microfeature lite)
+flutist create --path lib --name auth --options lite
+
+# Create a single package (omit --options)
+flutist create --path core --name utils
 ```
+
+Layer packages and their dependencies are **automatically wired** in `project.dart` when you run `flutist create`.
 
 ### 3. Manage Dependencies
 
@@ -68,9 +73,14 @@ flutist generate
 # List available templates
 flutist scaffold list
 
-# Generate code from a template
+# Generate from the built-in example template
 flutist scaffold feature --name login
+flutist scaffold feature --name login --path lib/widgets --stateful true
+
+# Templates live in flutist/templates/ — customize freely
 ```
+
+Templates support **pipe filters** (`{{name | pascal_case}}`), **conditional generation** (`if: "stateful == 'true'"`), **inline file content** (`type: string`), and **custom attributes** passed via CLI.
 
 ## 📋 Commands
 
@@ -115,66 +125,45 @@ my_project/
     └── flutist_gen.dart      # Generated code
 ```
 
-## 🧩 Module Types
+## 🧩 Scaffold Types
 
-Flutist supports 4 module types, each generating a different directory structure:
+`flutist create` generates layer packages and **automatically wires their dependencies** in `project.dart`.
 
 ### Clean (`--options clean`)
 
-Clean Architecture with 3 layers. Best for feature modules with clear separation of concerns.
+3-layer Clean Architecture. Best for feature modules with clear separation of concerns.
 
 ```
 flutist create --path features --name login --options clean
 
 features/login/
 ├── login_domain/          # Business logic, entities, use cases
-│   ├── lib/
-│   │   └── login_domain.dart
-│   └── pubspec.yaml
 ├── login_data/            # Repositories, data sources, DTOs
-│   ├── lib/
-│   │   └── login_data.dart
-│   └── pubspec.yaml
-└── login_presentation/    # UI, BLoC/Cubit, pages
-    ├── lib/
-    │   └── login_presentation.dart
-    └── pubspec.yaml
+└── login_presentation/    # UI and state management
 ```
+
+**Auto-wired:** `presentation → data → domain`
 
 ### Micro (`--options micro`)
 
-Microfeature Architecture with 5 layers. Best for reusable libraries shared across features.
+5-layer Microfeature Architecture. Best for reusable libraries shared across features.
 
 ```
 flutist create --path packages --name network --options micro
 
 packages/network/
-├── network_example/           # Demo app for the module
-│   ├── lib/
-│   │   ├── network_example.dart
-│   │   └── main.dart
-│   └── pubspec.yaml
 ├── network_interface/         # Public API (abstract classes, models)
-│   ├── lib/
-│   │   └── network_interface.dart
-│   └── pubspec.yaml
 ├── network_implementation/    # Concrete implementations
-│   ├── lib/
-│   │   └── network_implementation.dart
-│   └── pubspec.yaml
-├── network_tests/             # Integration/unit tests
-│   ├── lib/
-│   │   └── network_tests.dart
-│   └── pubspec.yaml
-└── network_testing/           # Test helpers, mocks, fakes
-    ├── lib/
-    │   └── network_testing.dart
-    └── pubspec.yaml
+├── network_testing/           # Test helpers, mocks, fakes
+├── network_tests/             # Unit and integration tests
+└── network_example/           # Demo app for the module
 ```
+
+**Auto-wired:** `implementation/testing → interface`, `tests/example → implementation + testing`
 
 ### Lite (`--options lite`)
 
-Microfeature lite with 4 layers (no example). Best for internal APIs that don't need a demo app.
+4-layer Microfeature lite (no example). Best for internal APIs.
 
 ```
 flutist create --path packages --name auth --options lite
@@ -182,20 +171,22 @@ flutist create --path packages --name auth --options lite
 packages/auth/
 ├── auth_interface/
 ├── auth_implementation/
-├── auth_tests/
-└── auth_testing/
+├── auth_testing/
+└── auth_tests/
 ```
 
-### Simple (`--options simple`)
+**Auto-wired:** `implementation/testing → interface`, `tests → implementation + testing`
 
-Single module with no layers. Best for utilities, shared models, or the app module itself.
+### Single package (omit `--options`)
+
+No layers. Best for utilities, shared models, or the app shell.
 
 ```
-flutist create --path packages --name core --options simple
+flutist create --path core --name utils
 
-packages/core/
+core/utils/
 ├── lib/
-│   └── core.dart
+│   └── utils.dart
 └── pubspec.yaml
 ```
 
