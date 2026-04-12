@@ -85,7 +85,7 @@ Templates live in `flutist/templates/`. Define your own templates to match your 
 | Command | Description | Usage |
 |---------|-------------|-------|
 | **`init`** | Initialize a new or existing project | `flutist init` |
-| **`create`** | Create a new module | `flutist create --path <path> --name <name> --options <type>` |
+| **`create`** | Create a new module | `flutist create --path <path> --name <name> [--options <type>]` |
 | **`generate`** | Sync dependencies and regenerate files | `flutist generate` |
 | **`check`** | Check architecture rules | `flutist check` |
 | **`test`** | Run tests for all modules in parallel | `flutist test` |
@@ -217,8 +217,8 @@ description: "My custom template"
 
 # ── Attributes ────────────────────────────────────────────────────────────────
 # Variables passed from the CLI (e.g. --name login --path lib/features).
-# required: true  → must be provided, or CLI will prompt
-# required: false → optional; uses `default` if not provided
+# required: true  → must be provided via CLI, or an error is shown
+# required: false → optional; uses `default` if not provided via CLI
 attributes:
   - name: name
     required: true
@@ -285,17 +285,17 @@ class {{name | pascal_case}}Page extends StatelessWidget {
 ### Running scaffold
 
 ```bash
-# Basic usage
+# Basic usage (uses default path from template.yaml)
 flutist scaffold feature --name login
 
-# With custom path
+# Override path
 flutist scaffold feature --name login --path lib/features
 
-# With custom attribute
-flutist scaffold feature --name login --withTest true
+# Custom attribute defined in your template.yaml
+flutist scaffold page --name home --withTest true
 ```
 
-Custom attributes defined in `template.yaml` are automatically available as `--<attribute>` flags.
+Custom attributes defined in `template.yaml` are automatically available as `--<attribute>` CLI flags. The default `feature` template has `name` and `path` — add your own attributes to match your conventions.
 
 ## 📚 Examples
 
