@@ -6,11 +6,16 @@ import '../utils/utils.dart';
 /// Generator for flutist_gen.dart file.
 class GenFileGenerator {
   /// Generates the flutist_gen.dart file based on package.dart.
+  /// If [packageData] is provided, skips re-parsing package.dart.
   /// If [projectModuleNames] is provided, only modules present in project.dart will be included.
-  static void generate(String rootPath, {List<String>? projectModuleNames}) {
-    try {
-      Logger.info('Generating flutist_gen.dart...');
+  static void generate(String rootPath,
+      {Package? packageData, List<String>? projectModuleNames}) {
+    Logger.info('Generating flutist_gen.dart...');
 
+    final Package package;
+    if (packageData != null) {
+      package = packageData;
+    } else {
       // Parse package.dart
       final packageFile = File('$rootPath/package.dart');
 
@@ -19,30 +24,35 @@ class GenFileGenerator {
         return;
       }
 
-      final content = packageFile.readAsStringSync();
-      final package = parsePackageDart(content);
+      try {
+        final content = packageFile.readAsStringSync();
+        package = parsePackageDart(content);
+      } catch (e) {
+        Logger.error(ErrorHelper.describe(e, '$rootPath/package.dart'));
+        return;
+      }
+    }
 
-      // Filter modules if projectModuleNames is provided
-      final filteredPackage = projectModuleNames != null
-          ? _filterPackageModules(package, projectModuleNames)
-          : package;
+    // Filter modules if projectModuleNames is provided
+    final filteredPackage = projectModuleNames != null
+        ? _filterPackageModules(package, projectModuleNames)
+        : package;
 
+    try {
       // Create flutist directory if not exists
       final flutistDir = Directory('$rootPath/flutist');
       if (!flutistDir.existsSync()) {
         flutistDir.createSync(recursive: true);
       }
 
-      // Generate content
+      // Generate content and write to file
       final genContent = _buildGenContent(filteredPackage);
-
-      // Write to file
       final genFile = File('$rootPath/flutist/flutist_gen.dart');
       genFile.writeAsStringSync(genContent);
 
       Logger.success('Generated flutist_gen.dart');
     } catch (e) {
-      Logger.error('Failed to generate flutist_gen.dart: $e');
+      Logger.error(ErrorHelper.describe(e, '$rootPath/flutist/flutist_gen.dart'));
     }
   }
 
@@ -62,6 +72,8 @@ class GenFileGenerator {
 
   /// Parses package.dart content.
   static Package parsePackageDart(String content) {
+    _warnIfInlineDeclarations(content, 'package.dart');
+
     // Parse package name
     final nameMatch = RegExp(r"name:\s*'([^']+)'").firstMatch(content);
     final packageName = nameMatch?.group(1) ?? 'workspace';
@@ -72,11 +84,48 @@ class GenFileGenerator {
     // Parse modules
     final modules = _parseModules(content);
 
+    // Warn if file has Module( outside comments but parsed none
+    if (modules.isEmpty && _hasModuleOutsideComments(content)) {
+      Logger.warn(
+          'package.dart contains Module() but none were parsed. '
+          'Check that declarations use multiline format.');
+    }
+
     return Package(
       name: packageName,
       dependencies: dependencies,
       modules: modules,
     );
+  }
+
+  /// Returns true if content has `Module(` on a non-comment line.
+  static bool _hasModuleOutsideComments(String content) {
+    for (final line in content.split('\n')) {
+      final trimmed = line.trim();
+      if (!trimmed.startsWith('//') && trimmed.contains('Module(')) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Warns if package.dart appears to use inline declarations.
+  ///
+  /// Detects patterns like `modules: [Module(name: 'foo')]` on a single line.
+  /// Skips comment lines to avoid false positives.
+  static void _warnIfInlineDeclarations(String content, String fileName) {
+    for (final line in content.split('\n')) {
+      final trimmed = line.trim();
+      if (trimmed.startsWith('//')) continue;
+      if (RegExp(r'\[.*Module\s*\(.*\).*\]').hasMatch(line) ||
+          RegExp(r'\[.*Dependency\s*\(.*\).*\]').hasMatch(line)) {
+        Logger.warn('$fileName appears to use inline declarations.');
+        Logger.warn(
+            'Flutist only parses multiline format. '
+            'Split each Module/Dependency onto separate lines.');
+        return;
+      }
+    }
   }
 
   /// Parses dependencies from package.dart content.

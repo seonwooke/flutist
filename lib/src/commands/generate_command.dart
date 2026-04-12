@@ -78,11 +78,11 @@ class GenerateCommand implements BaseCommand {
         Logger.success('Architecture rules passed');
       }
 
-      // Step 4: Generate flutist_gen.dart (filtered by project.dart modules)
+      // Step 4: Generate flutist_gen.dart (pass pre-parsed package to avoid re-parsing)
       final projectModuleNames =
           projectData.modules.map((m) => m.name).toList();
       GenFileGenerator.generate(currentDir,
-          projectModuleNames: projectModuleNames);
+          packageData: packageData, projectModuleNames: projectModuleNames);
 
       // Step 4: Update pubspec.yaml files
       _updatePubspecFiles(currentDir, projectData, packageData);
@@ -109,7 +109,7 @@ class GenerateCommand implements BaseCommand {
       final content = packageFile.readAsStringSync();
       return GenFileGenerator.parsePackageDart(content);
     } catch (e) {
-      Logger.error('Failed to parse package.dart: $e');
+      Logger.error(ErrorHelper.describe(e, 'package.dart'));
       return null;
     }
   }
