@@ -5,155 +5,110 @@ import 'package:flutist/flutist.dart';
 import 'flutist/flutist_gen.dart';
 import 'package.dart';
 
-/// Project configuration defining all modules and their relationships.
+/// Project configuration — defines all modules and their relationships.
 ///
-/// This file defines:
-/// - Which modules are part of the project
-/// - Dependencies between modules
-/// - External package dependencies for each module
+/// Modules are declared as individual layer packages.
+/// Layer dependencies are wired here explicitly (auto-wired by `flutist create`).
 ///
-/// After modifying this file, run `flutist generate` to sync changes
-/// to module pubspec.yaml files.
+/// After modifying, run `flutist generate` to sync pubspec.yaml files.
 final project = Project(
   name: 'my_flutter_project',
   options: const ProjectOptions(),
-
-  /// All modules in the project.
-  ///
-  /// Modules are organized hierarchically, with dependencies
-  /// defined using package.dependencies and package.modules.
   modules: [
-    // Main application module
+    // ─── App shell (simple) ───────────────────────────────────────────────
     Module(
       name: 'app',
-      type: ModuleType.simple,
-      dependencies: [
-        // State management
-        package.dependencies.provider,
-      ],
-      devDependencies: [
-        // Testing
-        package.dependencies.test,
-      ],
       modules: [
-        // App depends on authentication feature
-        package.modules.authentication,
-        package.modules.profile,
+        package.modules.authPresentation,
+        package.modules.networkInterface,
       ],
     ),
 
-    // Authentication clean module
-    Module(
-      name: 'authentication',
-      type: ModuleType.clean,
-      dependencies: [
-        // HTTP client for API calls
-        package.dependencies.http,
-        // Local storage for tokens
-        package.dependencies.sharedPreferences,
-        // State management
-        package.dependencies.provider,
-      ],
-      devDependencies: [
-        package.dependencies.test,
-        package.dependencies.mockito,
-      ],
-      modules: [
-        // Authentication depends on network library
-        package.modules.network,
-        // And models for data structures
-        package.modules.models,
-      ],
-    ),
+    // ─── auth — Clean Architecture ────────────────────────────────────────
+    //
+    // Direction: presentation → data → domain
+    // Created with: flutist create --path features --name auth --options clean
 
-    // Profile clean module
     Module(
-      name: 'profile',
-      type: ModuleType.clean,
-      dependencies: [
-        package.dependencies.http,
-        package.dependencies.provider,
-      ],
-      devDependencies: [
-        package.dependencies.test,
-      ],
-      modules: [
-        package.modules.network,
-        package.modules.models,
-        package.modules.storage,
-      ],
-    ),
-
-    // Network micro module
-    Module(
-      name: 'network',
-      type: ModuleType.micro,
-      dependencies: [
-        package.dependencies.http,
-        package.dependencies.jsonAnnotation,
-      ],
-      devDependencies: [
-        package.dependencies.test,
-        package.dependencies.mockito,
-      ],
-      modules: [
-        // Network depends on utils for helpers
-        package.modules.utils,
-      ],
-    ),
-
-    // Storage micro module
-    Module(
-      name: 'storage',
-      type: ModuleType.micro,
-      dependencies: [
-        package.dependencies.sharedPreferences,
-      ],
-      devDependencies: [
-        package.dependencies.test,
-      ],
-      modules: [],
-    ),
-
-    // Models lite module
-    Module(
-      name: 'models',
-      type: ModuleType.lite,
-      dependencies: [
-        package.dependencies.jsonAnnotation,
-      ],
-      devDependencies: [
-        package.dependencies.test,
-      ],
-      modules: [
-        package.modules.utils,
-      ],
-    ),
-
-    // Constants lite module
-    Module(
-      name: 'constants',
-      type: ModuleType.lite,
+      name: 'auth_domain',
       dependencies: [],
-      devDependencies: [],
+      devDependencies: [
+        package.dependencies.test,
+      ],
       modules: [],
     ),
 
-    // Utils simple module
+    Module(
+      name: 'auth_data',
+      dependencies: [
+        package.dependencies.http,
+      ],
+      devDependencies: [
+        package.dependencies.test,
+        package.dependencies.mockito,
+      ],
+      modules: [
+        package.modules.authDomain,
+        package.modules.networkInterface,
+      ],
+    ),
+
+    Module(
+      name: 'auth_presentation',
+      dependencies: [],
+      devDependencies: [
+        package.dependencies.test,
+      ],
+      modules: [
+        package.modules.authData,
+      ],
+    ),
+
+    // ─── network — Lite Architecture ──────────────────────────────────────
+    //
+    // Direction: implementation/testing → interface
+    //            tests → implementation + testing
+    // Created with: flutist create --path lib --name network --options lite
+
+    Module(
+      name: 'network_interface',
+      dependencies: [],
+      modules: [],
+    ),
+
+    Module(
+      name: 'network_implementation',
+      dependencies: [
+        package.dependencies.http,
+      ],
+      modules: [
+        package.modules.networkInterface,
+      ],
+    ),
+
+    Module(
+      name: 'network_testing',
+      modules: [
+        package.modules.networkInterface,
+      ],
+    ),
+
+    Module(
+      name: 'network_tests',
+      devDependencies: [
+        package.dependencies.test,
+        package.dependencies.mockito,
+      ],
+      modules: [
+        package.modules.networkImplementation,
+        package.modules.networkTesting,
+      ],
+    ),
+
+    // ─── utils (simple) ───────────────────────────────────────────────────
     Module(
       name: 'utils',
-      type: ModuleType.simple,
       dependencies: [],
-      devDependencies: [],
-      modules: [],
-    ),
-
-    // Extensions simple module
-    Module(
-      name: 'extensions',
-      type: ModuleType.simple,
-      dependencies: [],
-      devDependencies: [],
       modules: [],
     ),
   ],
