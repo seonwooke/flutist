@@ -201,63 +201,101 @@ core/utils/
 
 Scaffold lets you define reusable code generation templates for your project — like Tuist scaffold.
 
-Templates live in `flutist/templates/<name>/`. Each template has a `template.yaml` that describes what to generate.
+`flutist init` creates a starter template at `flutist/templates/feature/`. From there, **you own the templates** — edit them freely to match your project conventions.
 
 ```
 flutist/templates/
-└── feature/
-    ├── template.yaml           # Template configuration
-    └── widget.dart.template    # Template file with {{variables}}
+└── feature/                    # Template name (used in CLI)
+    ├── template.yaml           # Declares attributes and what files to generate
+    └── widget.dart.template    # Template file — use {{variables}} for substitution
 ```
 
-**`template.yaml` structure:**
+### template.yaml
 
 ```yaml
 description: "My custom template"
 
+# ── Attributes ────────────────────────────────────────────────────────────────
+# Variables passed from the CLI (e.g. --name login --path lib/features).
+# required: true  → must be provided, or CLI will prompt
+# required: false → optional; uses `default` if not provided
 attributes:
   - name: name
     required: true
   - name: path
     required: false
     default: "lib/features"
+  - name: withTest           # custom attribute: pass with --withTest true
+    required: false
+    default: "false"
 
+# ── Items ─────────────────────────────────────────────────────────────────────
+# Files to generate. Supports two types:
+#
+#   type: file   — reads a .template file, applies variable substitution
+#   type: string — writes inline content directly (no .template file needed)
+#
+# if: "key == 'value'" — skip this item unless the condition is true
 items:
-  # Generate from an external .template file
   - type: file
     path: "{{path}}/{{name | snake_case}}_page.dart"
     templatePath: "page.dart.template"
 
-  # Generate inline without a .template file
   - type: string
     path: "{{path}}/{{name | snake_case}}/README.md"
     contents: |
       # {{name | pascal_case}}
+      Auto-generated page.
 
-  # Conditional generation
   - type: file
     path: "{{path}}/{{name | snake_case}}_test.dart"
     templatePath: "test.dart.template"
-    if: "withTest == 'true'"
+    if: "withTest == 'true'"            # only generated when --withTest true
 ```
 
-**Template variables:**
+### Template variables
 
-| Syntax | Output |
-|--------|--------|
-| `{{name}}` | `snake_case` |
-| `{{name \| pascal_case}}` | `PascalCase` |
-| `{{name \| camel_case}}` | `camelCase` |
-| `{{name \| upper_case}}` | `UPPER_CASE` |
-| `{{myAttr}}` | Custom attribute value |
+Use `{{variables}}` inside `.template` files and in `path` values:
 
-**Custom attributes** defined in `template.yaml` are passed via CLI:
+| Syntax | Input `user profile` → Output |
+|--------|-------------------------------|
+| `{{name}}` | `user_profile` |
+| `{{name \| pascal_case}}` | `UserProfile` |
+| `{{name \| camel_case}}` | `userProfile` |
+| `{{name \| upper_case}}` | `USER_PROFILE` |
+| `{{path}}` | value of the `path` attribute |
+| `{{withTest}}` | value of any custom attribute |
+
+### Example `.template` file
+
+```dart
+// page.dart.template
+import 'package:flutter/material.dart';
+
+class {{name | pascal_case}}Page extends StatelessWidget {
+  const {{name | pascal_case}}Page({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold();
+  }
+}
+```
+
+### Running scaffold
 
 ```bash
-flutist scaffold feature --name login --path lib/features --withTest true
+# Basic usage
+flutist scaffold feature --name login
+
+# With custom path
+flutist scaffold feature --name login --path lib/features
+
+# With custom attribute
+flutist scaffold feature --name login --withTest true
 ```
 
-`flutist init` creates a starter template at `flutist/templates/feature/` — customize it to match your conventions.
+Custom attributes defined in `template.yaml` are automatically available as `--<attribute>` flags.
 
 ## 📚 Examples
 

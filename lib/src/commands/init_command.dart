@@ -237,13 +237,8 @@ class InitCommand implements BaseCommand {
     );
 
     await FileHelper.writeFile(
-      path.join(featureDir, 'stateless.dart.template'),
-      InitTemplates.featureStatelessDartTemplate(),
-    );
-
-    await FileHelper.writeFile(
-      path.join(featureDir, 'stateful.dart.template'),
-      InitTemplates.featureStatefulDartTemplate(),
+      path.join(featureDir, 'widget.dart.template'),
+      InitTemplates.featureWidgetDartTemplate(),
     );
   }
 
