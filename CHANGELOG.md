@@ -2,6 +2,79 @@
 
 All notable changes to Flutist will be documented in this file.
 
+## [3.0.0] - 2026-04-12
+
+### 💥 Breaking Changes
+
+- **`ModuleType` → `ScaffoldType` rename**
+  - `ModuleType` enum is removed. Use `ScaffoldType` internally (create-time only).
+  - `ScaffoldType` is never written to `project.dart` or `package.dart`.
+
+- **`Module.type` field removed**
+  - The `type:` field in `Module(...)` is no longer valid.
+  - If `project.dart` contains `type: ModuleType.xxx`, parsing will fail with a migration error.
+  - **Migration**: Remove all `type: ModuleType.xxx,` lines from `project.dart`.
+
+- **`--options simple` removed from `flutist create`**
+  - Omitting `--options` now creates a single package by default (was `--options simple`).
+  - `--options` accepts `clean`, `micro`, `lite` only.
+
+### ✨ New Features
+
+- **B6: Layer dependency auto-wiring on `flutist create`**
+  - Layer packages are automatically wired in `project.dart` based on scaffold type:
+    - `clean`: `presentation → data → domain`
+    - `micro`: `implementation/testing → interface`, `tests/example → implementation + testing`
+    - `lite`: `implementation/testing → interface`, `tests → implementation + testing`
+
+- **`flutist scaffold` enhancement**
+  - **Custom attribute CLI**: Attributes defined in `template.yaml` are now passed via `--<attribute> value`
+  - **Filter system**: `{{name | snake_case}}`, `{{name | pascal_case}}`, `{{name | camel_case}}`, `{{name | upper_case}}`
+    (legacy `{{Name}}`, `{{NAME}}` shorthands are still supported)
+  - **Conditional generation**: Items support `if: "attribute == 'value'"` to skip files conditionally
+  - **Interactive prompts**: Missing required/optional attributes trigger stdin prompts instead of erroring
+  - **`string` item type**: Define file contents inline in `template.yaml` without an external `.template` file
+  - **`--path` fix in simple mode**: `--path` is now respected as the output base directory
+
+- **D3: `flutter test` vs `dart test` auto-detection**
+  - `flutist test` now checks each module's `pubspec.yaml` for `flutter: sdk: flutter`.
+  - Uses `flutter test` for Flutter packages and `dart test` for pure Dart packages.
+
+- **Architecture Checker: `_implementation → _testing` rule**
+  - Added explicit tests documenting that `_implementation` must never depend on `_testing`, even within the same feature.
+
+### 🐛 Fixed
+
+- **`flutist init`**: Removed `type: ModuleType.simple` from generated `project.dart` template
+- **`flutist init`**: Removed hardcoded example dependencies (`intl`, `test`) from `package.dart` template
+- **`flutist scaffold`**: Example template replaced with neutral StatelessWidget/StatefulWidget (no `flutter_bloc` dependency)
+
+### 🔄 Migration from 2.x
+
+Remove `type:` from all `Module(...)` entries in `project.dart`:
+
+```dart
+// Before (2.x)
+Module(
+  name: 'auth_domain',
+  type: ModuleType.clean,   // ← remove this line
+  dependencies: [],
+  modules: [],
+),
+
+// After (3.0.0)
+Module(
+  name: 'auth_domain',
+  dependencies: [],
+  modules: [],
+),
+```
+
+If `type:` remains, `flutist generate` / `flutist check` will print a clear error
+pointing to this CHANGELOG.
+
+---
+
 ## [2.1.0] - 2026-04-07
 
 ### ✨ New Features
