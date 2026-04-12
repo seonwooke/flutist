@@ -99,12 +99,12 @@ import 'package:flutist/flutist.dart';
 final package = Package(
   name: '$projectName',
   dependencies: [
-    // TODO: Add dependencies here
-    Dependency(name: 'intl', version: '^20.2.0'),
-    Dependency(name: 'test', version: '^1.28.0'),
+    // Example)
+    // Dependency(name: 'intl', version: '^20.2.0'),
+    // Dependency(name: 'test', version: '^1.28.0'),
   ],
   modules: [
-    // TODO: Add modules here
+    // Modules are auto-registered when you run flutist create
   ],
 );'''
           : '''
