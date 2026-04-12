@@ -17,7 +17,6 @@ class ScaffoldCommand implements BaseCommand {
 
   @override
   void execute(List<String> arguments) {
-    // Check for help flag
     if (arguments.isEmpty ||
         arguments.contains('--help') ||
         arguments.contains('-h')) {
@@ -43,7 +42,6 @@ class ScaffoldCommand implements BaseCommand {
     }
   }
 
-  /// Shows main help message.
   void _showHelp() {
     print('''
 OVERVIEW: Generates new code based on a template
@@ -55,7 +53,8 @@ ARGUMENTS:
 
 OPTIONS:
   --name <name>           Name for the generated files (required)
-  --path <path>           Output path (default: current directory)
+  --path <path>           Output path (overrides template.yaml default)
+  --<attribute> <value>   Custom attribute defined in template.yaml
   -h, --help              Show help information
 
 SUBCOMMANDS:
@@ -65,28 +64,23 @@ SUBCOMMANDS:
 EXAMPLES:
   flutist scaffold list
   flutist scaffold feature --name login
-  flutist scaffold feature --name user_profile --path lib/features
-  flutist scaffold layered_feature --name auth --basePath lib/features
-
-TEMPLATE STRUCTURE:
-  flutist/templates/
-    feature/
-      template.yaml         # Template configuration
-      bloc.dart.template    # Template file with {{name}} variables
-      state.dart.template
-      event.dart.template
+  flutist scaffold feature --name login --path lib/features
+  flutist scaffold feature --name login --useBloc true
 
 TEMPLATE VARIABLES:
   {{name}}                snake_case (e.g., user_profile)
-  {{Name}}                PascalCase (e.g., UserProfile)  
-  {{NAME}}                UPPER_CASE (e.g., USER_PROFILE)
+  {{name | pascal_case}}  PascalCase (e.g., UserProfile)
+  {{name | camel_case}}   camelCase (e.g., userProfile)
+  {{name | upper_case}}   UPPER_CASE (e.g., USER_PROFILE)
+  {{name | snake_case}}   snake_case (e.g., user_profile)
+  {{Name}}                PascalCase — legacy shorthand
+  {{NAME}}                UPPER_CASE — legacy shorthand
   {{custom}}              Custom attributes from template.yaml
 
 See 'flutist scaffold help <subcommand>' for detailed help.
 ''');
   }
 
-  /// Shows help for a specific subcommand.
   void _showSubcommandHelp(String subCommand) {
     switch (subCommand) {
       case 'list':
@@ -94,10 +88,6 @@ See 'flutist scaffold help <subcommand>' for detailed help.
 OVERVIEW: Lists available scaffold templates
 
 USAGE: flutist scaffold list
-
-DESCRIPTION:
-  Displays all templates found in flutist/templates/ directory.
-  Each template should contain a template.yaml file with configuration.
 
 TEMPLATE.YAML STRUCTURE:
   description: "Feature template with BLoC pattern"
@@ -107,12 +97,21 @@ TEMPLATE.YAML STRUCTURE:
     - name: path
       required: false
       default: "lib/features"
+    - name: useBloc
+      required: false
+      default: "true"
   items:
     - type: file
-      path: "{{path}}/{{name}}/{{name}}_bloc.dart"
+      path: "{{path}}/{{name | snake_case}}_bloc.dart"
       templatePath: "bloc.dart.template"
+      if: "useBloc == 'true'"
+    - type: string
+      path: "{{path}}/README.md"
+      contents: |
+        # {{name | pascal_case}}
+        Auto-generated module.
     - type: directory
-      path: "{{path}}/{{name}}/assets"
+      path: "{{path}}/assets"
       sourcePath: "assets"
 
 EXAMPLES:
@@ -125,7 +124,6 @@ EXAMPLES:
     }
   }
 
-  /// Lists all available templates.
   void _listTemplates() {
     final rootPath = Directory.current.path;
     final templatesDir = Directory(p.join(rootPath, 'flutist', 'templates'));
@@ -140,7 +138,6 @@ EXAMPLES:
       Logger.info('    feature/');
       Logger.info('      template.yaml');
       Logger.info('      {{name}}_bloc.dart.template');
-      Logger.info('      {{name}}_state.dart.template');
       return;
     }
 
@@ -195,7 +192,6 @@ EXAMPLES:
         Logger.info('  • $template');
         Logger.info('    (no template.yaml - using simple mode)');
 
-        // Show template files
         final templateFiles = templateDir
             .listSync()
             .whereType<File>()
@@ -215,25 +211,58 @@ EXAMPLES:
   }
 
   /// Generates files from a template.
+  ///
+  /// Loads template.yaml early to discover custom attributes,
+  /// then builds ArgParser dynamically so `--attribute` flags work.
   void _generateFromTemplate(String templateName, List<String> arguments) {
-    final parser = ArgParser()
-      ..addOption(
-        'name',
-        help: 'Name for the generated files',
-        mandatory: true,
-      )
-      ..addOption(
-        'path',
-        help: 'Output path (overrides template.yaml default)',
-      )
-      ..addFlag(
-        'help',
-        abbr: 'h',
-        help: 'Show help information',
-        negatable: false,
-      );
+    final rootPath = Directory.current.path;
+    final templateDir = Directory(
+      p.join(rootPath, 'flutist', 'templates', templateName),
+    );
 
-    // Parse known options first
+    if (!templateDir.existsSync()) {
+      Logger.error('Template "$templateName" not found.');
+      Logger.info('');
+      Logger.info('Available templates: run "flutist scaffold list"');
+      exit(1);
+    }
+
+    // Load template.yaml early to discover custom attribute definitions.
+    final configFile = File(p.join(templateDir.path, 'template.yaml'));
+    Map? config;
+    List? configAttributes;
+
+    if (configFile.existsSync()) {
+      try {
+        config = loadYaml(configFile.readAsStringSync()) as Map;
+        configAttributes = config['attributes'] as List?;
+      } catch (e) {
+        Logger.error('Failed to parse template.yaml: $e');
+        exit(1);
+      }
+    }
+
+    // Build ArgParser with both standard and custom attributes.
+    final parser = ArgParser()
+      ..addOption('name', help: 'Name for the generated files', mandatory: true)
+      ..addOption('path', help: 'Output path (overrides template.yaml default)')
+      ..addFlag('help',
+          abbr: 'h', help: 'Show help information', negatable: false);
+
+    if (configAttributes != null) {
+      for (final attr in configAttributes) {
+        if (attr is Map) {
+          final attrName = attr['name'] as String;
+          if (attrName != 'name' && attrName != 'path') {
+            parser.addOption(
+              attrName,
+              help: attr['description'] as String? ?? attrName,
+            );
+          }
+        }
+      }
+    }
+
     ArgResults result;
     try {
       result = parser.parse(arguments);
@@ -253,32 +282,59 @@ USAGE: flutist scaffold $templateName --name <name> [options]
 
 OPTIONS:
   --name <name>           Name for the generated files (required)
+  --path <path>           Output path (overrides template.yaml default)
   --<attribute> <value>   Custom attribute defined in template.yaml
   -h, --help              Show help information
 
-EXAMPLES:
-  flutist scaffold $templateName --name my_feature
-  flutist scaffold $templateName --name user --path lib/features
-
 TEMPLATE VARIABLES:
-  {{name}}                snake_case version (e.g., user_profile)
-  {{Name}}                PascalCase version (e.g., UserProfile)
-  {{NAME}}                UPPER_CASE version (e.g., USER_PROFILE)
+  {{name}}                snake_case (e.g., user_profile)
+  {{name | pascal_case}}  PascalCase (e.g., UserProfile)
+  {{name | camel_case}}   camelCase (e.g., userProfile)
+  {{name | upper_case}}   UPPER_CASE (e.g., USER_PROFILE)
 ''');
       return;
     }
 
     final name = result['name'] as String;
-
-    // Collect all custom attributes
     final attributes = <String, String>{'name': name};
 
-    // Add remaining options as custom attributes
+    if (result['path'] != null) {
+      attributes['path'] = result['path'] as String;
+    }
+
+    // Collect custom attributes from parsed args.
     for (final key in result.options) {
-      if (key != 'name' && key != 'help') {
+      if (key != 'name' && key != 'path' && key != 'help') {
         final value = result[key];
         if (value != null) {
           attributes[key] = value.toString();
+        }
+      }
+    }
+
+    // Fill missing attributes via interactive prompts (④).
+    if (configAttributes != null) {
+      for (final attr in configAttributes) {
+        if (attr is! Map) continue;
+        final attrName = attr['name'] as String;
+        final required = attr['required'] == true;
+        final defaultValue = attr['default'] as String?;
+
+        if (!attributes.containsKey(attrName)) {
+          if (required) {
+            stdout.write('? $attrName: ');
+            final input = stdin.readLineSync()?.trim();
+            if (input == null || input.isEmpty) {
+              Logger.error('Required attribute "$attrName" is missing.');
+              exit(1);
+            }
+            attributes[attrName] = input;
+          } else if (defaultValue != null) {
+            stdout.write('? $attrName (default: $defaultValue): ');
+            final input = stdin.readLineSync()?.trim();
+            attributes[attrName] =
+                (input == null || input.isEmpty) ? defaultValue : input;
+          }
         }
       }
     }
@@ -292,89 +348,49 @@ TEMPLATE VARIABLES:
     }
     Logger.info('');
 
-    _processTemplate(templateName, attributes);
-
-    Logger.success('Scaffold completed!');
-  }
-
-  /// Processes a template and generates files.
-  void _processTemplate(String templateName, Map<String, String> attributes) {
-    final rootPath = Directory.current.path;
-    final templateDir = Directory(
-      p.join(rootPath, 'flutist', 'templates', templateName),
-    );
-
-    if (!templateDir.existsSync()) {
-      Logger.error('Template "$templateName" not found.');
-      Logger.info('');
-      Logger.info('Available templates: run "flutist scaffold list"');
-      exit(1);
-    }
-
-    // Check for template.yaml
-    final configFile = File(p.join(templateDir.path, 'template.yaml'));
-
-    if (configFile.existsSync()) {
-      // Advanced mode: use template.yaml
-      _processAdvancedTemplate(templateDir, configFile, attributes);
+    if (config != null) {
+      _processAdvancedTemplate(templateDir, config, attributes);
     } else {
-      // Simple mode: process all .template files
       _processSimpleTemplate(templateDir, attributes);
     }
+
+    Logger.success('Scaffold completed!');
   }
 
   /// Processes template using template.yaml configuration.
   void _processAdvancedTemplate(
     Directory templateDir,
-    File configFile,
+    Map config,
     Map<String, String> attributes,
   ) {
-    try {
-      final config = loadYaml(configFile.readAsStringSync()) as Map;
+    final items = config['items'] as List?;
+    if (items == null || items.isEmpty) {
+      Logger.warn('No items defined in template.yaml');
+      return;
+    }
 
-      // Validate required attributes
-      final configAttributes = config['attributes'] as List?;
-      if (configAttributes != null) {
-        for (final attr in configAttributes) {
-          if (attr is Map) {
-            final name = attr['name'] as String;
-            final required = attr['required'] == true;
-            final defaultValue = attr['default'] as String?;
+    for (final item in items) {
+      if (item is! Map) continue;
 
-            if (required && !attributes.containsKey(name)) {
-              Logger.error('Missing required attribute: --$name');
-              exit(1);
-            }
+      // ③ Conditional generation: skip item if if: condition is false.
+      final condition = item['if'] as String?;
+      if (!_evaluateCondition(condition, attributes)) continue;
 
-            // Set default value if not provided
-            if (!attributes.containsKey(name) && defaultValue != null) {
-              attributes[name] = defaultValue;
-            }
-          }
-        }
-      }
+      final type = item['type'] as String?;
 
-      // Process items
-      final items = config['items'] as List?;
-      if (items == null || items.isEmpty) {
-        Logger.warn('No items defined in template.yaml');
-        return;
-      }
-
-      for (final item in items) {
-        if (item is! Map) continue;
-
-        final type = item['type'] as String?;
-
-        if (type == 'file') {
+      switch (type) {
+        case 'file':
           _processFileItem(templateDir, item, attributes);
-        } else if (type == 'directory') {
+          break;
+        case 'string':
+          _processStringItem(item, attributes);
+          break;
+        case 'directory':
           _processDirectoryItem(templateDir, item, attributes);
-        }
+          break;
+        default:
+          Logger.warn('Unknown item type: $type');
       }
-    } catch (e) {
-      Logger.error('Failed to parse template.yaml: $e');
-      exit(1);
     }
   }
 
@@ -392,10 +408,8 @@ TEMPLATE VARIABLES:
       return;
     }
 
-    // Replace variables in output path
     final resolvedOutputPath = _replaceVariables(outputPath, attributes);
 
-    // Read template file
     final templateFile = File(p.join(templateDir.path, templatePath));
     if (!templateFile.existsSync()) {
       Logger.warn('Template file not found: $templatePath');
@@ -403,16 +417,33 @@ TEMPLATE VARIABLES:
     }
 
     var content = templateFile.readAsStringSync();
-
-    // Replace variables in content
     content = _replaceVariables(content, attributes);
 
-    // Create output file
     final rootPath = Directory.current.path;
-    final fullOutputPath = p.join(rootPath, resolvedOutputPath);
-    final outputFile = File(fullOutputPath);
+    final outputFile = File(p.join(rootPath, resolvedOutputPath));
     outputFile.createSync(recursive: true);
     outputFile.writeAsStringSync(content);
+
+    Logger.info('  ✓ Created: $resolvedOutputPath');
+  }
+
+  /// Processes a string item from template.yaml (⑤ inline content).
+  void _processStringItem(Map item, Map<String, String> attributes) {
+    final outputPath = item['path'] as String?;
+    final contents = item['contents'] as String?;
+
+    if (outputPath == null || contents == null) {
+      Logger.warn('Invalid string item: missing path or contents');
+      return;
+    }
+
+    final resolvedOutputPath = _replaceVariables(outputPath, attributes);
+    final resolvedContents = _replaceVariables(contents, attributes);
+
+    final rootPath = Directory.current.path;
+    final outputFile = File(p.join(rootPath, resolvedOutputPath));
+    outputFile.createSync(recursive: true);
+    outputFile.writeAsStringSync(resolvedContents);
 
     Logger.info('  ✓ Created: $resolvedOutputPath');
   }
@@ -431,20 +462,16 @@ TEMPLATE VARIABLES:
       return;
     }
 
-    // Replace variables in output path
     final resolvedOutputPath = _replaceVariables(outputPath, attributes);
 
-    // Source directory
     final sourceDir = Directory(p.join(templateDir.path, sourcePath));
     if (!sourceDir.existsSync()) {
       Logger.warn('Source directory not found: $sourcePath');
       return;
     }
 
-    // Copy directory
     final rootPath = Directory.current.path;
-    final fullOutputPath = p.join(rootPath, resolvedOutputPath);
-    _copyDirectory(sourceDir, Directory(fullOutputPath));
+    _copyDirectory(sourceDir, Directory(p.join(rootPath, resolvedOutputPath)));
 
     Logger.info('  ✓ Copied directory: $resolvedOutputPath');
   }
@@ -454,7 +481,6 @@ TEMPLATE VARIABLES:
     Directory templateDir,
     Map<String, String> attributes,
   ) {
-    // Get all .template files
     final templateFiles = templateDir
         .listSync(recursive: true)
         .whereType<File>()
@@ -467,58 +493,97 @@ TEMPLATE VARIABLES:
     }
 
     final rootPath = Directory.current.path;
+    final outputBase = attributes['path'] != null
+        ? p.join(rootPath, attributes['path']!)
+        : rootPath;
 
     for (final templateFile in templateFiles) {
-      // Get relative path from template dir
       final relativePath = p.relative(
         templateFile.path,
         from: templateDir.path,
       );
 
-      // Remove .template extension
-      final outputFileName = relativePath.replaceAll('.template', '');
+      final outputFileName =
+          _replaceVariables(relativePath.replaceAll('.template', ''), attributes);
 
-      // Replace variables in filename
-      final resolvedFileName = _replaceVariables(outputFileName, attributes);
-
-      // Read template content
       var content = templateFile.readAsStringSync();
-
-      // Replace variables in content
       content = _replaceVariables(content, attributes);
 
-      // Create output file
-      final outputPath = p.join(rootPath, resolvedFileName);
-      final outputFile = File(outputPath);
+      final outputFile = File(p.join(outputBase, outputFileName));
       outputFile.createSync(recursive: true);
       outputFile.writeAsStringSync(content);
 
-      Logger.info('  ✓ Created: $resolvedFileName');
+      Logger.info('  ✓ Created: $outputFileName');
+    }
+  }
+
+  /// Evaluates a simple condition expression (③).
+  ///
+  /// Supports: `key == 'value'` or `key == value`
+  bool _evaluateCondition(String? condition, Map<String, String> attributes) {
+    if (condition == null) return true;
+
+    final match =
+        RegExp(r"(\w+)\s*==\s*'?([^']*)'?").firstMatch(condition.trim());
+    if (match == null) return true;
+
+    final key = match.group(1)!;
+    final expected = match.group(2)!;
+    return (attributes[key] ?? '') == expected;
+  }
+
+  /// Applies a named filter to a value (②).
+  String _applyFilter(String value, String filter) {
+    switch (filter.trim()) {
+      case 'snake_case':
+        return StringCase.toSnakeCase(value);
+      case 'pascal_case':
+        return StringCase.toPascalCase(value);
+      case 'camel_case':
+        return StringCase.toCamelCase(value);
+      case 'upper_case':
+        return StringCase.toSnakeCase(value).toUpperCase();
+      default:
+        return value;
     }
   }
 
   /// Replaces template variables with actual values.
+  ///
+  /// Supports:
+  /// - Pipe filters: `{{name | snake_case}}`, `{{name | pascal_case}}` etc. (②)
+  /// - Direct substitution: `{{name}}` → snake_case
+  /// - Legacy shorthands: `{{Name}}`, `{{NAME}}`, `{{name_camel}}`
   String _replaceVariables(String content, Map<String, String> attributes) {
     var result = content;
 
+    // ② Pipe filter syntax: {{key | filter}}
+    result = result.replaceAllMapped(
+      RegExp(r'\{\{(\w+)\s*\|\s*(\w+)\}\}'),
+      (match) {
+        final key = match.group(1)!;
+        final filter = match.group(2)!;
+        final value = attributes[key] ?? '';
+        return _applyFilter(value, filter);
+      },
+    );
+
+    // Direct substitution and legacy shorthands
     for (final entry in attributes.entries) {
       final key = entry.key;
       final value = entry.value;
 
-      // Generate different case variations
       final snakeCase = StringCase.toSnakeCase(value);
       final pascalCase = StringCase.toPascalCase(value);
       final upperCase = snakeCase.toUpperCase();
       final camelCase = StringCase.toCamelCase(value);
 
-      // Replace all variations
       result = result
           .replaceAll('{{$key}}', snakeCase)
           .replaceAll('{{${key}_pascal}}', pascalCase)
           .replaceAll('{{${key}_upper}}', upperCase)
           .replaceAll('{{${key}_camel}}', camelCase);
 
-      // Special handling for 'name' attribute
       if (key == 'name') {
         result = result
             .replaceAll('{{Name}}', pascalCase)
@@ -530,19 +595,18 @@ TEMPLATE VARIABLES:
     return result;
   }
 
-  /// Copies a directory recursively.
   void _copyDirectory(Directory source, Directory destination) {
     destination.createSync(recursive: true);
 
     for (final entity in source.listSync()) {
       if (entity is File) {
-        final newPath = p.join(destination.path, p.basename(entity.path));
-        entity.copySync(newPath);
+        entity.copySync(p.join(destination.path, p.basename(entity.path)));
       } else if (entity is Directory) {
-        final newPath = p.join(destination.path, p.basename(entity.path));
-        _copyDirectory(entity, Directory(newPath));
+        _copyDirectory(
+          entity,
+          Directory(p.join(destination.path, p.basename(entity.path))),
+        );
       }
     }
   }
-
 }
