@@ -312,7 +312,7 @@ TEMPLATE VARIABLES:
       }
     }
 
-    // Fill missing attributes via interactive prompts (④).
+    // Fill missing attributes: required → error, optional → use default silently.
     if (configAttributes != null) {
       for (final attr in configAttributes) {
         if (attr is! Map) continue;
@@ -322,18 +322,13 @@ TEMPLATE VARIABLES:
 
         if (!attributes.containsKey(attrName)) {
           if (required) {
-            stdout.write('? $attrName: ');
-            final input = stdin.readLineSync()?.trim();
-            if (input == null || input.isEmpty) {
-              Logger.error('Required attribute "$attrName" is missing.');
-              exit(1);
-            }
-            attributes[attrName] = input;
+            Logger.error('Required attribute "--$attrName" is missing.');
+            Logger.info('');
+            Logger.info(
+                'Usage: flutist scaffold $templateName --name <name> [options]');
+            exit(1);
           } else if (defaultValue != null) {
-            stdout.write('? $attrName (default: $defaultValue): ');
-            final input = stdin.readLineSync()?.trim();
-            attributes[attrName] =
-                (input == null || input.isEmpty) ? defaultValue : input;
+            attributes[attrName] = defaultValue;
           }
         }
       }

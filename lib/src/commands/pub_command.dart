@@ -73,6 +73,8 @@ class PubCommand implements BaseCommand {
         final updatedContent =
             _addDependencyToPackage(packageContent, packageName, version);
 
+        if (updatedContent == packageContent) continue;
+
         // Write updated content
         await File(packageDartPath).writeAsString(updatedContent);
 
@@ -150,15 +152,12 @@ environment:
   ) {
     // Check if dependency already exists
     final existingPattern = RegExp(
-      r"Dependency\s*\(\s*name:\s*'$packageName'\s*,\s*version:\s*'[^']+'\s*\)",
+      "Dependency\\s*\\(\\s*name:\\s*'$packageName'\\s*,\\s*version:\\s*'[^']+'\\s*\\)",
     );
 
     if (existingPattern.hasMatch(packageContent)) {
-      // Update existing dependency
-      return packageContent.replaceFirst(
-        existingPattern,
-        "Dependency(name: '$packageName', version: '$version')",
-      );
+      Logger.warn('$packageName already exists in package.dart. Skipping.');
+      return packageContent;
     }
 
     // Find dependencies array
