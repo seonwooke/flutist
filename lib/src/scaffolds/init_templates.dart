@@ -17,6 +17,9 @@ dependencies:
   app:
     path: app
 
+flutter:
+  uses-material-design: true
+
 # Flutter Native Workspace configuration
 # All packages inside the 'packages' directory will be managed together
 workspace:''';

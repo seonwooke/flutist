@@ -348,6 +348,15 @@ class InitCommand implements BaseCommand {
       }
     }
 
+    // Ensure flutter.uses-material-design is set
+    final flutterSection = yamlDoc['flutter'] as Map?;
+    if (flutterSection == null || flutterSection['uses-material-design'] != true) {
+      editor.update(['flutter', 'uses-material-design'], true);
+      Logger.info('  ✓ Added flutter.uses-material-design: true');
+    } else {
+      Logger.info('  ✓ flutter.uses-material-design already set');
+    }
+
     // Ensure workspace section exists (block style: "- item" not "[item]")
     if (!yamlDoc.containsKey('workspace')) {
       editor.update(
