@@ -23,7 +23,7 @@ All notable changes to Flutist will be documented in this file.
 
 - **B6: Layer dependency auto-wiring on `flutist create`**
   - Layer packages are automatically wired in `project.dart` based on scaffold type:
-    - `clean`: `presentation → data → domain`
+    - `clean`: `presentation → domain`, `data → domain` (both independently depend on domain)
     - `micro`: `implementation/testing → interface`, `tests/example → implementation + testing`
     - `lite`: `implementation/testing → interface`, `tests → implementation + testing`
 

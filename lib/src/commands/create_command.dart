@@ -128,7 +128,7 @@ class CreateCommand implements BaseCommand {
         return {
           '${name}_domain': [],
           '${name}_data': ['${name}_domain'],
-          '${name}_presentation': ['${name}_data'],
+          '${name}_presentation': ['${name}_domain'],
         };
 
       case ScaffoldType.micro:

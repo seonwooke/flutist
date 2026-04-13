@@ -142,7 +142,7 @@ features/login/
 └── login_presentation/    # UI and state management
 ```
 
-**Auto-wired:** `presentation → data → domain`
+**Auto-wired:** `presentation → domain`, `data → domain`
 
 ### Micro (`--options micro`)
 
