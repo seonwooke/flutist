@@ -31,10 +31,12 @@ cd my_flutter_project
 flutist init
 ```
 
-Flutist will ask whether this is a **new project** or an **existing project migration**:
+Flutist adapts based on context:
 
-- **New project**: Creates `app` module, adds it to workspace, scaffolds `lib/main.dart`
-- **Existing project**: Only creates configuration files (`project.dart`, `package.dart`) and workspace setup — preserves your existing code, `analysis_options.yaml`, and `lib/main.dart`
+- **No `pubspec.yaml`**: Asks if you want to create a new Flutter project. If yes, runs `flutter create .` and sets up as a new project automatically. If no, exits with guidance.
+- **`pubspec.yaml` exists**: Asks whether this is a **new project** or an **existing project migration**.
+  - **New project**: Creates `app` module, adds it to workspace, scaffolds `lib/main.dart`
+  - **Existing project**: Only creates configuration files (`project.dart`, `package.dart`) and workspace setup — preserves your existing code, `analysis_options.yaml`, and `lib/main.dart`
 
 ### 2. Create a Module
 

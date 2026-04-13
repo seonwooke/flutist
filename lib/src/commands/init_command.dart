@@ -28,8 +28,11 @@ class InitCommand implements BaseCommand {
       // 1. Check if Flutter project exists
       final pubspecExists = File('$rootPath/pubspec.yaml').existsSync();
 
+      // Determine isNewProject based on context
+      bool isNewProject;
+
       if (!pubspecExists) {
-        // Ask user if they want to create Flutter project
+        // No pubspec.yaml — ask to create Flutter project
         Logger.warn('No Flutter project found in current directory.');
         Logger.info('Do you want to create a new Flutter project? (y/n)');
 
@@ -53,24 +56,27 @@ class InitCommand implements BaseCommand {
           await _removeFilesAndFolders(rootPath);
 
           Logger.success('Flutter project created');
+
+          // Implicitly a new project — skip Q2
+          isNewProject = true;
+          Logger.info('Setting up as new project...');
         } else {
-          Logger.error('Flutist requires a Flutter project.');
           Logger.info('Run "flutter create ." first, then "flutist init"');
-          exit(1);
+          exit(0);
         }
-      }
-
-      // Ask project type
-      Logger.info('Is this a new project or an existing project migration?');
-      Logger.info('  1) New project');
-      Logger.info('  2) Existing project migration');
-      final projectTypeAnswer = stdin.readLineSync()?.trim();
-      final isNewProject = projectTypeAnswer != '2';
-
-      if (isNewProject) {
-        Logger.info('Setting up as new project...');
       } else {
-        Logger.info('Setting up as existing project migration...');
+        // pubspec.yaml exists — ask new project or migration
+        Logger.info('Is this a new project or an existing project migration?');
+        Logger.info('  1) New project');
+        Logger.info('  2) Existing project migration');
+        final projectTypeAnswer = stdin.readLineSync()?.trim();
+        isNewProject = projectTypeAnswer != '2';
+
+        if (isNewProject) {
+          Logger.info('Setting up as new project...');
+        } else {
+          Logger.info('Setting up as existing project migration...');
+        }
       }
 
       // Get flutist package version from current package's pubspec.yaml
