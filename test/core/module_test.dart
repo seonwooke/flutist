@@ -2,38 +2,33 @@ import 'package:flutist/flutist.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('ModuleType.fromString', () {
+  group('ScaffoldType.fromString', () {
     test('parses all valid types', () {
-      expect(ModuleType.fromString('clean'), ModuleType.clean);
-      expect(ModuleType.fromString('micro'), ModuleType.micro);
-      expect(ModuleType.fromString('lite'), ModuleType.lite);
-      expect(ModuleType.fromString('simple'), ModuleType.simple);
-      expect(ModuleType.fromString('custom'), ModuleType.custom);
+      expect(ScaffoldType.fromString('clean'), ScaffoldType.clean);
+      expect(ScaffoldType.fromString('micro'), ScaffoldType.micro);
+      expect(ScaffoldType.fromString('lite'), ScaffoldType.lite);
+      expect(ScaffoldType.fromString('simple'), ScaffoldType.simple);
+      expect(ScaffoldType.fromString('custom'), ScaffoldType.custom);
     });
 
     test('throws on invalid type', () {
-      expect(() => ModuleType.fromString('invalid'), throwsArgumentError);
-      expect(() => ModuleType.fromString(''), throwsArgumentError);
+      expect(() => ScaffoldType.fromString('invalid'), throwsArgumentError);
+      expect(() => ScaffoldType.fromString(''), throwsArgumentError);
     });
 
     test('is case-sensitive', () {
-      expect(() => ModuleType.fromString('Clean'), throwsArgumentError);
-      expect(() => ModuleType.fromString('MICRO'), throwsArgumentError);
+      expect(() => ScaffoldType.fromString('Clean'), throwsArgumentError);
+      expect(() => ScaffoldType.fromString('MICRO'), throwsArgumentError);
     });
 
     test('rejects old 1.x type names', () {
-      expect(() => ModuleType.fromString('feature'), throwsArgumentError);
-      expect(() => ModuleType.fromString('library'), throwsArgumentError);
-      expect(() => ModuleType.fromString('standard'), throwsArgumentError);
+      expect(() => ScaffoldType.fromString('feature'), throwsArgumentError);
+      expect(() => ScaffoldType.fromString('library'), throwsArgumentError);
+      expect(() => ScaffoldType.fromString('standard'), throwsArgumentError);
     });
   });
 
   group('Module', () {
-    test('defaults to ModuleType.micro', () {
-      final module = Module(name: 'test');
-      expect(module.type, ModuleType.micro);
-    });
-
     test('defaults to empty lists', () {
       final module = Module(name: 'test');
       expect(module.dependencies, isEmpty);

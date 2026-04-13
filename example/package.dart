@@ -2,66 +2,40 @@ import 'package:flutist/flutist.dart';
 
 /// Centralized dependency management for the project.
 ///
-/// All dependencies and modules are defined here and can be referenced
-/// by individual modules in project.dart using type-safe accessors.
+/// Add dependencies here and reference them in project.dart via
+/// package.dependencies.<name> and package.modules.<name>.
 ///
-/// Example usage in project.dart:
-/// ```dart
-/// Module(
-///   name: 'app',
-///   dependencies: [
-///     package.dependencies.http,
-///     package.dependencies.provider,
-///   ],
-///   modules: [
-///     package.modules.authentication,
-///   ],
-/// )
-/// ```
+/// After modifying, run `flutist generate` to sync pubspec.yaml files.
 final package = Package(
   name: 'my_flutter_project',
 
-  /// External dependencies available for all modules.
-  ///
-  /// After adding dependencies here, run `flutist generate` to sync
-  /// them to module pubspec.yaml files.
   dependencies: [
-    // HTTP client for API calls
+    // Network
     Dependency(name: 'http', version: '^1.1.0'),
-
-    // State management
-    Dependency(name: 'provider', version: '^6.1.1'),
-
-    // Local storage
-    Dependency(name: 'shared_preferences', version: '^2.2.2'),
-
-    // JSON serialization
-    Dependency(name: 'json_annotation', version: '^4.8.1'),
 
     // Testing
     Dependency(name: 'test', version: '^1.24.0'),
     Dependency(name: 'mockito', version: '^5.4.4'),
   ],
 
-  /// Module definitions that can be referenced by other modules.
-  ///
-  /// These modules are defined here and can be used as dependencies
-  /// in project.dart to establish module relationships.
+  /// All modules in the workspace.
+  /// Layer packages are declared individually (no type: field in 3.0.0).
   modules: [
-    // Clean modules
-    Module(name: 'authentication', type: ModuleType.clean),
-    Module(name: 'profile', type: ModuleType.clean),
+    // App shell
+    Module(name: 'app'),
 
-    // Micro modules
-    Module(name: 'network', type: ModuleType.micro),
-    Module(name: 'storage', type: ModuleType.micro),
+    // auth — clean architecture (3 layers)
+    Module(name: 'auth_domain'),
+    Module(name: 'auth_data'),
+    Module(name: 'auth_presentation'),
 
-    // Lite modules
-    Module(name: 'models', type: ModuleType.lite),
-    Module(name: 'constants', type: ModuleType.lite),
+    // network — lite architecture (4 layers)
+    Module(name: 'network_interface'),
+    Module(name: 'network_implementation'),
+    Module(name: 'network_testing'),
+    Module(name: 'network_tests'),
 
-    // Simple modules
-    Module(name: 'utils', type: ModuleType.simple),
-    Module(name: 'extensions', type: ModuleType.simple),
+    // Shared utilities
+    Module(name: 'utils'),
   ],
 );

@@ -2,46 +2,119 @@
 
 All notable changes to Flutist will be documented in this file.
 
+## [3.0.0] - 2026-04-13
+
+### 💥 Breaking Changes
+
+- **`ModuleType` → `ScaffoldType` rename**
+  - `ModuleType` enum is removed. Use `ScaffoldType` internally (create-time only).
+  - `ScaffoldType` is never written to `project.dart` or `package.dart`.
+
+- **`Module.type` field removed**
+  - The `type:` field in `Module(...)` is no longer valid.
+  - If `project.dart` contains `type: ModuleType.xxx`, parsing will fail with a migration error.
+  - **Migration**: Remove all `type: ModuleType.xxx,` lines from `project.dart`.
+
+- **`--options simple` removed from `flutist create`**
+  - Omitting `--options` now creates a single package by default (was `--options simple`).
+  - `--options` accepts `clean`, `micro`, `lite` only.
+
+### ✨ New Features
+
+- **B6: Layer dependency auto-wiring on `flutist create`**
+  - Layer packages are automatically wired in `project.dart` based on scaffold type:
+    - `clean`: `presentation → domain`, `data → domain` (both independently depend on domain)
+    - `micro`: `implementation/testing → interface`, `tests/example → implementation + testing`
+    - `lite`: `implementation/testing → interface`, `tests → implementation + testing`
+
+- **`flutist scaffold` enhancement**
+  - **Custom attribute CLI**: Attributes defined in `template.yaml` are now passed via `--<attribute> value`
+  - **Filter system**: `{{name | snake_case}}`, `{{name | pascal_case}}`, `{{name | camel_case}}`, `{{name | upper_case}}`
+    (legacy `{{Name}}`, `{{NAME}}` shorthands are still supported)
+  - **Conditional generation**: Items support `if: "attribute == 'value'"` to skip files conditionally
+  - **`string` item type**: Define file contents inline in `template.yaml` without an external `.template` file
+  - **`--path` fix in simple mode**: `--path` is now respected as the output base directory
+
+- **D3: `flutter test` vs `dart test` auto-detection**
+  - `flutist test` automatically selects `flutter test` or `dart test` per module.
+  - Detects Flutter packages by checking the module and its path dependencies recursively — test-only packages that depend on Flutter implementation packages are correctly identified without requiring `flutter_test` in their own `pubspec.yaml`.
+
+- **Architecture Checker: explicit tests for `_implementation → _testing` rule**
+  - Added tests verifying that `_implementation` must never depend on `_testing`, even within the same feature (enforced via the existing `testing_reference` rule).
+
+### 🐛 Fixed
+
+- **`flutist init`**: Removed `type: ModuleType.simple` from generated `project.dart` template
+- **`flutist init`**: Removed hardcoded example dependencies (`intl`, `test`) from `package.dart` template
+- **`flutist init`**: Added `flutter: uses-material-design: true` to root `pubspec.yaml` — without this, `Icons.*` render as `?` at runtime
+- **`flutist scaffold`**: Example template replaced with neutral StatelessWidget/StatefulWidget (no `flutter_bloc` dependency)
+
+### 🔄 Migration from 2.x
+
+Remove `type:` from all `Module(...)` entries in `project.dart`:
+
+```dart
+// Before (2.x)
+Module(
+  name: 'auth_domain',
+  type: ModuleType.clean,   // ← remove this line
+  dependencies: [],
+  modules: [],
+),
+
+// After (3.0.0)
+Module(
+  name: 'auth_domain',
+  dependencies: [],
+  modules: [],
+),
+```
+
+If `type:` remains, `flutist generate` / `flutist check` will print a clear error
+pointing to this CHANGELOG.
+
+---
+
 ## [2.1.0] - 2026-04-07
 
 ### ✨ New Features
 
-- **`flutist init`: 신규/기존 프로젝트 선택**
-  - 초기화 시 새 프로젝트 / 기존 프로젝트 마이그레이션을 선택할 수 있음
-  - 기존 프로젝트: app 모듈 생성 스킵, workspace app 항목 스킵, 빈 project.dart/package.dart 생성
-- **`flutist pub add`: 다중 패키지 지원**
-  - `flutist pub add http dio` 형태로 한 번에 여러 패키지 추가 가능
-- **기존 프로젝트용 템플릿 사용 가이드 주석**
-  - `project.dart`, `package.dart`에 워크플로우 3단계 주석 및 예시 추가
+- **`flutist init`: New/existing project selection**
+  - Choose between new project creation or existing project migration during init
+  - Existing project: skip app module creation, skip workspace app entry, generate empty project.dart/package.dart
+- **`flutist pub add`: Multi-package support**
+  - Add multiple packages at once with `flutist pub add http dio`
+- **Template usage guide comments for existing projects**
+  - Added 3-step workflow comments and examples to `project.dart` and `package.dart`
 
 ### 🐛 Fixed
 
-- **`flutist create`**: simple 모듈 경로에 모듈 이름 누락 수정 (`packages/` → `packages/core`)
-- **`flutist create`**: 레이어 모듈명 suffix 중복 입력 시 경고 및 종료
-- **`flutist create`**: path 마지막 세그먼트가 name과 같을 때 중첩 경고 및 종료
-- **`flutist create`**: 모듈 생성 시 barrel file(`lib/module_name.dart`) 자동 생성
-- **`flutist generate`**: cross-path 모듈 의존성 해석 — 하드코딩된 basePaths 제거, workspace 스캔으로 동적 해석
-- **`flutist generate`**: `flutter`, `flutter_localizations` 등 모든 SDK 의존성 보존 (기존에는 `flutter`만 보존)
-- **`flutist init`**: `lib/main.dart` 이미 존재하면 덮어쓰지 않음
-- **`flutist init`**: `analysis_options.yaml` 이미 존재하면 덮어쓰지 않음
-- **`flutist init`**: workspace 항목이 block style로 추가됨 (`- path/to/module`)
-- **`flutist pub add`**: 반복 실행 시 `],`가 같은 줄에 붙는 포맷 깨짐 수정
-- **`flutist pub add`**: `Generated flutist_gen.dart` 메시지 중복 출력 수정
-- **`flutist scaffold`**: `--path` 옵션이 문서에만 존재하고 실제 동작하지 않던 버그 수정
-- **`flutist test`**: 실패 시 키워드 필터링 없이 전체 stdout/stderr 출력
-- **아키텍처 체커**: 같은 피처의 `_example`, `_tests`가 `_implementation`, `_testing`에 의존하는 것을 허용 (Tuist microfeature 표준)
+- **`flutist create`**: Fixed missing module name in simple module path (`packages/` → `packages/core`)
+- **`flutist create`**: Warn and exit when layer module name suffix is entered redundantly
+- **`flutist create`**: Warn and exit when last path segment matches the module name (nested path detection)
+- **`flutist create`**: Auto-generate barrel file (`lib/module_name.dart`) when creating a module
+- **`flutist generate`**: Cross-path module dependency resolution — removed hardcoded basePaths, now resolved dynamically via workspace scan
+- **`flutist generate`**: Preserve all SDK dependencies including `flutter`, `flutter_localizations`, etc. (previously only `flutter` was preserved)
+- **`flutist init`**: Do not overwrite `lib/main.dart` if it already exists
+- **`flutist init`**: Do not overwrite `analysis_options.yaml` if it already exists
+- **`flutist init`**: Workspace entries are now added in block style (`- path/to/module`)
+- **`flutist pub add`**: Fixed format corruption where `],` was appended on the same line on repeated runs
+- **`flutist pub add`**: Fixed duplicate output of `Generated flutist_gen.dart` message
+- **`flutist scaffold`**: Fixed bug where `--path` option existed in docs but did not actually work
+- **`flutist test`**: Print full stdout/stderr without keyword filtering on failure
+- **Architecture Checker**: Allow `_example` and `_tests` of the same feature to depend on `_implementation` and `_testing` (Tuist microfeature standard)
 
 ### 🔧 Changed
 
-- **`strictMode` 동작 변경**: `strictMode: false`여도 아키텍처 위반을 항상 감지하고 출력함. `strictMode`는 위반 시 중단 여부만 제어
-  - `true` (기본): 위반 발견 시 generate/check 중단 (exit 1)
-  - `false`: 위반 출력 후 계속 진행 (마이그레이션 과도기용)
+- **`strictMode` behavior change**: Architecture violations are always detected and reported even when `strictMode: false`. `strictMode` only controls whether to abort on violations
+  - `true` (default): Abort generate/check when violations are found (exit 1)
+  - `false`: Print violations and continue (intended for migration transition period)
 
 ### 📝 Documentation
 
-- README: SDK 의존성 및 Flutter 빌드 설정 관련 주의사항 추가
-- README: 모듈 타입별 디렉토리 구조 문서화
-- README: init 워크플로우 (신규/기존 프로젝트) 문서화
+- README: Added notes on SDK dependencies and Flutter build configuration
+- README: Documented directory structure per module type
+- README: Documented init workflow for new and existing projects
 
 ---
 
@@ -332,4 +405,21 @@ Inspired by [Tuist](https://tuist.io/)
 
 ---
 
-[1.0.0]: https://github.com/yourusername/flutist/releases/tag/v1.0.0
+[3.0.0]: https://github.com/seonwooke/flutist/releases/tag/v3.0.0
+[2.1.0]: https://github.com/seonwooke/flutist/releases/tag/v2.1.0
+[2.0.0]: https://github.com/seonwooke/flutist/releases/tag/v2.0.0
+[1.1.3]: https://github.com/seonwooke/flutist/releases/tag/v1.1.3
+[1.1.2]: https://github.com/seonwooke/flutist/releases/tag/v1.1.2
+[1.1.1]: https://github.com/seonwooke/flutist/releases/tag/v1.1.1
+[1.1.0]: https://github.com/seonwooke/flutist/releases/tag/v1.1.0
+[1.0.10]: https://github.com/seonwooke/flutist/releases/tag/v1.0.10
+[1.0.9]: https://github.com/seonwooke/flutist/releases/tag/v1.0.9
+[1.0.8]: https://github.com/seonwooke/flutist/releases/tag/v1.0.8
+[1.0.7]: https://github.com/seonwooke/flutist/releases/tag/v1.0.7
+[1.0.6]: https://github.com/seonwooke/flutist/releases/tag/v1.0.6
+[1.0.5]: https://github.com/seonwooke/flutist/releases/tag/v1.0.5
+[1.0.4]: https://github.com/seonwooke/flutist/releases/tag/v1.0.4
+[1.0.3]: https://github.com/seonwooke/flutist/releases/tag/v1.0.3
+[1.0.2]: https://github.com/seonwooke/flutist/releases/tag/v1.0.2
+[1.0.1]: https://github.com/seonwooke/flutist/releases/tag/v1.0.1
+[1.0.0]: https://github.com/seonwooke/flutist/releases/tag/v1.0.0

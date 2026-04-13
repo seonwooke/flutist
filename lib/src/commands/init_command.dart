@@ -4,7 +4,6 @@ import 'package:path/path.dart' as path;
 import 'package:yaml/yaml.dart';
 import 'package:yaml_edit/yaml_edit.dart';
 
-import '../core/core.dart';
 import '../engine/engine.dart';
 import '../scaffolds/init_templates.dart';
 import '../utils/utils.dart';
@@ -29,8 +28,11 @@ class InitCommand implements BaseCommand {
       // 1. Check if Flutter project exists
       final pubspecExists = File('$rootPath/pubspec.yaml').existsSync();
 
+      // Determine isNewProject based on context
+      bool isNewProject;
+
       if (!pubspecExists) {
-        // Ask user if they want to create Flutter project
+        // No pubspec.yaml — ask to create Flutter project
         Logger.warn('No Flutter project found in current directory.');
         Logger.info('Do you want to create a new Flutter project? (y/n)');
 
@@ -54,24 +56,27 @@ class InitCommand implements BaseCommand {
           await _removeFilesAndFolders(rootPath);
 
           Logger.success('Flutter project created');
+
+          // Implicitly a new project — skip Q2
+          isNewProject = true;
+          Logger.info('Setting up as new project...');
         } else {
-          Logger.error('Flutist requires a Flutter project.');
           Logger.info('Run "flutter create ." first, then "flutist init"');
-          exit(1);
+          exit(0);
         }
-      }
-
-      // Ask project type
-      Logger.info('Is this a new project or an existing project migration?');
-      Logger.info('  1) New project');
-      Logger.info('  2) Existing project migration');
-      final projectTypeAnswer = stdin.readLineSync()?.trim();
-      final isNewProject = projectTypeAnswer != '2';
-
-      if (isNewProject) {
-        Logger.info('Setting up as new project...');
       } else {
-        Logger.info('Setting up as existing project migration...');
+        // pubspec.yaml exists — ask new project or migration
+        Logger.info('Is this a new project or an existing project migration?');
+        Logger.info('  1) New project');
+        Logger.info('  2) Existing project migration');
+        final projectTypeAnswer = stdin.readLineSync()?.trim();
+        isNewProject = projectTypeAnswer != '2';
+
+        if (isNewProject) {
+          Logger.info('Setting up as new project...');
+        } else {
+          Logger.info('Setting up as existing project migration...');
+        }
       }
 
       // Get flutist package version from current package's pubspec.yaml
@@ -232,67 +237,23 @@ class InitCommand implements BaseCommand {
     final featureDir = path.join(templatesDir, 'feature');
     await Directory(featureDir).create(recursive: true);
 
-    // template.yaml
     await FileHelper.writeFile(
       path.join(featureDir, 'template.yaml'),
       InitTemplates.featureTemplateYaml(),
     );
 
-    // bloc.dart.template
     await FileHelper.writeFile(
-      path.join(featureDir, 'bloc.dart.template'),
-      InitTemplates.featureBlocDartTemplate(),
-    );
-
-    // state.dart.template
-    await FileHelper.writeFile(
-      path.join(featureDir, 'state.dart.template'),
-      InitTemplates.featureStateDartTemplate(),
-    );
-
-    // event.dart.template
-    await FileHelper.writeFile(
-      path.join(featureDir, 'event.dart.template'),
-      InitTemplates.featureEventDartTemplate(),
-    );
-
-    // screen.dart.template
-    await FileHelper.writeFile(
-      path.join(featureDir, 'screen.dart.template'),
-      InitTemplates.featureScreenDartTemplate(),
+      path.join(featureDir, 'widget.dart.template'),
+      InitTemplates.featureWidgetDartTemplate(),
     );
   }
 
   /// Gets the flutist package version from the current package's pubspec.yaml.
-  /// Priority: dart pub global list > local script path (for local development)
+  /// Priority: running script's pubspec.yaml > dart pub global list
   Future<String> _getFlutistPackageVersion() async {
     try {
-      // Priority 1: Try to get version from 'dart pub global list' (for globally installed packages)
-      // This is the most common case when users run "dart pub global activate flutist"
-      try {
-        final result = await Process.run('dart', ['pub', 'global', 'list']);
-        if (result.exitCode == 0) {
-          final output = result.stdout as String;
-          // Parse output like "flutist 1.0.7"
-          final lines = output.split('\n');
-          for (final line in lines) {
-            final trimmed = line.trim();
-            if (trimmed.startsWith('flutist ')) {
-              final parts = trimmed.split(RegExp(r'\s+'));
-              if (parts.length >= 2) {
-                final version = parts[1];
-                if (version.isNotEmpty) {
-                  return '^$version';
-                }
-              }
-            }
-          }
-        }
-      } catch (_) {
-        // Ignore if dart pub global list fails
-      }
-
-      // Priority 2: Try to get the script location (bin/flutist.dart) for local development
+      // Priority 1: Read version from the running script's own pubspec.yaml.
+      // This is always accurate regardless of which version is globally installed.
       String? scriptPath;
       try {
         final scriptUri = Platform.script;
@@ -322,6 +283,29 @@ class InitCommand implements BaseCommand {
             }
           }
         }
+      }
+
+      // Priority 2: Fall back to 'dart pub global list' if script path is unavailable.
+      try {
+        final result = await Process.run('dart', ['pub', 'global', 'list']);
+        if (result.exitCode == 0) {
+          final output = result.stdout as String;
+          final lines = output.split('\n');
+          for (final line in lines) {
+            final trimmed = line.trim();
+            if (trimmed.startsWith('flutist ')) {
+              final parts = trimmed.split(RegExp(r'\s+'));
+              if (parts.length >= 2) {
+                final version = parts[1];
+                if (version.isNotEmpty) {
+                  return '^$version';
+                }
+              }
+            }
+          }
+        }
+      } catch (_) {
+        // Ignore if dart pub global list fails
       }
     } catch (e) {
       Logger.warn('Failed to read flutist package version: $e');
@@ -362,6 +346,15 @@ class InitCommand implements BaseCommand {
       } else {
         Logger.info('  ✓ app dependency already exists');
       }
+    }
+
+    // Ensure flutter.uses-material-design is set
+    final flutterSection = yamlDoc['flutter'] as Map?;
+    if (flutterSection == null || flutterSection['uses-material-design'] != true) {
+      editor.update(['flutter', 'uses-material-design'], true);
+      Logger.info('  ✓ Added flutter.uses-material-design: true');
+    } else {
+      Logger.info('  ✓ flutter.uses-material-design already set');
     }
 
     // Ensure workspace section exists (block style: "- item" not "[item]")
@@ -422,7 +415,6 @@ class InitCommand implements BaseCommand {
       rootPath,
       'app',
       'app',
-      ModuleType.simple,
     );
   }
 

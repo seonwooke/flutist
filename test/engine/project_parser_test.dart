@@ -37,18 +37,16 @@ final project = Project(
       expect(result!.name, 'my_app');
     });
 
-    test('parses modules with types', () {
+    test('parses modules', () {
       writeProjectDart("""
 final project = Project(
   name: 'my_app',
   modules: [
     Module(
       name: 'login',
-      type: ModuleType.clean,
     ),
     Module(
       name: 'network',
-      type: ModuleType.micro,
     ),
   ],
 );
@@ -57,10 +55,9 @@ final project = Project(
       final result = ProjectParser.parse(tempDir.path);
       expect(result!.modules, hasLength(2));
       expect(result.modules[0].name, 'login');
-      expect(result.modules[0].type, ModuleType.clean);
       expect(result.modules[1].name, 'network');
-      expect(result.modules[1].type, ModuleType.micro);
     });
+
 
     test('parses module dependencies', () {
       writeProjectDart("""
@@ -69,7 +66,6 @@ final project = Project(
   modules: [
     Module(
       name: 'login',
-      type: ModuleType.clean,
       dependencies: [
         package.dependencies.http,
         package.dependencies.sharedPreferences,
@@ -93,7 +89,6 @@ final project = Project(
   modules: [
     Module(
       name: 'login',
-      type: ModuleType.clean,
       modules: [
         package.modules.network,
         package.modules.models,

@@ -45,24 +45,23 @@ final package = Package(
       expect(result.dependencies[1].version, '^6.1.1');
     });
 
-    test('parses modules with types', () {
+    test('parses modules', () {
       const content = """
 final package = Package(
   name: 'test',
   dependencies: [],
   modules: [
-    Module(name: 'auth', type: ModuleType.clean),
-    Module(name: 'network', type: ModuleType.micro),
-    Module(name: 'models', type: ModuleType.lite),
+    Module(name: 'auth'),
+    Module(name: 'network'),
+    Module(name: 'models'),
   ],
 );
 """;
       final result = GenFileGenerator.parsePackageDart(content);
       expect(result.modules, hasLength(3));
       expect(result.modules[0].name, 'auth');
-      expect(result.modules[0].type, ModuleType.clean);
-      expect(result.modules[1].type, ModuleType.micro);
-      expect(result.modules[2].type, ModuleType.lite);
+      expect(result.modules[1].name, 'network');
+      expect(result.modules[2].name, 'models');
     });
 
     test('handles empty dependencies and modules', () {
@@ -124,9 +123,9 @@ final package = Package(
   name: 'test',
   dependencies: [],
   modules: [
-    Module(name: 'shared_module', type: ModuleType.simple),
-    Module(name: 'network', type: ModuleType.micro),
-    Module(name: 'user_profile', type: ModuleType.clean),
+    Module(name: 'shared_module'),
+    Module(name: 'network'),
+    Module(name: 'user_profile'),
   ],
 );
 """;

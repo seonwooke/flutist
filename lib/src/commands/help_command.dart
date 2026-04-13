@@ -43,7 +43,7 @@ QUICK START:
      flutist init
 
   2. Create a new module:
-     flutist create --path <path> --name <name> --options <type>
+     flutist create --name <name> --path <path> --options <type>
 
   3. Generate pubspec files:
      flutist generate
@@ -54,7 +54,7 @@ For more information about a specific command, use:
 
 EXAMPLES:
   flutist init
-  flutist create --path features --name login --options clean
+  flutist create --name login --path features --options clean
   flutist generate
   flutist pub add http
   flutist scaffold list
@@ -130,11 +130,11 @@ COMMAND: create
 DESCRIPTION: Create a new module in the Flutist project
 
 USAGE:
-  flutist create --path <path> --name <name> --options <type>
+  flutist create --name <name> --path <path> --options <type>
 
 REQUIRED OPTIONS:
-  --path, -p <path>     Directory path where the module will be created
   --name, -n <name>     Name of the module
+  --path, -p <path>     Directory path where the module will be created
   --options, -o <type>   Module type (clean, micro, lite, simple)
 
 MODULE TYPES:
@@ -144,9 +144,9 @@ MODULE TYPES:
   simple     Simple module with minimal structure
 
 EXAMPLES:
-  flutist create --path features --name login --options clean
-  flutist create --path lib --name network --options micro
-  flutist create -p core -n models -o lite
+  flutist create --name login --path features --options clean
+  flutist create --name network --path lib --options micro
+  flutist create -n models -p core -o lite
 ''');
   }
 

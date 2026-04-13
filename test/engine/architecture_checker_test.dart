@@ -169,6 +169,33 @@ void main() {
           _byRule(_errors(checker.check()), 'testing_reference');
       expect(testingErrors, hasLength(1));
     });
+
+    test('errors when implementation depends on same feature testing', () {
+      // _implementation must never depend on _testing (production code must
+      // not import test utilities, even from the same feature)
+      final checker = _checker(modules: [
+        Module(name: 'network_implementation', modules: [
+          Module(name: 'network_testing'),
+        ]),
+      ]);
+
+      final testingErrors =
+          _byRule(_errors(checker.check()), 'testing_reference');
+      expect(testingErrors, hasLength(1));
+      expect(testingErrors.first.message, contains('network_implementation'));
+    });
+
+    test('errors when implementation depends on different feature testing', () {
+      final checker = _checker(modules: [
+        Module(name: 'network_implementation', modules: [
+          Module(name: 'auth_testing'),
+        ]),
+      ]);
+
+      final testingErrors =
+          _byRule(_errors(checker.check()), 'testing_reference');
+      expect(testingErrors, hasLength(1));
+    });
   });
 
   group('Example reference check', () {

@@ -78,11 +78,11 @@ class GenerateCommand implements BaseCommand {
         Logger.success('Architecture rules passed');
       }
 
-      // Step 4: Generate flutist_gen.dart (filtered by project.dart modules)
+      // Step 4: Generate flutist_gen.dart (pass pre-parsed package to avoid re-parsing)
       final projectModuleNames =
           projectData.modules.map((m) => m.name).toList();
       GenFileGenerator.generate(currentDir,
-          projectModuleNames: projectModuleNames);
+          packageData: packageData, projectModuleNames: projectModuleNames);
 
       // Step 4: Update pubspec.yaml files
       _updatePubspecFiles(currentDir, projectData, packageData);
@@ -109,7 +109,7 @@ class GenerateCommand implements BaseCommand {
       final content = packageFile.readAsStringSync();
       return GenFileGenerator.parsePackageDart(content);
     } catch (e) {
-      Logger.error('Failed to parse package.dart: $e');
+      Logger.error(ErrorHelper.describe(e, 'package.dart'));
       return null;
     }
   }
@@ -231,17 +231,6 @@ class GenerateCommand implements BaseCommand {
 
   /// Ensures a section exists in the YAML document.
   /// If it doesn't exist, creates it as an empty map.
-  void _ensureSection(YamlEditor editor, String sectionName) {
-    try {
-      // Try to access the section
-      editor.parseAt([sectionName]);
-    } catch (e) {
-      // Section doesn't exist, create it
-      editor.update([sectionName], {});
-      Logger.info('  ✓ Created $sectionName section');
-    }
-  }
-
   /// Formats pubspec.yaml content to ensure proper blank lines.
   String _formatPubspecContent(String content) {
     // Convert inline maps to multiline
@@ -447,8 +436,30 @@ class GenerateCommand implements BaseCommand {
     Module module,
     Package package,
   ) {
-    if (module.devDependencies.isEmpty) {
-      // Remove dev_dependencies section if empty
+    // Names that flutist will manage (from project.dart devDependencies)
+    final flutistManagedNames =
+        module.devDependencies.map((d) => d.name).toSet();
+
+    // Preserve existing entries that flutist does not manage
+    // (SDK deps like flutter_test, user-added deps like test, flutter_lints, etc.)
+    final preserved = <String, dynamic>{};
+    try {
+      final devDepsNode = editor.parseAt(['dev_dependencies']);
+      if (devDepsNode.value is Map) {
+        final devDeps = devDepsNode.value as Map;
+        for (final entry in devDeps.entries) {
+          final name = entry.key as String;
+          if (!flutistManagedNames.contains(name)) {
+            preserved[name] = entry.value;
+          }
+        }
+      }
+    } catch (e) {
+      // Section doesn't exist yet
+    }
+
+    if (module.devDependencies.isEmpty && preserved.isEmpty) {
+      // Remove dev_dependencies section only if truly empty
       try {
         editor.remove(['dev_dependencies']);
       } catch (e) {
@@ -457,19 +468,23 @@ class GenerateCommand implements BaseCommand {
       return;
     }
 
-    // Ensure dev_dependencies section exists
-    _ensureSection(editor, 'dev_dependencies');
+    // Collect all dev dependencies: preserved first, then flutist-managed
+    final allDevDeps = <String, dynamic>{};
+    allDevDeps.addAll(preserved);
 
-    // Clear the section
-    editor.update(['dev_dependencies'], {});
-
-    // Add devDependencies
     for (final devDep in module.devDependencies) {
       final version = _getVersionFromPackage(package, devDep.name);
       if (version != null) {
-        editor.update(['dev_dependencies', devDep.name], version);
+        allDevDeps[devDep.name] = version;
         Logger.info('  ✓ Added dev_dependency: ${devDep.name} ($version)');
       }
+    }
+
+    // Update dev_dependencies section
+    try {
+      editor.update(['dev_dependencies'], allDevDeps);
+    } catch (e) {
+      editor.update(['dev_dependencies'], allDevDeps);
     }
   }
 

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:args/args.dart';
 import 'package:path/path.dart' as p;
+import 'package:yaml/yaml.dart';
 
 import '../utils/utils.dart';
 import 'commands.dart';
@@ -44,6 +45,10 @@ class TestCommand implements BaseCommand {
       final testTargets = _findTestTargets(currentDir, targetModule);
 
       if (testTargets.isEmpty) {
+        if (targetModule != null) {
+          Logger.error('Module "$targetModule" not found or has no test/ directory.');
+          exit(1);
+        }
         Logger.warn('No test targets found.');
         return;
       }
@@ -137,15 +142,65 @@ EXAMPLES:
           _searchForTestTargets(entity, rootDir, targets);
         }
       }
-    } catch (_) {
-      // Permission denied or other errors
+    } catch (e) {
+      if (e is FileSystemException) {
+        Logger.warn('Skipped directory (permission denied): ${dir.path}');
+      }
     }
   }
 
-  /// Runs dart test in a module directory.
+  /// Detects whether a module requires flutter test or dart test.
+  ///
+  /// Returns true if the module (or any of its path dependencies) declares
+  /// `flutter: sdk: flutter` in dependencies or `flutter_test: sdk: flutter`
+  /// in dev_dependencies. This ensures that test-only packages that depend on
+  /// Flutter implementation packages are also detected correctly.
+  bool _isFlutterModule(String modulePath) {
+    return _isFlutterModuleYaml(modulePath, {});
+  }
+
+  bool _isFlutterModuleYaml(String modulePath, Set<String> visited) {
+    if (visited.contains(modulePath)) return false;
+    visited.add(modulePath);
+
+    final pubspecFile = File(p.join(modulePath, 'pubspec.yaml'));
+    if (!pubspecFile.existsSync()) return false;
+    try {
+      final content = pubspecFile.readAsStringSync();
+      final yaml = loadYaml(content) as Map?;
+
+      final deps = yaml?['dependencies'] as Map?;
+      final flutter = deps?['flutter'];
+      if (flutter is Map && flutter['sdk'] == 'flutter') return true;
+
+      final devDeps = yaml?['dev_dependencies'] as Map?;
+      final flutterTest = devDeps?['flutter_test'];
+      if (flutterTest is Map && flutterTest['sdk'] == 'flutter') return true;
+
+      // Check path dependencies one level deeper
+      final allDeps = <String, dynamic>{
+        if (deps != null) ...deps.cast<String, dynamic>(),
+        if (devDeps != null) ...devDeps.cast<String, dynamic>(),
+      };
+      for (final entry in allDeps.entries) {
+        final value = entry.value;
+        if (value is Map && value['path'] is String) {
+          final depPath = p.normalize(p.join(modulePath, value['path'] as String));
+          if (_isFlutterModuleYaml(depPath, visited)) return true;
+        }
+      }
+
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Runs dart test or flutter test in a module directory.
   Future<_TestResult> _runModuleTest(_TestTarget target) async {
+    final useFlutter = _isFlutterModule(target.path);
     final process = await Process.start(
-      'dart',
+      useFlutter ? 'flutter' : 'dart',
       ['test'],
       workingDirectory: target.path,
     );

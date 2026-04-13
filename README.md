@@ -1,11 +1,11 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/seonwooke/flutist/release/1.0.0/assets/flutist_banner.png" alt="Flutist Banner">
+<img src="https://raw.githubusercontent.com/seonwooke/flutist/main/assets/flutist_banner.png" alt="Flutist Banner">
 
 **A Flutter project management framework inspired by Tuist**
 
 [![Docs](https://img.shields.io/badge/Docs-blue.svg?logo=book&logoColor=white)](https://deepwiki.com/seonwooke/flutist)
-[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](pubspec.yaml)
+[![pub.dev](https://img.shields.io/pub/v/flutist.svg)](https://pub.dev/packages/flutist)
 [![Dart](https://img.shields.io/badge/Dart-%3E%3D3.5.0%20%3C4.0.0-blue.svg)](https://dart.dev)
 
 </div>
@@ -31,23 +31,30 @@ cd my_flutter_project
 flutist init
 ```
 
-Flutist will ask whether this is a **new project** or an **existing project migration**:
+Flutist adapts based on context:
 
-- **New project**: Creates `app` module, adds it to workspace, scaffolds `lib/main.dart`
-- **Existing project**: Only creates configuration files (`project.dart`, `package.dart`) and workspace setup — preserves your existing code, `analysis_options.yaml`, and `lib/main.dart`
+- **No `pubspec.yaml`**: Asks if you want to create a new Flutter project. If yes, runs `flutter create .` and sets up as a new project automatically. If no, exits with guidance.
+- **`pubspec.yaml` exists**: Asks whether this is a **new project** or an **existing project migration**.
+  - **New project**: Creates `app` module, adds it to workspace, scaffolds `lib/main.dart`
+  - **Existing project**: Only creates configuration files (`project.dart`, `package.dart`) and workspace setup — preserves your existing code, `analysis_options.yaml`, and `lib/main.dart`
 
 ### 2. Create a Module
 
 ```bash
 # Create a clean module (Clean Architecture)
-flutist create --path features --name login --options clean
+flutist create --name login --path features --options clean
 
 # Create a micro module (Microfeature Architecture)
-flutist create --path lib --name network --options micro
+flutist create --name network --path packages --options micro
 
-# Create a simple module
-flutist create --path core --name utils --options simple
+# Create a lite module (Microfeature lite)
+flutist create --name auth --path packages --options lite
+
+# Create a single package (omit --options)
+flutist create --name utils --path core
 ```
+
+Layer packages and their dependencies are **automatically wired** in `project.dart` when you run `flutist create`.
 
 ### 3. Manage Dependencies
 
@@ -62,31 +69,34 @@ flutist pub add http dio riverpod
 flutist generate
 ```
 
-### 4. Generate Code from Templates
+### 4. Generate Code from Custom Templates
 
 ```bash
 # List available templates
 flutist scaffold list
 
-# Generate code from a template
+# Generate from a template
 flutist scaffold feature --name login
+flutist scaffold feature --name login --path lib/features
 ```
+
+Templates live in `flutist/templates/`. Define your own templates to match your project conventions — just like Tuist.
 
 ## 📋 Commands
 
 | Command | Description | Usage |
 |---------|-------------|-------|
 | **`init`** | Initialize a new or existing project | `flutist init` |
-| **`create`** | Create a new module | `flutist create --path <path> --name <name> --options <type>` |
+| **`create`** | Create a new module | `flutist create --name <name> --path <path> [--options <type>]` |
 | **`generate`** | Sync dependencies and regenerate files | `flutist generate` |
 | **`check`** | Check architecture rules | `flutist check` |
-| **`test`** | Run tests for all modules in parallel | `flutist test` |
+| **`test`** | Run tests for all modules in parallel (auto-selects `flutter test` or `dart test`) | `flutist test [-m <module>]` |
 | **`scaffold`** | Generate code from templates | `flutist scaffold <template> --name <name>` |
 | **`pub`** | Manage dependencies | `flutist pub add <package>` |
 | **`graph`** | Visualize module dependencies | `flutist graph [--format <format>]` |
 | **`help`** | Show help information | `flutist help [command]` |
 
-> **Note:** `flutist generate` manages dependencies declared in `package.dart` and `project.dart`. SDK dependencies (`flutter_localizations`, etc.) and Flutter-specific settings (`flutter: generate: true`) should be added directly to each module's `pubspec.yaml` — they are preserved during generation.
+> **Note:** `flutist generate` manages dependencies declared in `package.dart` and `project.dart`. SDK dependencies (`flutter_localizations`, etc.) and Flutter-specific settings (`flutter: generate: true`, `flutter: uses-material-design: true`) should be added directly to each module's `pubspec.yaml` — they are preserved during generation.
 
 For detailed documentation, visit the [documentation site](https://deepwiki.com/seonwooke/flutist).
 
@@ -115,87 +125,68 @@ my_project/
     └── flutist_gen.dart      # Generated code
 ```
 
-## 🧩 Module Types
+## 🧩 Scaffold Types
 
-Flutist supports 4 module types, each generating a different directory structure:
+`flutist create` generates layer packages and **automatically wires their dependencies** in `project.dart`.
 
 ### Clean (`--options clean`)
 
-Clean Architecture with 3 layers. Best for feature modules with clear separation of concerns.
+3-layer Clean Architecture. Best for feature modules with clear separation of concerns.
 
 ```
-flutist create --path features --name login --options clean
+flutist create --name login --path features --options clean
 
 features/login/
 ├── login_domain/          # Business logic, entities, use cases
-│   ├── lib/
-│   │   └── login_domain.dart
-│   └── pubspec.yaml
 ├── login_data/            # Repositories, data sources, DTOs
-│   ├── lib/
-│   │   └── login_data.dart
-│   └── pubspec.yaml
-└── login_presentation/    # UI, BLoC/Cubit, pages
-    ├── lib/
-    │   └── login_presentation.dart
-    └── pubspec.yaml
+└── login_presentation/    # UI and state management
 ```
+
+**Auto-wired:** `presentation → domain`, `data → domain`
 
 ### Micro (`--options micro`)
 
-Microfeature Architecture with 5 layers. Best for reusable libraries shared across features.
+5-layer Microfeature Architecture. Best for reusable libraries shared across features.
 
 ```
-flutist create --path packages --name network --options micro
+flutist create --name network --path packages --options micro
 
 packages/network/
-├── network_example/           # Demo app for the module
-│   ├── lib/
-│   │   ├── network_example.dart
-│   │   └── main.dart
-│   └── pubspec.yaml
 ├── network_interface/         # Public API (abstract classes, models)
-│   ├── lib/
-│   │   └── network_interface.dart
-│   └── pubspec.yaml
 ├── network_implementation/    # Concrete implementations
-│   ├── lib/
-│   │   └── network_implementation.dart
-│   └── pubspec.yaml
-├── network_tests/             # Integration/unit tests
-│   ├── lib/
-│   │   └── network_tests.dart
-│   └── pubspec.yaml
-└── network_testing/           # Test helpers, mocks, fakes
-    ├── lib/
-    │   └── network_testing.dart
-    └── pubspec.yaml
+├── network_testing/           # Test helpers, mocks, fakes
+├── network_tests/             # Unit and integration tests
+└── network_example/           # Demo app for the module
 ```
+
+**Auto-wired:** `implementation/testing → interface`, `tests/example → implementation + testing`
 
 ### Lite (`--options lite`)
 
-Microfeature lite with 4 layers (no example). Best for internal APIs that don't need a demo app.
+4-layer Microfeature lite (no example). Best for internal APIs.
 
 ```
-flutist create --path packages --name auth --options lite
+flutist create --name auth --path packages --options lite
 
 packages/auth/
 ├── auth_interface/
 ├── auth_implementation/
-├── auth_tests/
-└── auth_testing/
+├── auth_testing/
+└── auth_tests/
 ```
 
-### Simple (`--options simple`)
+**Auto-wired:** `implementation/testing → interface`, `tests → implementation + testing`
 
-Single module with no layers. Best for utilities, shared models, or the app module itself.
+### Single package (omit `--options`)
+
+No layers. Best for utilities, shared models, or the app shell. This is the default when `--options` is omitted.
 
 ```
-flutist create --path packages --name core --options simple
+flutist create --name utils --path core
 
-packages/core/
+core/utils/
 ├── lib/
-│   └── core.dart
+│   └── utils.dart
 └── pubspec.yaml
 ```
 
@@ -207,6 +198,115 @@ packages/core/
 - **🔗 Dependency Visualization**: Visualize module dependencies with graphs
 - **⚡ Workspace Support**: Leverage Flutter's native workspace feature
 - **🎨 Code Generation**: Create custom templates for rapid development
+
+## 🎨 Scaffold Templates
+
+Scaffold lets you define reusable code generation templates for your project — like Tuist scaffold.
+
+`flutist init` creates a starter template at `flutist/templates/feature/`. From there, **you own the templates** — edit them freely to match your project conventions.
+
+```
+flutist/templates/
+└── feature/                    # Template name (used in CLI)
+    ├── template.yaml           # Declares attributes and what files to generate
+    └── widget.dart.template    # Template file — use {{variables}} for substitution
+```
+
+### template.yaml
+
+```yaml
+description: "My custom template"
+
+# ── Attributes ────────────────────────────────────────────────────────────────
+# Variables passed from the CLI (e.g. --name login --path lib/features).
+# required: true  → must be provided via CLI, or an error is shown
+# required: false → optional; uses `default` if not provided via CLI
+attributes:
+  - name: name
+    required: true
+  - name: path
+    required: false
+    default: "lib/features"
+  - name: withTest           # custom attribute: pass with --withTest true
+    required: false
+    default: "false"
+
+# ── Items ─────────────────────────────────────────────────────────────────────
+# Files to generate. Supports two types:
+#
+#   type: file   — reads a .template file, applies variable substitution
+#   type: string — writes inline content directly (no .template file needed)
+#
+# if: "key == 'value'" — skip this item unless the condition is true
+items:
+  - type: file
+    path: "{{path}}/{{name | snake_case}}_page.dart"
+    templatePath: "page.dart.template"
+
+  - type: string
+    path: "{{path}}/{{name | snake_case}}/README.md"
+    contents: |
+      # {{name | pascal_case}}
+      Auto-generated page.
+
+  - type: file
+    path: "{{path}}/{{name | snake_case}}_test.dart"
+    templatePath: "test.dart.template"
+    if: "withTest == 'true'"            # only generated when --withTest true
+```
+
+The `if:` field supports `==`, `!=`, `&&`, and `||`:
+
+```yaml
+if: "withTest == 'true'"                        # equality
+if: "withTest != 'false'"                       # inequality
+if: "withTest == 'true' && withMock == 'true'"  # AND
+if: "style == 'bloc' || style == 'cubit'"       # OR
+```
+
+### Template variables
+
+Use `{{variables}}` inside `.template` files and in `path` values:
+
+| Syntax | Input `user profile` → Output |
+|--------|-------------------------------|
+| `{{name}}` | `user_profile` |
+| `{{name \| pascal_case}}` | `UserProfile` |
+| `{{name \| camel_case}}` | `userProfile` |
+| `{{name \| upper_case}}` | `USER_PROFILE` |
+| `{{path}}` | value of the `path` attribute |
+| `{{withTest}}` | value of any custom attribute |
+
+### Example `.template` file
+
+```dart
+// page.dart.template
+import 'package:flutter/material.dart';
+
+class {{name | pascal_case}}Page extends StatelessWidget {
+  const {{name | pascal_case}}Page({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold();
+  }
+}
+```
+
+### Running scaffold
+
+```bash
+# Basic usage (uses default path from template.yaml)
+flutist scaffold feature --name login
+
+# Override path
+flutist scaffold feature --name login --path lib/features
+
+# Custom attribute defined in your template.yaml
+flutist scaffold page --name home --withTest true
+```
+
+Custom attributes defined in `template.yaml` are automatically available as `--<attribute>` CLI flags. The default `feature` template has `name` and `path` — add your own attributes to match your conventions.
 
 ## 📚 Examples
 
