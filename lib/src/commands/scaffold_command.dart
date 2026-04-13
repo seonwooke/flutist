@@ -512,19 +512,50 @@ TEMPLATE VARIABLES:
     }
   }
 
-  /// Evaluates a simple condition expression (③).
+  /// Evaluates a condition expression.
   ///
-  /// Supports: `key == 'value'` or `key == value`
+  /// Supports:
+  /// - `key == 'value'`
+  /// - `key != 'value'`
+  /// - `cond1 && cond2` (AND)
+  /// - `cond1 || cond2` (OR)
   bool _evaluateCondition(String? condition, Map<String, String> attributes) {
     if (condition == null) return true;
 
-    final match =
-        RegExp(r"(\w+)\s*==\s*'?([^']*)'?").firstMatch(condition.trim());
-    if (match == null) return true;
+    final trimmed = condition.trim();
 
-    final key = match.group(1)!;
-    final expected = match.group(2)!;
-    return (attributes[key] ?? '') == expected;
+    // OR takes lower precedence — split first
+    final orParts = trimmed.split('||');
+    if (orParts.length > 1) {
+      return orParts.any((part) => _evaluateCondition(part.trim(), attributes));
+    }
+
+    // AND
+    final andParts = trimmed.split('&&');
+    if (andParts.length > 1) {
+      return andParts
+          .every((part) => _evaluateCondition(part.trim(), attributes));
+    }
+
+    // Single unit: key == 'value' or key != 'value'
+    final neqMatch =
+        RegExp(r"^(\w+)\s*!=\s*'?([^']*)'?$").firstMatch(trimmed);
+    if (neqMatch != null) {
+      final key = neqMatch.group(1)!;
+      final expected = neqMatch.group(2)!;
+      return (attributes[key] ?? '') != expected;
+    }
+
+    final eqMatch =
+        RegExp(r"^(\w+)\s*==\s*'?([^']*)'?$").firstMatch(trimmed);
+    if (eqMatch != null) {
+      final key = eqMatch.group(1)!;
+      final expected = eqMatch.group(2)!;
+      return (attributes[key] ?? '') == expected;
+    }
+
+    Logger.warn("Could not parse scaffold condition: '$trimmed' — treating as true");
+    return true;
   }
 
   /// Applies a named filter to a value (②).

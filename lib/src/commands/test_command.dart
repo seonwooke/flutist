@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:args/args.dart';
 import 'package:path/path.dart' as p;
+import 'package:yaml/yaml.dart';
 
 import '../utils/utils.dart';
 import 'commands.dart';
@@ -44,6 +45,10 @@ class TestCommand implements BaseCommand {
       final testTargets = _findTestTargets(currentDir, targetModule);
 
       if (testTargets.isEmpty) {
+        if (targetModule != null) {
+          Logger.error('Module "$targetModule" not found or has no test/ directory.');
+          exit(1);
+        }
         Logger.warn('No test targets found.');
         return;
       }
@@ -137,8 +142,10 @@ EXAMPLES:
           _searchForTestTargets(entity, rootDir, targets);
         }
       }
-    } catch (_) {
-      // Permission denied or other errors
+    } catch (e) {
+      if (e is FileSystemException) {
+        Logger.warn('Skipped directory (permission denied): ${dir.path}');
+      }
     }
   }
 
@@ -146,8 +153,16 @@ EXAMPLES:
   bool _isFlutterModule(String modulePath) {
     final pubspecFile = File(p.join(modulePath, 'pubspec.yaml'));
     if (!pubspecFile.existsSync()) return false;
-    final content = pubspecFile.readAsStringSync();
-    return content.contains('flutter:') && content.contains('sdk: flutter');
+    try {
+      final content = pubspecFile.readAsStringSync();
+      final yaml = loadYaml(content) as Map?;
+      final deps = yaml?['dependencies'] as Map?;
+      final flutter = deps?['flutter'];
+      if (flutter is! Map) return false;
+      return flutter['sdk'] == 'flutter';
+    } catch (_) {
+      return false;
+    }
   }
 
   /// Runs dart test or flutter test in a module directory.

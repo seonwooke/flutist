@@ -269,7 +269,7 @@ class CreateCommand implements BaseCommand {
       rootPubspecFile.writeAsStringSync(editor.toString());
       Logger.success('Updated root pubspec.yaml');
     } catch (e) {
-      Logger.error('Failed to update root pubspec.yaml: $e');
+      Logger.error('Failed to update root pubspec.yaml: ${ErrorHelper.describe(e, '$currentDir/pubspec.yaml')}');
     }
   }
 
@@ -336,7 +336,7 @@ class CreateCommand implements BaseCommand {
 
       Logger.success('Updated project.dart');
     } catch (e) {
-      Logger.error('Failed to update project.dart: $e');
+      Logger.error('Failed to update project.dart: ${ErrorHelper.describe(e, '$currentDir/project.dart')}');
     }
   }
 
@@ -401,7 +401,7 @@ class CreateCommand implements BaseCommand {
 
       Logger.success('Updated package.dart');
     } catch (e) {
-      Logger.error('Failed to update package.dart: $e');
+      Logger.error('Failed to update package.dart: ${ErrorHelper.describe(e, '$currentDir/package.dart')}');
     }
   }
 

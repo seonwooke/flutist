@@ -253,6 +253,15 @@ items:
     if: "withTest == 'true'"            # only generated when --withTest true
 ```
 
+The `if:` field supports `==`, `!=`, `&&`, and `||`:
+
+```yaml
+if: "withTest == 'true'"                        # equality
+if: "withTest != 'false'"                       # inequality
+if: "withTest == 'true' && withMock == 'true'"  # AND
+if: "style == 'bloc' || style == 'cubit'"       # OR
+```
+
 ### Template variables
 
 Use `{{variables}}` inside `.template` files and in `path` values:
