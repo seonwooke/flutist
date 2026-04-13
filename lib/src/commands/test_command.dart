@@ -151,11 +151,18 @@ EXAMPLES:
 
   /// Detects whether a module requires flutter test or dart test.
   ///
-  /// Returns true if the module declares `flutter: sdk: flutter` in
-  /// dependencies OR `flutter_test: sdk: flutter` in dev_dependencies.
-  /// The latter covers test/testing modules that use Flutter widgets in
-  /// tests but don't list flutter as a direct dependency.
+  /// Returns true if the module (or any of its path dependencies) declares
+  /// `flutter: sdk: flutter` in dependencies or `flutter_test: sdk: flutter`
+  /// in dev_dependencies. This ensures that test-only packages that depend on
+  /// Flutter implementation packages are also detected correctly.
   bool _isFlutterModule(String modulePath) {
+    return _isFlutterModuleYaml(modulePath, {});
+  }
+
+  bool _isFlutterModuleYaml(String modulePath, Set<String> visited) {
+    if (visited.contains(modulePath)) return false;
+    visited.add(modulePath);
+
     final pubspecFile = File(p.join(modulePath, 'pubspec.yaml'));
     if (!pubspecFile.existsSync()) return false;
     try {
@@ -168,7 +175,22 @@ EXAMPLES:
 
       final devDeps = yaml?['dev_dependencies'] as Map?;
       final flutterTest = devDeps?['flutter_test'];
-      return flutterTest is Map && flutterTest['sdk'] == 'flutter';
+      if (flutterTest is Map && flutterTest['sdk'] == 'flutter') return true;
+
+      // Check path dependencies one level deeper
+      final allDeps = <String, dynamic>{
+        if (deps != null) ...deps.cast<String, dynamic>(),
+        if (devDeps != null) ...devDeps.cast<String, dynamic>(),
+      };
+      for (final entry in allDeps.entries) {
+        final value = entry.value;
+        if (value is Map && value['path'] is String) {
+          final depPath = p.normalize(p.join(modulePath, value['path'] as String));
+          if (_isFlutterModuleYaml(depPath, visited)) return true;
+        }
+      }
+
+      return false;
     } catch (_) {
       return false;
     }
