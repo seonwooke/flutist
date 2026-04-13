@@ -89,17 +89,6 @@ class CreateCommand implements BaseCommand {
       }
     }
 
-    if (scaffoldType != ScaffoldType.simple) {
-      final pathSegments = path.split('/');
-      if (pathSegments.isNotEmpty && pathSegments.last == name) {
-        Logger.warn(
-          '⚠ Path "$path" already ends with module name "$name".');
-        Logger.warn(
-          '  This will create "$path/$name/" with extra nesting. '
-          'Did you mean --path ${pathSegments.sublist(0, pathSegments.length - 1).join('/')}?');
-        exit(1);
-      }
-    }
   }
 
   /// Creates the module with specified structure.
@@ -217,9 +206,15 @@ class CreateCommand implements BaseCommand {
   }
 
   /// Creates pubspec.yaml file.
+  ///
+  /// Adds `flutter: sdk: flutter` for layers that typically contain Flutter UI
+  /// code: _implementation and _example.
   void _createPubspec(String modulePath, String moduleName) {
+    final isFlutterLayer = moduleName.endsWith('_implementation') ||
+        moduleName.endsWith('_example');
     final pubspecFile = File('$modulePath/pubspec.yaml');
-    final content = CreateTemplates.pubspecYaml(modulePath, moduleName);
+    final content = CreateTemplates.pubspecYaml(modulePath, moduleName,
+        isFlutterModule: isFlutterLayer);
     pubspecFile.writeAsStringSync(content);
   }
 

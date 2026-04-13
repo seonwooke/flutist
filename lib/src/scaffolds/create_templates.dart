@@ -4,7 +4,14 @@ import '../utils/utils.dart';
 /// Template generator for module creation.
 class CreateTemplates {
   /// Generates pubspec.yaml content for a module.
-  static String pubspecYaml(String modulePath, String moduleName) => '''
+  ///
+  /// [isFlutterModule] — if true, adds `flutter: sdk: flutter` to dependencies.
+  /// Used for _implementation and _example layers that contain Flutter UI code.
+  static String pubspecYaml(String modulePath, String moduleName,
+      {bool isFlutterModule = false}) {
+    final flutterDep =
+        isFlutterModule ? '  flutter:\n    sdk: flutter\n' : '';
+    return '''
 name: $moduleName
 description: A Flutter module
 version: 1.0.0+1
@@ -14,9 +21,10 @@ environment:
   sdk: ">=3.5.0 <4.0.0"
 
 dependencies:
-
+$flutterDep
 resolution: workspace
 ''';
+  }
 
   /// Generates main.dart content for library example layer.
   static String mainDart(String projectName) => '''

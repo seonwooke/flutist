@@ -243,35 +243,11 @@ class InitCommand implements BaseCommand {
   }
 
   /// Gets the flutist package version from the current package's pubspec.yaml.
-  /// Priority: dart pub global list > local script path (for local development)
+  /// Priority: running script's pubspec.yaml > dart pub global list
   Future<String> _getFlutistPackageVersion() async {
     try {
-      // Priority 1: Try to get version from 'dart pub global list' (for globally installed packages)
-      // This is the most common case when users run "dart pub global activate flutist"
-      try {
-        final result = await Process.run('dart', ['pub', 'global', 'list']);
-        if (result.exitCode == 0) {
-          final output = result.stdout as String;
-          // Parse output like "flutist 1.0.7"
-          final lines = output.split('\n');
-          for (final line in lines) {
-            final trimmed = line.trim();
-            if (trimmed.startsWith('flutist ')) {
-              final parts = trimmed.split(RegExp(r'\s+'));
-              if (parts.length >= 2) {
-                final version = parts[1];
-                if (version.isNotEmpty) {
-                  return '^$version';
-                }
-              }
-            }
-          }
-        }
-      } catch (_) {
-        // Ignore if dart pub global list fails
-      }
-
-      // Priority 2: Try to get the script location (bin/flutist.dart) for local development
+      // Priority 1: Read version from the running script's own pubspec.yaml.
+      // This is always accurate regardless of which version is globally installed.
       String? scriptPath;
       try {
         final scriptUri = Platform.script;
@@ -301,6 +277,29 @@ class InitCommand implements BaseCommand {
             }
           }
         }
+      }
+
+      // Priority 2: Fall back to 'dart pub global list' if script path is unavailable.
+      try {
+        final result = await Process.run('dart', ['pub', 'global', 'list']);
+        if (result.exitCode == 0) {
+          final output = result.stdout as String;
+          final lines = output.split('\n');
+          for (final line in lines) {
+            final trimmed = line.trim();
+            if (trimmed.startsWith('flutist ')) {
+              final parts = trimmed.split(RegExp(r'\s+'));
+              if (parts.length >= 2) {
+                final version = parts[1];
+                if (version.isNotEmpty) {
+                  return '^$version';
+                }
+              }
+            }
+          }
+        }
+      } catch (_) {
+        // Ignore if dart pub global list fails
       }
     } catch (e) {
       Logger.warn('Failed to read flutist package version: $e');
