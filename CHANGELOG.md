@@ -405,4 +405,21 @@ Inspired by [Tuist](https://tuist.io/)
 
 ---
 
-[1.0.0]: https://github.com/yourusername/flutist/releases/tag/v1.0.0
+[3.0.0]: https://github.com/seonwooke/flutist/releases/tag/v3.0.0
+[2.1.0]: https://github.com/seonwooke/flutist/releases/tag/v2.1.0
+[2.0.0]: https://github.com/seonwooke/flutist/releases/tag/v2.0.0
+[1.1.3]: https://github.com/seonwooke/flutist/releases/tag/v1.1.3
+[1.1.2]: https://github.com/seonwooke/flutist/releases/tag/v1.1.2
+[1.1.1]: https://github.com/seonwooke/flutist/releases/tag/v1.1.1
+[1.1.0]: https://github.com/seonwooke/flutist/releases/tag/v1.1.0
+[1.0.10]: https://github.com/seonwooke/flutist/releases/tag/v1.0.10
+[1.0.9]: https://github.com/seonwooke/flutist/releases/tag/v1.0.9
+[1.0.8]: https://github.com/seonwooke/flutist/releases/tag/v1.0.8
+[1.0.7]: https://github.com/seonwooke/flutist/releases/tag/v1.0.7
+[1.0.6]: https://github.com/seonwooke/flutist/releases/tag/v1.0.6
+[1.0.5]: https://github.com/seonwooke/flutist/releases/tag/v1.0.5
+[1.0.4]: https://github.com/seonwooke/flutist/releases/tag/v1.0.4
+[1.0.3]: https://github.com/seonwooke/flutist/releases/tag/v1.0.3
+[1.0.2]: https://github.com/seonwooke/flutist/releases/tag/v1.0.2
+[1.0.1]: https://github.com/seonwooke/flutist/releases/tag/v1.0.1
+[1.0.0]: https://github.com/seonwooke/flutist/releases/tag/v1.0.0

@@ -31,7 +31,7 @@
 /// flutist graph --open
 /// ```
 ///
-/// For more information, visit: https://github.com/yourusername/flutist
+/// For more information, visit: https://github.com/seonwooke/flutist
 library;
 
 export 'src/commands/commands.dart';
