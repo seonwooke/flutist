@@ -57,11 +57,21 @@ class GenFileGenerator {
   }
 
   /// Filters package modules to only include those present in project.dart.
+  /// Falls back to projectModuleNames for any module not declared in package.dart,
+  /// so getters are always generated for all modules in project.dart.
   static Package _filterPackageModules(
       Package package, List<String> projectModuleNames) {
     final filteredModules = package.modules
         .where((module) => projectModuleNames.contains(module.name))
         .toList();
+
+    // Add any project.dart modules missing from package.dart
+    final existing = filteredModules.map((m) => m.name).toSet();
+    for (final name in projectModuleNames) {
+      if (!existing.contains(name)) {
+        filteredModules.add(Module(name: name));
+      }
+    }
 
     return Package(
       name: package.name,
