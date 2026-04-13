@@ -2,7 +2,7 @@
 
 All notable changes to Flutist will be documented in this file.
 
-## [3.0.0] - 2026-04-12
+## [3.0.0] - 2026-04-13
 
 ### 💥 Breaking Changes
 
@@ -39,8 +39,8 @@ All notable changes to Flutist will be documented in this file.
   - `flutist test` automatically selects `flutter test` or `dart test` per module.
   - Detects Flutter packages by checking the module and its path dependencies recursively — test-only packages that depend on Flutter implementation packages are correctly identified without requiring `flutter_test` in their own `pubspec.yaml`.
 
-- **Architecture Checker: `_implementation → _testing` rule**
-  - Added explicit tests documenting that `_implementation` must never depend on `_testing`, even within the same feature.
+- **Architecture Checker: explicit tests for `_implementation → _testing` rule**
+  - Added tests verifying that `_implementation` must never depend on `_testing`, even within the same feature (enforced via the existing `testing_reference` rule).
 
 ### 🐛 Fixed
 
