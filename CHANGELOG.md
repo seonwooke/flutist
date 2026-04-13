@@ -32,13 +32,12 @@ All notable changes to Flutist will be documented in this file.
   - **Filter system**: `{{name | snake_case}}`, `{{name | pascal_case}}`, `{{name | camel_case}}`, `{{name | upper_case}}`
     (legacy `{{Name}}`, `{{NAME}}` shorthands are still supported)
   - **Conditional generation**: Items support `if: "attribute == 'value'"` to skip files conditionally
-  - **Interactive prompts**: Missing required/optional attributes trigger stdin prompts instead of erroring
   - **`string` item type**: Define file contents inline in `template.yaml` without an external `.template` file
   - **`--path` fix in simple mode**: `--path` is now respected as the output base directory
 
 - **D3: `flutter test` vs `dart test` auto-detection**
-  - `flutist test` now checks each module's `pubspec.yaml` for `flutter: sdk: flutter`.
-  - Uses `flutter test` for Flutter packages and `dart test` for pure Dart packages.
+  - `flutist test` automatically selects `flutter test` or `dart test` per module.
+  - Detects Flutter packages by checking the module and its path dependencies recursively — test-only packages that depend on Flutter implementation packages are correctly identified without requiring `flutter_test` in their own `pubspec.yaml`.
 
 - **Architecture Checker: `_implementation → _testing` rule**
   - Added explicit tests documenting that `_implementation` must never depend on `_testing`, even within the same feature.
@@ -47,6 +46,7 @@ All notable changes to Flutist will be documented in this file.
 
 - **`flutist init`**: Removed `type: ModuleType.simple` from generated `project.dart` template
 - **`flutist init`**: Removed hardcoded example dependencies (`intl`, `test`) from `package.dart` template
+- **`flutist init`**: Added `flutter: uses-material-design: true` to root `pubspec.yaml` — without this, `Icons.*` render as `?` at runtime
 - **`flutist scaffold`**: Example template replaced with neutral StatelessWidget/StatefulWidget (no `flutter_bloc` dependency)
 
 ### 🔄 Migration from 2.x

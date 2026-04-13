@@ -45,10 +45,10 @@ Flutist adapts based on context:
 flutist create --name login --path features --options clean
 
 # Create a micro module (Microfeature Architecture)
-flutist create --name network --path lib --options micro
+flutist create --name network --path packages --options micro
 
 # Create a lite module (Microfeature lite)
-flutist create --name auth --path lib --options lite
+flutist create --name auth --path packages --options lite
 
 # Create a single package (omit --options)
 flutist create --name utils --path core
@@ -90,13 +90,13 @@ Templates live in `flutist/templates/`. Define your own templates to match your 
 | **`create`** | Create a new module | `flutist create --name <name> --path <path> [--options <type>]` |
 | **`generate`** | Sync dependencies and regenerate files | `flutist generate` |
 | **`check`** | Check architecture rules | `flutist check` |
-| **`test`** | Run tests for all modules in parallel | `flutist test` |
+| **`test`** | Run tests for all modules in parallel (auto-selects `flutter test` or `dart test`) | `flutist test [-m <module>]` |
 | **`scaffold`** | Generate code from templates | `flutist scaffold <template> --name <name>` |
 | **`pub`** | Manage dependencies | `flutist pub add <package>` |
 | **`graph`** | Visualize module dependencies | `flutist graph [--format <format>]` |
 | **`help`** | Show help information | `flutist help [command]` |
 
-> **Note:** `flutist generate` manages dependencies declared in `package.dart` and `project.dart`. SDK dependencies (`flutter_localizations`, etc.) and Flutter-specific settings (`flutter: generate: true`) should be added directly to each module's `pubspec.yaml` — they are preserved during generation.
+> **Note:** `flutist generate` manages dependencies declared in `package.dart` and `project.dart`. SDK dependencies (`flutter_localizations`, etc.) and Flutter-specific settings (`flutter: generate: true`, `flutter: uses-material-design: true`) should be added directly to each module's `pubspec.yaml` — they are preserved during generation.
 
 For detailed documentation, visit the [documentation site](https://deepwiki.com/seonwooke/flutist).
 
@@ -179,7 +179,7 @@ packages/auth/
 
 ### Single package (omit `--options`)
 
-No layers. Best for utilities, shared models, or the app shell.
+No layers. Best for utilities, shared models, or the app shell. This is the default when `--options` is omitted.
 
 ```
 flutist create --name utils --path core
