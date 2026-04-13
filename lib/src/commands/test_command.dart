@@ -150,16 +150,25 @@ EXAMPLES:
   }
 
   /// Detects whether a module requires flutter test or dart test.
+  ///
+  /// Returns true if the module declares `flutter: sdk: flutter` in
+  /// dependencies OR `flutter_test: sdk: flutter` in dev_dependencies.
+  /// The latter covers test/testing modules that use Flutter widgets in
+  /// tests but don't list flutter as a direct dependency.
   bool _isFlutterModule(String modulePath) {
     final pubspecFile = File(p.join(modulePath, 'pubspec.yaml'));
     if (!pubspecFile.existsSync()) return false;
     try {
       final content = pubspecFile.readAsStringSync();
       final yaml = loadYaml(content) as Map?;
+
       final deps = yaml?['dependencies'] as Map?;
       final flutter = deps?['flutter'];
-      if (flutter is! Map) return false;
-      return flutter['sdk'] == 'flutter';
+      if (flutter is Map && flutter['sdk'] == 'flutter') return true;
+
+      final devDeps = yaml?['dev_dependencies'] as Map?;
+      final flutterTest = devDeps?['flutter_test'];
+      return flutterTest is Map && flutterTest['sdk'] == 'flutter';
     } catch (_) {
       return false;
     }
