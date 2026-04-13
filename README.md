@@ -42,16 +42,16 @@ Flutist adapts based on context:
 
 ```bash
 # Create a clean module (Clean Architecture)
-flutist create --path features --name login --options clean
+flutist create --name login --path features --options clean
 
 # Create a micro module (Microfeature Architecture)
-flutist create --path lib --name network --options micro
+flutist create --name network --path lib --options micro
 
 # Create a lite module (Microfeature lite)
-flutist create --path lib --name auth --options lite
+flutist create --name auth --path lib --options lite
 
 # Create a single package (omit --options)
-flutist create --path core --name utils
+flutist create --name utils --path core
 ```
 
 Layer packages and their dependencies are **automatically wired** in `project.dart` when you run `flutist create`.
@@ -87,7 +87,7 @@ Templates live in `flutist/templates/`. Define your own templates to match your 
 | Command | Description | Usage |
 |---------|-------------|-------|
 | **`init`** | Initialize a new or existing project | `flutist init` |
-| **`create`** | Create a new module | `flutist create --path <path> --name <name> [--options <type>]` |
+| **`create`** | Create a new module | `flutist create --name <name> --path <path> [--options <type>]` |
 | **`generate`** | Sync dependencies and regenerate files | `flutist generate` |
 | **`check`** | Check architecture rules | `flutist check` |
 | **`test`** | Run tests for all modules in parallel | `flutist test` |
@@ -134,7 +134,7 @@ my_project/
 3-layer Clean Architecture. Best for feature modules with clear separation of concerns.
 
 ```
-flutist create --path features --name login --options clean
+flutist create --name login --path features --options clean
 
 features/login/
 ├── login_domain/          # Business logic, entities, use cases
@@ -149,7 +149,7 @@ features/login/
 5-layer Microfeature Architecture. Best for reusable libraries shared across features.
 
 ```
-flutist create --path packages --name network --options micro
+flutist create --name network --path packages --options micro
 
 packages/network/
 ├── network_interface/         # Public API (abstract classes, models)
@@ -166,7 +166,7 @@ packages/network/
 4-layer Microfeature lite (no example). Best for internal APIs.
 
 ```
-flutist create --path packages --name auth --options lite
+flutist create --name auth --path packages --options lite
 
 packages/auth/
 ├── auth_interface/
@@ -182,7 +182,7 @@ packages/auth/
 No layers. Best for utilities, shared models, or the app shell.
 
 ```
-flutist create --path core --name utils
+flutist create --name utils --path core
 
 core/utils/
 ├── lib/

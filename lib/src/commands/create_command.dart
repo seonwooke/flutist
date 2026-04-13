@@ -21,15 +21,15 @@ class CreateCommand implements BaseCommand {
   void execute(List<String> arguments) {
     final parser = ArgParser()
       ..addOption(
-        'path',
-        abbr: 'p',
-        help: 'Directory path where the module will be created',
-        mandatory: true,
-      )
-      ..addOption(
         'name',
         abbr: 'n',
         help: 'Name of the module',
+        mandatory: true,
+      )
+      ..addOption(
+        'path',
+        abbr: 'p',
+        help: 'Directory path where the module will be created',
         mandatory: true,
       )
       ..addOption(
@@ -64,7 +64,7 @@ class CreateCommand implements BaseCommand {
     } catch (e) {
       Logger.error('Failed to create module: $e');
       Logger.info(
-        'Usage: flutist create --path <path> --name <name> [--options <clean|micro|lite>]',
+        'Usage: flutist create --name <name> --path <path> [--options <clean|micro|lite>]',
       );
       exit(1);
     }

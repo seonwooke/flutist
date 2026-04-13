@@ -64,7 +64,7 @@ import 'flutist/flutist_gen.dart';
 import 'package.dart';
 
 // How to use:
-// 1. Create a module: flutist create --path <path> --name <name> --options <type>
+// 1. Create a module: flutist create --name <name> --path <path> --options <type>
 // 2. Add the module below with its dependencies
 // 3. Run: flutist generate
 
@@ -373,7 +373,7 @@ $projectName/
 
 ```bash
 # Create a new clean module
-flutist create --path features --name login --options clean
+flutist create --name login --path features --options clean
 
 # Add a new dependency
 flutist pub add http
@@ -411,10 +411,10 @@ Then run `flutist generate` to sync the changes to all modules.
 
 ```bash
 # Create a simple module
-flutist create --path lib --name utils --options simple
+flutist create --name utils --path lib --options simple
 
 # Create a clean module
-flutist create --path features --name authentication --options clean
+flutist create --name authentication --path features --options clean
 ```
 
 ### Code Generation
