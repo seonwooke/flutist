@@ -2,6 +2,18 @@
 
 All notable changes to Flutist will be documented in this file.
 
+## [Unreleased]
+
+### 📝 Documentation
+
+- **README overhaul**: Rewrote and expanded README with full documentation site content
+  - Added Core Values section (Declarative, Single Source, Rules as Code)
+  - Added Core Files section (`package.dart`, `project.dart`, `flutist_gen.dart`)
+  - Added Architecture Validation section (5 rules + `strictMode`/`compositionRoots` config)
+  - Expanded Project Structure with `packages/` directory example
+  - Fixed Commands table bold+code formatting (`**\`command\`**`)
+  - Added "Learn more about Flutist!" link to docs site
+
 ## [3.0.0] - 2026-04-13
 
 ### 💥 Breaking Changes
