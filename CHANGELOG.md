@@ -2,7 +2,7 @@
 
 All notable changes to Flutist will be documented in this file.
 
-## [Unreleased]
+## [3.0.1] - 2026-04-16
 
 ### 📝 Documentation
 
