@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'package:yaml/yaml.dart';
 
-import '../generator/flutist_generator.dart';
+import '../engine/engine.dart';
 import '../utils/utils.dart';
 import 'commands.dart';
 
@@ -40,11 +40,10 @@ class PubCommand implements BaseCommand {
   Future<void> _handleAdd(List<String> arguments) async {
     if (arguments.isEmpty) {
       Logger.error('No package name provided.');
-      Logger.info('Usage: flutist pub add <package_name>');
+      Logger.info('Usage: flutist pub add <package_name> [<package_name2> ...]');
       exit(1);
     }
 
-    final packageName = arguments[0];
     final rootPath = Directory.current.path;
     final packageDartPath = path.join(rootPath, 'package.dart');
 
@@ -56,41 +55,49 @@ class PubCommand implements BaseCommand {
     }
 
     try {
-      Logger.info('Adding dependency: $packageName');
+      Logger.info('Resolving versions for: ${arguments.join(', ')}');
 
-      // Get latest version using dart pub add
-      final version = await _getLatestVersion(packageName, rootPath);
+      // Batch-resolve all packages in a single dart pub add call
+      final versions = await _getAllVersions(arguments, rootPath);
 
-      if (version == null) {
-        Logger.error('Failed to get version for package: $packageName');
+      if (versions == null) {
         exit(1);
       }
 
-      Logger.info('Found version: $version');
+      for (final packageName in arguments) {
+        final version = versions[packageName];
 
-      // Read and parse package.dart
-      final packageContent = await File(packageDartPath).readAsString();
-      final updatedContent =
-          _addDependencyToPackage(packageContent, packageName, version);
+        if (version == null) {
+          Logger.error('Could not resolve version for: $packageName');
+          exit(1);
+        }
 
-      // Write updated content
-      await File(packageDartPath).writeAsString(updatedContent);
+        Logger.info('Found version: $packageName ($version)');
 
-      Logger.success('Added $packageName ($version) to package.dart');
+        // Read and parse package.dart
+        final packageContent = await File(packageDartPath).readAsString();
+        final updatedContent =
+            _addDependencyToPackage(packageContent, packageName, version);
 
-      // Generate flutist_gen.dart
+        if (updatedContent == packageContent) continue;
+
+        // Write updated content
+        await File(packageDartPath).writeAsString(updatedContent);
+
+        Logger.success('Added $packageName ($version) to package.dart');
+      }
+
+      // Generate flutist_gen.dart once after all packages are added
       GenFileGenerator.generate(rootPath);
-
-      Logger.success('Generated flutist_gen.dart');
     } catch (e) {
       Logger.error('Failed to add dependency: $e');
       exit(1);
     }
   }
 
-  /// Gets the latest version of a package using dart pub add.
-  Future<String?> _getLatestVersion(String packageName, String rootPath) async {
-    // Create a temporary directory for pub add
+  /// Resolves the latest versions of all [packages] in a single dart pub add call.
+  Future<Map<String, String>?> _getAllVersions(
+      List<String> packages, String rootPath) async {
     final tempDir = Directory(path.join(rootPath, '.flutist_temp'));
     try {
       if (!tempDir.existsSync()) {
@@ -105,38 +112,40 @@ environment:
   sdk: ">=3.5.0 <4.0.0"
 ''');
 
-      // Run dart pub add
+      // Run dart pub add with all packages at once
       final result = await Process.run(
         'dart',
-        ['pub', 'add', packageName],
+        ['pub', 'add', ...packages],
         workingDirectory: tempDir.path,
       );
 
       if (result.exitCode != 0) {
-        Logger.error('Failed to get package version: ${result.stderr}');
+        // Filter internal temp package name from error output
+        final errorMsg = (result.stderr as String)
+            .replaceAll('temp_package', 'your project')
+            .trim();
+        Logger.error('Failed to resolve package versions:\n$errorMsg');
         return null;
       }
 
-      // Read pubspec.yaml to get the version
+      // Read pubspec.yaml and collect all resolved versions
       final pubspecContent = await File(tempPubspecPath).readAsString();
       final pubspec = loadYaml(pubspecContent) as Map;
-
       final dependencies = pubspec['dependencies'] as Map?;
-      if (dependencies == null || !dependencies.containsKey(packageName)) {
-        return null;
+      if (dependencies == null) return null;
+
+      final versions = <String, String>{};
+      for (final packageName in packages) {
+        final version = dependencies[packageName];
+        if (version is String) {
+          versions[packageName] = version;
+        } else if (version is Map) {
+          versions[packageName] = 'any';
+        }
       }
 
-      final version = dependencies[packageName];
-      if (version is String) {
-        return version;
-      } else if (version is Map) {
-        // Handle path, git, etc.
-        return 'any';
-      }
-
-      return null;
+      return versions;
     } finally {
-      // Clean up temp directory
       if (tempDir.existsSync()) {
         await tempDir.delete(recursive: true);
       }
@@ -151,15 +160,12 @@ environment:
   ) {
     // Check if dependency already exists
     final existingPattern = RegExp(
-      r"Dependency\s*\(\s*name:\s*'$packageName'\s*,\s*version:\s*'[^']+'\s*\)",
+      "Dependency\\s*\\(\\s*name:\\s*'$packageName'\\s*,\\s*version:\\s*'[^']+'\\s*\\)",
     );
 
     if (existingPattern.hasMatch(packageContent)) {
-      // Update existing dependency
-      return packageContent.replaceFirst(
-        existingPattern,
-        "Dependency(name: '$packageName', version: '$version')",
-      );
+      Logger.warn('$packageName already exists in package.dart. Skipping.');
+      return packageContent;
     }
 
     // Find dependencies array
@@ -219,8 +225,9 @@ environment:
       }
     }
 
-    return packageContent.substring(0, dependenciesStart) +
-        newDependency +
-        packageContent.substring(dependenciesEnd);
+    return '${packageContent.substring(0, dependenciesStart)}'
+        '$newDependency'
+        '\n  '
+        '${packageContent.substring(dependenciesEnd)}';
   }
 }

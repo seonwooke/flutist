@@ -9,8 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutist:
-    ^1.0.1
+  flutist: ^3.0.0
 
 # Flutter Native Workspace configuration
 # All packages inside the workspace will be managed together
@@ -44,11 +43,13 @@ dependencies:
 #   - lib/storage/storage_implementation
 #   - lib/storage/storage_testing
 #   - lib/storage/storage_tests
-#   # Models standard layers
+#   # Models lite layers
+#   - core/models/models_interface
 #   - core/models/models_implementation
 #   - core/models/models_tests
 #   - core/models/models_testing
-#   # Constants standard layers
+#   # Constants lite layers
+#   - core/constants/constants_interface
 #   - core/constants/constants_implementation
 #   - core/constants/constants_tests
 #   - core/constants/constants_testing

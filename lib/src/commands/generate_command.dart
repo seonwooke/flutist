@@ -1,10 +1,11 @@
 import 'dart:io';
 
 import 'package:path/path.dart' as path;
+import 'package:yaml/yaml.dart';
 import 'package:yaml_edit/yaml_edit.dart';
 
 import '../core/core.dart';
-import '../generator/flutist_generator.dart';
+import '../engine/engine.dart';
 import '../utils/utils.dart';
 import 'commands.dart';
 
@@ -36,7 +37,7 @@ class GenerateCommand implements BaseCommand {
       Logger.info('  Modules: ${packageData.modules.length}');
 
       // Step 2: Parse project.dart
-      final projectData = _parseProjectDart(currentDir);
+      final projectData = ProjectParser.parse(currentDir);
 
       if (projectData == null) {
         Logger.error('Failed to parse project.dart');
@@ -46,11 +47,42 @@ class GenerateCommand implements BaseCommand {
       Logger.success('Parsed project.dart');
       Logger.info('  Modules: ${projectData.modules.length}');
 
-      // Step 3: Generate flutist_gen.dart (filtered by project.dart modules)
+      // Step 3: Architecture rule check (always runs; strictMode controls whether to abort)
+      Logger.info('Checking architecture rules...');
+      final checker = ArchitectureChecker(
+        project: projectData,
+        package: packageData,
+      );
+      final results = checker.check();
+      final errors = results
+          .where((r) => r.severity == CheckSeverity.error)
+          .toList();
+
+      if (errors.isNotEmpty) {
+        Logger.info('');
+        for (final error in errors) {
+          Logger.error('[ERROR] ${error.rule}');
+          Logger.error('  ${error.message}');
+          Logger.info('');
+        }
+        if (projectData.options.strictMode) {
+          Logger.error(
+              'Generation aborted. ${errors.length} architecture violation(s) found.');
+          Logger.info('Fix violations or set strictMode: false in ProjectOptions.');
+          exit(1);
+        } else {
+          Logger.warn(
+              '${errors.length} architecture violation(s) found. Continuing because strictMode is false.');
+        }
+      } else {
+        Logger.success('Architecture rules passed');
+      }
+
+      // Step 4: Generate flutist_gen.dart (pass pre-parsed package to avoid re-parsing)
       final projectModuleNames =
           projectData.modules.map((m) => m.name).toList();
       GenFileGenerator.generate(currentDir,
-          projectModuleNames: projectModuleNames);
+          packageData: packageData, projectModuleNames: projectModuleNames);
 
       // Step 4: Update pubspec.yaml files
       _updatePubspecFiles(currentDir, projectData, packageData);
@@ -75,226 +107,53 @@ class GenerateCommand implements BaseCommand {
 
     try {
       final content = packageFile.readAsStringSync();
-
-      // Parse package name
-      final nameMatch = RegExp(r"name:\s*'([^']+)'").firstMatch(content);
-      final packageName = nameMatch?.group(1) ?? 'workspace';
-
-      // Parse dependencies
-      final dependencies = _parseDependencies(content);
-
-      // Parse modules
-      final modules = _parseModules(content);
-
-      return Package(
-        name: packageName,
-        dependencies: dependencies,
-        modules: modules,
-      );
+      return GenFileGenerator.parsePackageDart(content);
     } catch (e) {
-      Logger.error('Failed to parse package.dart: $e');
+      Logger.error(ErrorHelper.describe(e, 'package.dart'));
       return null;
     }
   }
 
-  /// Parses dependencies from package.dart content.
-  List<Dependency> _parseDependencies(String content) {
-    final dependencies = <Dependency>[];
 
-    // Find dependencies array
-    final dependenciesPattern = RegExp(
-      r'dependencies:\s*\[(.*?)\]',
-      dotAll: true,
-    );
-    final match = dependenciesPattern.firstMatch(content);
 
-    if (match == null) return dependencies;
+  /// Builds a map of module name → absolute directory path by scanning
+  /// workspace entries in root pubspec.yaml and reading each module's
+  /// pubspec.yaml name field.
+  Map<String, String> _buildModulePathMap(String currentDir) {
+    final map = <String, String>{};
+    final rootPubspecFile = File('$currentDir/pubspec.yaml');
 
-    final dependenciesContent = match.group(1)!;
-
-    // Find each Dependency(...) entry
-    final dependencyPattern = RegExp(
-      r"Dependency\s*\(\s*name:\s*'([^']+)'\s*,\s*version:\s*'([^']+)'\s*\)",
-    );
-
-    for (final depMatch in dependencyPattern.allMatches(dependenciesContent)) {
-      final name = depMatch.group(1)!;
-      final version = depMatch.group(2)!;
-
-      dependencies.add(Dependency(name: name, version: version));
-    }
-
-    return dependencies;
-  }
-
-  /// Parses modules from package.dart content.
-  List<Module> _parseModules(String content) {
-    final modules = <Module>[];
-
-    // Find modules array
-    final modulesPattern = RegExp(
-      r'modules:\s*\[(.*?)\]',
-      dotAll: true,
-    );
-    final match = modulesPattern.firstMatch(content);
-
-    if (match == null) return modules;
-
-    final modulesContent = match.group(1)!;
-
-    // Find each Module(...) entry
-    final modulePattern = RegExp(
-      r"Module\s*\(\s*name:\s*'([^']+)'\s*,\s*type:\s*ModuleType\.(\w+)\s*\)",
-    );
-
-    for (final modMatch in modulePattern.allMatches(modulesContent)) {
-      final name = modMatch.group(1)!;
-      final typeString = modMatch.group(2)!;
-      final type = _parseModuleType(typeString);
-
-      modules.add(Module(name: name, type: type));
-    }
-
-    return modules;
-  }
-
-  /// Parses the project.dart file.
-  Project? _parseProjectDart(String currentDir) {
-    Logger.info('Parsing project.dart...');
-
-    final projectFile = File('$currentDir/project.dart');
-
-    if (!projectFile.existsSync()) {
-      Logger.error('project.dart not found');
-      return null;
-    }
+    if (!rootPubspecFile.existsSync()) return map;
 
     try {
-      final content = projectFile.readAsStringSync();
+      final content = rootPubspecFile.readAsStringSync();
+      final yamlDoc = loadYaml(content) as Map;
+      final workspace = yamlDoc['workspace'];
 
-      // Parse project name
-      final nameMatch = RegExp(r"name:\s*'([^']+)'").firstMatch(content);
-      final projectName = nameMatch?.group(1) ?? 'workspace';
+      if (workspace is! List) return map;
 
-      // Parse modules
-      final modules = _parseProjectModules(content);
+      for (final entry in workspace) {
+        final entryPath = '$currentDir/$entry';
+        final pubspecFile = File('$entryPath/pubspec.yaml');
 
-      return Project(
-        name: projectName,
-        modules: modules,
-      );
+        if (pubspecFile.existsSync()) {
+          try {
+            final pubspecContent = pubspecFile.readAsStringSync();
+            final pubspecYaml = loadYaml(pubspecContent) as Map;
+            final name = pubspecYaml['name'] as String?;
+            if (name != null) {
+              map[name] = entryPath;
+            }
+          } catch (_) {
+            // Skip unparseable pubspec.yaml
+          }
+        }
+      }
     } catch (e) {
-      Logger.error('Failed to parse project.dart: $e');
-      return null;
-    }
-  }
-
-  /// Parses modules from project.dart content.
-  List<Module> _parseProjectModules(String content) {
-    final modules = <Module>[];
-
-    // Find all Module(...) blocks
-    final modulePattern = RegExp(
-      r'Module\s*\((.*?)\),',
-      dotAll: true,
-    );
-
-    for (final match in modulePattern.allMatches(content)) {
-      final moduleContent = match.group(1)!;
-
-      // Parse module name
-      final nameMatch = RegExp(r"name:\s*'([^']+)'").firstMatch(moduleContent);
-      if (nameMatch == null) continue;
-      final name = nameMatch.group(1)!;
-
-      // Parse module type
-      final typeMatch =
-          RegExp(r'type:\s*ModuleType\.(\w+)').firstMatch(moduleContent);
-      if (typeMatch == null) continue;
-      final type = _parseModuleType(typeMatch.group(1)!);
-
-      // Parse dependencies
-      final dependencies =
-          _parseModuleDependencies(moduleContent, 'dependencies');
-
-      // Parse devDependencies
-      final devDependencies =
-          _parseModuleDependencies(moduleContent, 'devDependencies');
-
-      // Parse modules
-      final moduleRefs = _parseModuleReferences(moduleContent);
-
-      modules.add(Module(
-        name: name,
-        type: type,
-        dependencies: dependencies,
-        devDependencies: devDependencies,
-        modules: moduleRefs,
-      ));
+      Logger.warn('Failed to build module path map: $e');
     }
 
-    return modules;
-  }
-
-  /// Parses dependency references from a module's dependencies or devDependencies array.
-  List<Dependency> _parseModuleDependencies(
-      String moduleContent, String fieldName) {
-    final dependencies = <Dependency>[];
-
-    // Find the dependencies array
-    final arrayPattern = RegExp(
-      '$fieldName:\\s*\\[(.*?)\\]',
-      dotAll: true,
-    );
-    final match = arrayPattern.firstMatch(moduleContent);
-
-    if (match == null) return dependencies;
-
-    final arrayContent = match.group(1)!;
-
-    // Find package.dependencies.xxx patterns
-    final depPattern = RegExp(r'package\.dependencies\.(\w+)');
-
-    for (final depMatch in depPattern.allMatches(arrayContent)) {
-      final camelName = depMatch.group(1)!;
-      // Convert camelCase back to snake_case
-      final snakeName = _toSnakeCase(camelName);
-
-      // Create a placeholder Dependency (version will be filled from package.dart later)
-      dependencies.add(Dependency(name: snakeName, version: ''));
-    }
-
-    return dependencies;
-  }
-
-  /// Parses module references from a module's modules array.
-  List<Module> _parseModuleReferences(String moduleContent) {
-    final modules = <Module>[];
-
-    // Find the modules array
-    final arrayPattern = RegExp(
-      r'modules:\s*\[(.*?)\]',
-      dotAll: true,
-    );
-    final match = arrayPattern.firstMatch(moduleContent);
-
-    if (match == null) return modules;
-
-    final arrayContent = match.group(1)!;
-
-    // Find package.modules.xxx patterns
-    final modPattern = RegExp(r'package\.modules\.(\w+)');
-
-    for (final modMatch in modPattern.allMatches(arrayContent)) {
-      final camelName = modMatch.group(1)!;
-      // Convert camelCase back to snake_case
-      final snakeName = _toSnakeCase(camelName);
-
-      // Create a placeholder Module (type will be filled from package.dart later)
-      modules.add(Module(name: snakeName, type: ModuleType.simple));
-    }
-
-    return modules;
+    return map;
   }
 
   /// Updates pubspec.yaml files for all modules.
@@ -302,22 +161,32 @@ class GenerateCommand implements BaseCommand {
       String currentDir, Project project, Package package) {
     Logger.info('Updating pubspec.yaml files...');
 
+    // Build module path map from workspace once
+    final modulePathMap = _buildModulePathMap(currentDir);
+
     for (final module in project.modules) {
-      _updateModulePubspec(currentDir, module, package);
+      _updateModulePubspec(currentDir, module, package, modulePathMap);
     }
 
     Logger.success('Updated all pubspec.yaml files');
   }
 
   /// Updates pubspec.yaml for a single module.
-  void _updateModulePubspec(String currentDir, Module module, Package package) {
+  void _updateModulePubspec(
+    String currentDir,
+    Module module,
+    Package package,
+    Map<String, String> modulePathMap,
+  ) {
     // Find the module's pubspec.yaml location
-    final pubspecPath = _findModulePubspecPath(currentDir, module);
+    final moduleDirPath = modulePathMap[module.name];
 
-    if (pubspecPath == null) {
-      Logger.warn('Could not find pubspec.yaml for module: ${module.name}');
+    if (moduleDirPath == null) {
+      Logger.warn('Could not find module: ${module.name}');
       return;
     }
+
+    final pubspecPath = '$moduleDirPath/pubspec.yaml';
 
     Logger.info('Updating ${module.name}/pubspec.yaml...');
 
@@ -333,7 +202,8 @@ class GenerateCommand implements BaseCommand {
       final editor = YamlEditor(content);
 
       // Clear and rebuild dependencies section
-      _rebuildDependenciesSection(editor, module, package, pubspecPath);
+      _rebuildDependenciesSection(
+          editor, module, package, pubspecPath, modulePathMap);
 
       // Clear and rebuild dev_dependencies section
       _rebuildDevDependenciesSection(editor, module, package);
@@ -345,40 +215,6 @@ class GenerateCommand implements BaseCommand {
     } catch (e) {
       Logger.error('Failed to update ${module.name}: $e');
     }
-  }
-
-  /// Finds the pubspec.yaml path for a module.
-  String? _findModulePubspecPath(String currentDir, Module module) {
-    // Try different possible locations based on module name pattern
-
-    // Check if it's a simple module (e.g., 'app')
-    final simplePath = '$currentDir/${module.name}/pubspec.yaml';
-    if (File(simplePath).existsSync()) {
-      return simplePath;
-    }
-
-    // Check if it's a layered module (e.g., 'login_example' in 'features/login/login_example')
-    // Extract parent name (e.g., 'login' from 'login_example')
-    final parts = module.name.split('_');
-    if (parts.length >= 2) {
-      // Try common base paths
-      final basePaths = ['features', 'core', 'data', 'domain'];
-
-      for (final basePath in basePaths) {
-        // Try to find parent folder
-        for (int i = parts.length - 1; i >= 1; i--) {
-          final parentName = parts.sublist(0, i).join('_');
-          final layeredPath =
-              '$currentDir/$basePath/$parentName/${module.name}/pubspec.yaml';
-
-          if (File(layeredPath).existsSync()) {
-            return layeredPath;
-          }
-        }
-      }
-    }
-
-    return null;
   }
 
   /// Gets version for a dependency from package.dart.
@@ -395,17 +231,6 @@ class GenerateCommand implements BaseCommand {
 
   /// Ensures a section exists in the YAML document.
   /// If it doesn't exist, creates it as an empty map.
-  void _ensureSection(YamlEditor editor, String sectionName) {
-    try {
-      // Try to access the section
-      editor.parseAt([sectionName]);
-    } catch (e) {
-      // Section doesn't exist, create it
-      editor.update([sectionName], {});
-      Logger.info('  ✓ Created $sectionName section');
-    }
-  }
-
   /// Formats pubspec.yaml content to ensure proper blank lines.
   String _formatPubspecContent(String content) {
     // Convert inline maps to multiline
@@ -538,17 +363,21 @@ class GenerateCommand implements BaseCommand {
     Module module,
     Package package,
     String pubspecPath,
+    Map<String, String> modulePathMap,
   ) {
-    // Get current dependencies to preserve flutter sdk
+    // Get current dependencies to preserve SDK dependencies
     final currentDeps = <String, dynamic>{};
     try {
       final depsNode = editor.parseAt(['dependencies']);
       // Convert YamlNode value to Map
       if (depsNode.value is Map) {
         final deps = depsNode.value as Map;
-        // Preserve flutter sdk dependency
-        if (deps.containsKey('flutter')) {
-          currentDeps['flutter'] = deps['flutter'];
+        // Preserve all SDK dependencies (flutter, flutter_localizations, etc.)
+        for (final entry in deps.entries) {
+          if (entry.value is Map &&
+              (entry.value as Map).containsKey('sdk')) {
+            currentDeps[entry.key as String] = entry.value;
+          }
         }
       }
     } catch (e) {
@@ -569,6 +398,8 @@ class GenerateCommand implements BaseCommand {
     }
 
     // Add module dependencies (with calculated relative path)
+    final currentModuleDir = path.dirname(pubspecPath);
+
     for (final modDep in module.modules) {
       // Skip self-reference
       if (modDep.name == module.name) {
@@ -576,15 +407,10 @@ class GenerateCommand implements BaseCommand {
         continue;
       }
 
-      final targetPubspecPath = _findModulePubspecPath(
-        path.dirname(path.dirname(pubspecPath)), // Go to root
-        modDep,
-      );
+      final targetModuleDir = modulePathMap[modDep.name];
 
-      if (targetPubspecPath != null) {
+      if (targetModuleDir != null) {
         // Calculate relative path
-        final currentModuleDir = path.dirname(pubspecPath);
-        final targetModuleDir = path.dirname(targetPubspecPath);
         final relativePath =
             path.relative(targetModuleDir, from: currentModuleDir);
 
@@ -610,8 +436,30 @@ class GenerateCommand implements BaseCommand {
     Module module,
     Package package,
   ) {
-    if (module.devDependencies.isEmpty) {
-      // Remove dev_dependencies section if empty
+    // Names that flutist will manage (from project.dart devDependencies)
+    final flutistManagedNames =
+        module.devDependencies.map((d) => d.name).toSet();
+
+    // Preserve existing entries that flutist does not manage
+    // (SDK deps like flutter_test, user-added deps like test, flutter_lints, etc.)
+    final preserved = <String, dynamic>{};
+    try {
+      final devDepsNode = editor.parseAt(['dev_dependencies']);
+      if (devDepsNode.value is Map) {
+        final devDeps = devDepsNode.value as Map;
+        for (final entry in devDeps.entries) {
+          final name = entry.key as String;
+          if (!flutistManagedNames.contains(name)) {
+            preserved[name] = entry.value;
+          }
+        }
+      }
+    } catch (e) {
+      // Section doesn't exist yet
+    }
+
+    if (module.devDependencies.isEmpty && preserved.isEmpty) {
+      // Remove dev_dependencies section only if truly empty
       try {
         editor.remove(['dev_dependencies']);
       } catch (e) {
@@ -620,49 +468,24 @@ class GenerateCommand implements BaseCommand {
       return;
     }
 
-    // Ensure dev_dependencies section exists
-    _ensureSection(editor, 'dev_dependencies');
+    // Collect all dev dependencies: preserved first, then flutist-managed
+    final allDevDeps = <String, dynamic>{};
+    allDevDeps.addAll(preserved);
 
-    // Clear the section
-    editor.update(['dev_dependencies'], {});
-
-    // Add devDependencies
     for (final devDep in module.devDependencies) {
       final version = _getVersionFromPackage(package, devDep.name);
       if (version != null) {
-        editor.update(['dev_dependencies', devDep.name], version);
+        allDevDeps[devDep.name] = version;
         Logger.info('  ✓ Added dev_dependency: ${devDep.name} ($version)');
       }
     }
-  }
 
-  // MARK: - Helper
-
-  /// Converts string to ModuleType enum.
-  ModuleType _parseModuleType(String typeString) {
-    switch (typeString) {
-      case 'feature':
-        return ModuleType.feature;
-      case 'library':
-        return ModuleType.library;
-      case 'standard':
-        return ModuleType.standard;
-      case 'simple':
-        return ModuleType.simple;
-      default:
-        throw ArgumentError('Invalid module type: $typeString');
+    // Update dev_dependencies section
+    try {
+      editor.update(['dev_dependencies'], allDevDeps);
+    } catch (e) {
+      editor.update(['dev_dependencies'], allDevDeps);
     }
   }
 
-  /// Converts camelCase to snake_case.
-  ///
-  /// Examples:
-  /// - loginExample → login_example
-  /// - userDomainImplementation → user_domain_implementation
-  String _toSnakeCase(String camelCase) {
-    return camelCase.replaceAllMapped(
-      RegExp(r'[A-Z]'),
-      (match) => '_${match.group(0)!.toLowerCase()}',
-    );
-  }
 }

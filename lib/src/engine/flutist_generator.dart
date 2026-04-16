@@ -6,11 +6,16 @@ import '../utils/utils.dart';
 /// Generator for flutist_gen.dart file.
 class GenFileGenerator {
   /// Generates the flutist_gen.dart file based on package.dart.
+  /// If [packageData] is provided, skips re-parsing package.dart.
   /// If [projectModuleNames] is provided, only modules present in project.dart will be included.
-  static void generate(String rootPath, {List<String>? projectModuleNames}) {
-    try {
-      Logger.info('Generating flutist_gen.dart...');
+  static void generate(String rootPath,
+      {Package? packageData, List<String>? projectModuleNames}) {
+    Logger.info('Generating flutist_gen.dart...');
 
+    final Package package;
+    if (packageData != null) {
+      package = packageData;
+    } else {
       // Parse package.dart
       final packageFile = File('$rootPath/package.dart');
 
@@ -19,39 +24,54 @@ class GenFileGenerator {
         return;
       }
 
-      final content = packageFile.readAsStringSync();
-      final package = _parsePackageDart(content);
+      try {
+        final content = packageFile.readAsStringSync();
+        package = parsePackageDart(content);
+      } catch (e) {
+        Logger.error(ErrorHelper.describe(e, '$rootPath/package.dart'));
+        return;
+      }
+    }
 
-      // Filter modules if projectModuleNames is provided
-      final filteredPackage = projectModuleNames != null
-          ? _filterPackageModules(package, projectModuleNames)
-          : package;
+    // Filter modules if projectModuleNames is provided
+    final filteredPackage = projectModuleNames != null
+        ? _filterPackageModules(package, projectModuleNames)
+        : package;
 
+    try {
       // Create flutist directory if not exists
       final flutistDir = Directory('$rootPath/flutist');
       if (!flutistDir.existsSync()) {
         flutistDir.createSync(recursive: true);
       }
 
-      // Generate content
+      // Generate content and write to file
       final genContent = _buildGenContent(filteredPackage);
-
-      // Write to file
       final genFile = File('$rootPath/flutist/flutist_gen.dart');
       genFile.writeAsStringSync(genContent);
 
       Logger.success('Generated flutist_gen.dart');
     } catch (e) {
-      Logger.error('Failed to generate flutist_gen.dart: $e');
+      Logger.error(ErrorHelper.describe(e, '$rootPath/flutist/flutist_gen.dart'));
     }
   }
 
   /// Filters package modules to only include those present in project.dart.
+  /// Falls back to projectModuleNames for any module not declared in package.dart,
+  /// so getters are always generated for all modules in project.dart.
   static Package _filterPackageModules(
       Package package, List<String> projectModuleNames) {
     final filteredModules = package.modules
         .where((module) => projectModuleNames.contains(module.name))
         .toList();
+
+    // Add any project.dart modules missing from package.dart
+    final existing = filteredModules.map((m) => m.name).toSet();
+    for (final name in projectModuleNames) {
+      if (!existing.contains(name)) {
+        filteredModules.add(Module(name: name));
+      }
+    }
 
     return Package(
       name: package.name,
@@ -61,7 +81,9 @@ class GenFileGenerator {
   }
 
   /// Parses package.dart content.
-  static Package _parsePackageDart(String content) {
+  static Package parsePackageDart(String content) {
+    _warnIfInlineDeclarations(content, 'package.dart');
+
     // Parse package name
     final nameMatch = RegExp(r"name:\s*'([^']+)'").firstMatch(content);
     final packageName = nameMatch?.group(1) ?? 'workspace';
@@ -72,11 +94,48 @@ class GenFileGenerator {
     // Parse modules
     final modules = _parseModules(content);
 
+    // Warn if file has Module( outside comments but parsed none
+    if (modules.isEmpty && _hasModuleOutsideComments(content)) {
+      Logger.warn(
+          'package.dart contains Module() but none were parsed. '
+          'Check that declarations use multiline format.');
+    }
+
     return Package(
       name: packageName,
       dependencies: dependencies,
       modules: modules,
     );
+  }
+
+  /// Returns true if content has `Module(` on a non-comment line.
+  static bool _hasModuleOutsideComments(String content) {
+    for (final line in content.split('\n')) {
+      final trimmed = line.trim();
+      if (!trimmed.startsWith('//') && trimmed.contains('Module(')) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Warns if package.dart appears to use inline declarations.
+  ///
+  /// Detects patterns like `modules: [Module(name: 'foo')]` on a single line.
+  /// Skips comment lines to avoid false positives.
+  static void _warnIfInlineDeclarations(String content, String fileName) {
+    for (final line in content.split('\n')) {
+      final trimmed = line.trim();
+      if (trimmed.startsWith('//')) continue;
+      if (RegExp(r'\[.*Module\s*\(.*\).*\]').hasMatch(line) ||
+          RegExp(r'\[.*Dependency\s*\(.*\).*\]').hasMatch(line)) {
+        Logger.warn('$fileName appears to use inline declarations.');
+        Logger.warn(
+            'Flutist only parses multiline format. '
+            'Split each Module/Dependency onto separate lines.');
+        return;
+      }
+    }
   }
 
   /// Parses dependencies from package.dart content.
@@ -121,14 +180,12 @@ class GenFileGenerator {
     final modulesContent = match.group(1)!;
 
     final modulePattern = RegExp(
-      r"Module\s*\(\s*name:\s*'([^']+)'\s*,\s*type:\s*ModuleType\.(\w+)\s*\)",
+      r"Module\s*\(\s*name:\s*'([^']+)'\s*\)",
     );
 
     for (final modMatch in modulePattern.allMatches(modulesContent)) {
       final name = modMatch.group(1)!;
-      final typeString = modMatch.group(2)!;
-      final type = _parseModuleType(typeString);
-      modules.add(Module(name: name, type: type));
+      modules.add(Module(name: name));
     }
 
     return modules;
@@ -150,7 +207,7 @@ class GenFileGenerator {
     buffer.writeln('extension PackageDependenciesX on List<Dependency> {');
 
     for (final dep in package.dependencies) {
-      final getterName = _toCamelCase(dep.name);
+      final getterName = StringCase.toCamelCase(dep.name);
       buffer.writeln("  /// Dependency getter for ${dep.name}");
       buffer.writeln(
           "  Dependency get $getterName => firstWhere((d) => d.name == '${dep.name}');");
@@ -164,7 +221,7 @@ class GenFileGenerator {
     buffer.writeln('extension PackageModulesX on List<Module> {');
 
     for (final module in package.modules) {
-      final getterName = _toCamelCase(module.name);
+      final getterName = StringCase.toCamelCase(module.name);
       buffer.writeln("  /// Module getter for ${module.name}");
       buffer.writeln(
           "  Module get $getterName => firstWhere((m) => m.name == '${module.name}');");
@@ -175,33 +232,4 @@ class GenFileGenerator {
     return buffer.toString();
   }
 
-  /// Converts snake_case to camelCase.
-  static String _toCamelCase(String snakeCase) {
-    final parts = snakeCase.split('_');
-    if (parts.length == 1) return snakeCase;
-
-    final first = parts.first;
-    final rest = parts.skip(1).map((part) {
-      if (part.isEmpty) return part;
-      return part[0].toUpperCase() + part.substring(1);
-    });
-
-    return first + rest.join('');
-  }
-
-  /// Converts string to ModuleType enum.
-  static ModuleType _parseModuleType(String typeString) {
-    switch (typeString) {
-      case 'feature':
-        return ModuleType.feature;
-      case 'library':
-        return ModuleType.library;
-      case 'standard':
-        return ModuleType.standard;
-      case 'simple':
-        return ModuleType.simple;
-      default:
-        throw ArgumentError('Invalid module type: $typeString');
-    }
-  }
 }

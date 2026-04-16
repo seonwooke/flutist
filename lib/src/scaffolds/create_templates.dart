@@ -1,9 +1,17 @@
 import '../core/core.dart';
+import '../utils/utils.dart';
 
 /// Template generator for module creation.
 class CreateTemplates {
   /// Generates pubspec.yaml content for a module.
-  static String pubspecYaml(String modulePath, String moduleName) => '''
+  ///
+  /// [isFlutterModule] — if true, adds `flutter: sdk: flutter` to dependencies.
+  /// Used for _implementation and _example layers that contain Flutter UI code.
+  static String pubspecYaml(String modulePath, String moduleName,
+      {bool isFlutterModule = false}) {
+    final flutterDep =
+        isFlutterModule ? '  flutter:\n    sdk: flutter\n' : '';
+    return '''
 name: $moduleName
 description: A Flutter module
 version: 1.0.0+1
@@ -13,9 +21,10 @@ environment:
   sdk: ">=3.5.0 <4.0.0"
 
 dependencies:
-
+$flutterDep
 resolution: workspace
 ''';
+  }
 
   /// Generates main.dart content for library example layer.
   static String mainDart(String projectName) => '''
@@ -25,18 +34,23 @@ void main() {
 ''';
 
   /// Generates Module entry for project.dart.
-  static String projectModule(String moduleName, ModuleType moduleType) => '''
-    Module(
+  ///
+  /// [moduleRefs] - list of module names this module depends on (B6 auto-wiring).
+  static String projectModule(String moduleName, [List<String> moduleRefs = const []]) {
+    final modulesContent = moduleRefs.isEmpty
+        ? '[]'
+        : '[\n${moduleRefs.map((m) => '        package.modules.${StringCase.toCamelCase(m)},').join('\n')}\n      ]';
+    return '''    Module(
       name: '$moduleName',
-      type: ModuleType.${moduleType.name},
       dependencies: [],
       devDependencies: [],
-      modules: [],
+      modules: $modulesContent,
     ),''';
+  }
 
   /// Generates Module entry for package.dart.
-  static String packageModule(String moduleName, ModuleType moduleType) => '''
-    Module(name: '$moduleName', type: ModuleType.${moduleType.name}),''';
+  static String packageModule(String moduleName) => '''
+    Module(name: '$moduleName'),''';
 
   /// Generates analysis_options.yaml that includes root config.
   ///
@@ -47,7 +61,7 @@ include: $relativePath/analysis_options.yaml
 ''';
 
   /// Generates README.md content for a module.
-  static String moduleReadme(String moduleName, ModuleType moduleType) => '''
+  static String moduleReadme(String moduleName, ScaffoldType scaffoldType) => '''
 <div align="center">
 
 <img src="https://raw.githubusercontent.com/seonwooke/flutist/release/1.0.0/assets/flutist_banner.png" alt="Flutist Banner" width="50%">
@@ -60,11 +74,11 @@ Module in Flutist workspace.
 
 This module is part of the Flutist workspace project. Dependencies are managed centrally in the root `package.dart` file.
 
-## 🏗️ Module Type
+## 🏗️ Scaffold Type
 
-**Type:** `${moduleType.name}`
+**Type:** `${scaffoldType.name}`
 
-${_getModuleTypeDescription(moduleType)}
+${_getScaffoldTypeDescription(scaffoldType)}
 
 ## 📦 Dependencies
 
@@ -83,7 +97,7 @@ import 'package:$moduleName/$moduleName.dart';
 
 ## 📁 Structure
 
-${_getModuleStructure(moduleType, moduleName)}
+${_getModuleStructure(scaffoldType, moduleName)}
 
 ## 🔧 Development
 
@@ -100,46 +114,47 @@ When working on this module:
 - Module-specific configuration can be found in this module's `pubspec.yaml`
 ''';
 
-  static String _getModuleTypeDescription(ModuleType type) {
+  static String _getScaffoldTypeDescription(ScaffoldType type) {
     switch (type) {
-      case ModuleType.feature:
+      case ScaffoldType.clean:
         return '''
-This is a **feature module** with a 3-layer architecture:
+This is a **clean module** with a 3-layer Clean Architecture:
 - **Domain Layer** - Business logic and entities
 - **Data Layer** - Data sources and repositories
 - **Presentation Layer** - UI components and state management
 ''';
-      case ModuleType.library:
+      case ScaffoldType.micro:
         return '''
-This is a **library module** with a 5-layer architecture:
+This is a **micro module** with a 5-layer Microfeature Architecture:
 - **Example Layer** - Example usage and demos
-- **Implementation Layer** - Core implementation
 - **Interface Layer** - Public API and contracts
+- **Implementation Layer** - Core implementation
 - **Tests Layer** - Unit and widget tests
 - **Testing Layer** - Test utilities and mocks
 ''';
-      case ModuleType.standard:
+      case ScaffoldType.lite:
         return '''
-This is a **standard module** with a 3-layer architecture:
+This is a **lite module** with a 4-layer Microfeature lite Architecture:
+- **Interface Layer** - Public API and contracts
 - **Implementation Layer** - Core functionality
 - **Tests Layer** - Unit and integration tests
 - **Testing Layer** - Test utilities and helpers
 ''';
-      case ModuleType.simple:
+      case ScaffoldType.simple:
         return '''
 This is a **simple module** with a minimal structure:
 - **lib/** - Source code directory
 ''';
-      case ModuleType.custom:
+      case ScaffoldType.custom:
         return '''
 This is a **custom module** with custom template structure.
 ''';
     }
   }
 
-  static String _getModuleStructure(ModuleType type, String moduleName) {
+  static String _getModuleStructure(ScaffoldType type, String moduleName) {
     switch (type) {
-      case ModuleType.feature:
+      case ScaffoldType.clean:
         return '''
 ```
 $moduleName/
@@ -151,7 +166,7 @@ $moduleName/
     └── lib/
 ```
 ''';
-      case ModuleType.library:
+      case ScaffoldType.micro:
         return '''
 ```
 $moduleName/
@@ -167,10 +182,12 @@ $moduleName/
     └── lib/
 ```
 ''';
-      case ModuleType.standard:
+      case ScaffoldType.lite:
         return '''
 ```
 $moduleName/
+├── ${moduleName}_interface/      # Interface layer
+│   └── lib/
 ├── ${moduleName}_implementation/ # Implementation layer
 │   └── lib/
 ├── ${moduleName}_tests/          # Tests layer
@@ -179,14 +196,14 @@ $moduleName/
     └── lib/
 ```
 ''';
-      case ModuleType.simple:
+      case ScaffoldType.simple:
         return '''
 ```
 $moduleName/
 └── lib/              # Source code
 ```
 ''';
-      case ModuleType.custom:
+      case ScaffoldType.custom:
         return '''
 ```
 $moduleName/

@@ -1,30 +1,47 @@
 import 'core.dart';
 
-/// Defines the structural type of a module in a Flutist project.
-enum ModuleType {
-  /// Feature module with Domain, Data, Presentation 3-layer structure.
-  feature,
+/// Defines the scaffold template type used when creating a module.
+/// Used exclusively by `flutist create --options` and internal logic.
+/// Not stored in project.dart or package.dart.
+enum ScaffoldType {
+  /// Clean Architecture: Domain / Data / Presentation (3 layers).
+  clean,
 
-  /// Library module with Example, Implementation, Interface, Tests, Testing 5-layer structure.
-  library,
+  /// Microfeature Architecture: Example / Interface / Implementation / Tests / Testing (5 layers).
+  micro,
 
-  /// Standard module with Implementation, Tests, Testing 3-layer structure.
-  standard,
+  /// Microfeature lite: Interface / Implementation / Tests / Testing (4 layers).
+  lite,
 
-  /// Simple module with only lib folder.
+  /// Single package with no layers.
   simple,
 
-  /// Custom module with custom template.
-  custom,
+  /// Custom template structure.
+  custom;
+
+  /// Parses a string to [ScaffoldType].
+  static ScaffoldType fromString(String value) {
+    switch (value) {
+      case 'clean':
+        return ScaffoldType.clean;
+      case 'micro':
+        return ScaffoldType.micro;
+      case 'lite':
+        return ScaffoldType.lite;
+      case 'simple':
+        return ScaffoldType.simple;
+      case 'custom':
+        return ScaffoldType.custom;
+      default:
+        throw ArgumentError('Invalid scaffold type: $value');
+    }
+  }
 }
 
 /// Represents a module in a Flutist project.
 class Module {
   /// Module name.
   final String name;
-
-  /// Module type.
-  final ModuleType type;
 
   /// Regular dependencies for 'dependencies' section.
   final List<Dependency> dependencies;
@@ -37,7 +54,6 @@ class Module {
 
   Module({
     required this.name,
-    this.type = ModuleType.library,
     this.dependencies = const [],
     this.devDependencies = const [],
     this.modules = const [],

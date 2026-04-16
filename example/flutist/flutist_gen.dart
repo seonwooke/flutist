@@ -8,17 +8,6 @@ extension PackageDependenciesX on List<Dependency> {
   /// Dependency getter for http
   Dependency get http => firstWhere((d) => d.name == 'http');
 
-  /// Dependency getter for provider
-  Dependency get provider => firstWhere((d) => d.name == 'provider');
-
-  /// Dependency getter for shared_preferences
-  Dependency get sharedPreferences =>
-      firstWhere((d) => d.name == 'shared_preferences');
-
-  /// Dependency getter for json_annotation
-  Dependency get jsonAnnotation =>
-      firstWhere((d) => d.name == 'json_annotation');
-
   /// Dependency getter for test
   Dependency get test => firstWhere((d) => d.name == 'test');
 
@@ -28,27 +17,34 @@ extension PackageDependenciesX on List<Dependency> {
 
 /// Extension for package.modules.xxx access
 extension PackageModulesX on List<Module> {
-  /// Module getter for authentication
-  Module get authentication => firstWhere((m) => m.name == 'authentication');
+  /// Module getter for app
+  Module get app => firstWhere((m) => m.name == 'app');
 
-  /// Module getter for profile
-  Module get profile => firstWhere((m) => m.name == 'profile');
+  /// Module getter for auth_domain
+  Module get authDomain => firstWhere((m) => m.name == 'auth_domain');
 
-  /// Module getter for network
-  Module get network => firstWhere((m) => m.name == 'network');
+  /// Module getter for auth_data
+  Module get authData => firstWhere((m) => m.name == 'auth_data');
 
-  /// Module getter for storage
-  Module get storage => firstWhere((m) => m.name == 'storage');
+  /// Module getter for auth_presentation
+  Module get authPresentation =>
+      firstWhere((m) => m.name == 'auth_presentation');
 
-  /// Module getter for models
-  Module get models => firstWhere((m) => m.name == 'models');
+  /// Module getter for network_interface
+  Module get networkInterface =>
+      firstWhere((m) => m.name == 'network_interface');
 
-  /// Module getter for constants
-  Module get constants => firstWhere((m) => m.name == 'constants');
+  /// Module getter for network_implementation
+  Module get networkImplementation =>
+      firstWhere((m) => m.name == 'network_implementation');
+
+  /// Module getter for network_testing
+  Module get networkTesting =>
+      firstWhere((m) => m.name == 'network_testing');
+
+  /// Module getter for network_tests
+  Module get networkTests => firstWhere((m) => m.name == 'network_tests');
 
   /// Module getter for utils
   Module get utils => firstWhere((m) => m.name == 'utils');
-
-  /// Module getter for extensions
-  Module get extensions => firstWhere((m) => m.name == 'extensions');
 }

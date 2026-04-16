@@ -22,7 +22,7 @@
 /// flutist init
 ///
 /// # Create a module
-/// flutist create --path features --name login --options library
+/// flutist create --name login --path features --options clean
 ///
 /// # Sync dependencies
 /// flutist generate
@@ -31,10 +31,10 @@
 /// flutist graph --open
 /// ```
 ///
-/// For more information, visit: https://github.com/yourusername/flutist
+/// For more information, visit: https://github.com/seonwooke/flutist
 library;
 
 export 'src/commands/commands.dart';
 export 'src/core/core.dart';
-export 'src/parser/parser.dart';
+export 'src/engine/engine.dart';
 export 'src/utils/utils.dart';

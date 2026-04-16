@@ -23,6 +23,10 @@ void main(List<String> arguments) async {
         GenerateCommand().execute(commandArgs);
         break;
 
+      case 'check':
+        CheckCommand().execute(commandArgs);
+        break;
+
       case 'create':
         CreateCommand().execute(commandArgs);
         break;
@@ -33,6 +37,10 @@ void main(List<String> arguments) async {
 
       case 'scaffold':
         ScaffoldCommand().execute(commandArgs);
+        break;
+
+      case 'test':
+        TestCommand().execute(commandArgs);
         break;
 
       case 'graph':

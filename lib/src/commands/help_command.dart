@@ -31,8 +31,10 @@ AVAILABLE COMMANDS:
   init        Initialize a new Flutist project with Workspace support
   create      Create a new module in the Flutist project
   generate    Sync all pubspec.yaml files based on project.dart
+  check       Check architecture rules for module dependencies
   pub         Manage dependencies in package.dart
   scaffold    Generate code from templates
+  test        Run tests for all modules in parallel
   graph       Generate dependency graph of modules
   help        Display help information for Flutist commands
 
@@ -41,7 +43,7 @@ QUICK START:
      flutist init
 
   2. Create a new module:
-     flutist create --path <path> --name <name> --options <type>
+     flutist create --name <name> --path <path> --options <type>
 
   3. Generate pubspec files:
      flutist generate
@@ -52,7 +54,7 @@ For more information about a specific command, use:
 
 EXAMPLES:
   flutist init
-  flutist create --path features --name login --options feature
+  flutist create --name login --path features --options clean
   flutist generate
   flutist pub add http
   flutist scaffold list
@@ -72,11 +74,17 @@ EXAMPLES:
       case 'generate':
         _showGenerateHelp();
         break;
+      case 'check':
+        _showCheckHelp();
+        break;
       case 'pub':
         _showPubHelp();
         break;
       case 'scaffold':
         _showScaffoldHelp();
+        break;
+      case 'test':
+        _showTestHelp();
         break;
       case 'graph':
         _showGraphHelp();
@@ -122,23 +130,23 @@ COMMAND: create
 DESCRIPTION: Create a new module in the Flutist project
 
 USAGE:
-  flutist create --path <path> --name <name> --options <type>
+  flutist create --name <name> --path <path> --options <type>
 
 REQUIRED OPTIONS:
-  --path, -p <path>     Directory path where the module will be created
   --name, -n <name>     Name of the module
-  --options, -o <type>   Module type (feature, library, standard, simple)
+  --path, -p <path>     Directory path where the module will be created
+  --options, -o <type>   Module type (clean, micro, lite, simple)
 
 MODULE TYPES:
-  feature    Feature module with full structure
-  library    Library module for shared code
-  standard   Standard module structure
+  clean      Clean Architecture module (Domain, Data, Presentation)
+  micro      Microfeature Architecture module (Example, Interface, Impl, Tests, Testing)
+  lite       Microfeature lite module (Interface, Impl, Tests, Testing)
   simple     Simple module with minimal structure
 
 EXAMPLES:
-  flutist create --path features --name login --options feature
-  flutist create --path lib --name utils --options library
-  flutist create -p shared -n models -o standard
+  flutist create --name login --path features --options clean
+  flutist create --name network --path lib --options micro
+  flutist create -n models -p core -o lite
 ''');
   }
 
@@ -165,6 +173,34 @@ EXAMPLES:
 ''');
   }
 
+  void _showCheckHelp() {
+    print('''
+COMMAND: check
+DESCRIPTION: Check architecture rules for module dependencies
+
+USAGE:
+  flutist check
+
+OVERVIEW:
+  Validates that module dependencies follow architecture rules.
+  Also runs automatically during `flutist generate` when strictMode is enabled.
+
+RULES:
+  • Implementation layers must not be referenced directly (use Interface instead)
+  • Circular dependencies are not allowed
+  • Testing layers should only be referenced by test modules
+  • Example layers should not be referenced as dependencies
+  • Clean module layers must follow direction: Presentation → Data → Domain
+
+OPTIONS (in ProjectOptions):
+  strictMode: true          Enable/disable enforcement (default: true)
+  compositionRoots: ['app'] Modules allowed to reference Implementation directly
+
+EXAMPLES:
+  flutist check
+''');
+  }
+
   void _showPubHelp() {
     print('''
 COMMAND: pub
@@ -188,6 +224,28 @@ EXAMPLES:
   flutist pub add http
   flutist pub add provider --version ^2.0.0
   flutist pub add bloc
+''');
+  }
+
+  void _showTestHelp() {
+    print('''
+COMMAND: test
+DESCRIPTION: Run tests for all modules in parallel
+
+USAGE:
+  flutist test [options]
+
+OPTIONS:
+  -m, --module <name>   Run tests for a specific module only
+  -h, --help            Show help information
+
+OVERVIEW:
+  Finds all modules with a test/ directory and runs dart test
+  in parallel. Reports results with pass/fail summary.
+
+EXAMPLES:
+  flutist test
+  flutist test --module login
 ''');
   }
 
