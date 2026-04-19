@@ -35,6 +35,24 @@ All notable changes to Flutist will be documented in this file.
     on a downstream catch-and-create fallback. The template now emits the
     section as a proper block list, removing the fragility.
 
+- **`flutist init` now exits with code 1 on failure**
+  - Previously, the top-level `catch` in `InitCommand.execute` only logged the
+    error and let the process exit with code 0, so CI/scripts could not detect
+    init failures. It now matches the other commands (`create`, `generate`,
+    `test`, `scaffold`) and calls `exit(1)`.
+
+- **`flutist scaffold` now strips only the trailing `.template` suffix**
+  - The previous `replaceAll('.template', '')` removed every occurrence in the
+    path, so a file named `widget.template.dart.template` would be written as
+    `widget..dart`. The suffix is now stripped via `RegExp(r'\.template$')`.
+
+- **`flutist test` no longer truncates failure output**
+  - `_runModuleTest` previously attached `listen` callbacks to stdout/stderr
+    and read the buffers immediately after `process.exitCode`, racing the
+    transform pipeline and sometimes cutting off the last lines of stack
+    traces. The streams are now drained via `.join()` futures that are awaited
+    after the process exits, guaranteeing full output capture.
+
 ### 📝 Documentation
 
 - **Docs badge now links to the official docs site**
