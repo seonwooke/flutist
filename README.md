@@ -4,7 +4,7 @@
 
 **Manage your Flutter modular structure simply and systematically**
 
-[![Docs](https://img.shields.io/badge/Docs-blue.svg?logo=book&logoColor=white)](https://deepwiki.com/seonwooke/flutist)
+[![Docs](https://img.shields.io/badge/Docs-blue.svg?logo=book&logoColor=white)](https://flutist-1pn8eqs9s-seonwookes-projects.vercel.app/docs)
 [![pub.dev](https://img.shields.io/pub/v/flutist.svg)](https://pub.dev/packages/flutist)
 [![Dart](https://img.shields.io/badge/Dart-%3E%3D3.5.0%20%3C4.0.0-blue.svg)](https://dart.dev)
 

@@ -2,6 +2,63 @@
 
 All notable changes to Flutist will be documented in this file.
 
+## [3.0.2] - 2026-04-19
+
+### 🐛 Bug Fixes
+
+- **`flutist init` on existing projects no longer produces an invalid `workspace: []`**
+  - When migrating an existing project, `init` previously inserted an empty `workspace: []`
+    into `pubspec.yaml`, which caused `flutter pub get` to fail.
+  - The `workspace` section is now left untouched during migration and is created on
+    demand when the first module is added via `flutist create`.
+
+- **`flutist create` now creates the `workspace` section if it's missing**
+  - Previously, running `flutist create` right after a migration-mode `init`
+    (or on any project without a `workspace:` section) failed with
+    `Failed to traverse to subpath (workspace)`.
+  - `CreateCommand` now falls back to creating a block-style `workspace` list
+    with the new module when the section is absent.
+
+- **`flutist create --path .` produces clean workspace entries**
+  - Workspace entries are now normalized via POSIX path normalization,
+    so `--name app --path .` yields `app` instead of `./app`.
+
+- **`flutist generate` now surfaces a clear warning when `workspace:` is missing or malformed**
+  - Previously, a missing or non-list `workspace:` caused `_buildModulePathMap`
+    to silently return an empty map, producing misleading per-module
+    "Could not find module" warnings while still reporting success.
+  - An upfront warning is now emitted, and unparseable module pubspec.yaml files
+    are logged instead of silently skipped.
+
+- **New-project `pubspec.yaml` template now seeds `workspace:` with `- app`**
+  - The template previously rendered `workspace:` with a null value and relied
+    on a downstream catch-and-create fallback. The template now emits the
+    section as a proper block list, removing the fragility.
+
+- **`flutist init` now exits with code 1 on failure**
+  - Previously, the top-level `catch` in `InitCommand.execute` only logged the
+    error and let the process exit with code 0, so CI/scripts could not detect
+    init failures. It now matches the other commands (`create`, `generate`,
+    `test`, `scaffold`) and calls `exit(1)`.
+
+- **`flutist scaffold` now strips only the trailing `.template` suffix**
+  - The previous `replaceAll('.template', '')` removed every occurrence in the
+    path, so a file named `widget.template.dart.template` would be written as
+    `widget..dart`. The suffix is now stripped via `RegExp(r'\.template$')`.
+
+- **`flutist test` no longer truncates failure output**
+  - `_runModuleTest` previously attached `listen` callbacks to stdout/stderr
+    and read the buffers immediately after `process.exitCode`, racing the
+    transform pipeline and sometimes cutting off the last lines of stack
+    traces. The streams are now drained via `.join()` futures that are awaited
+    after the process exits, guaranteeing full output capture.
+
+### 📝 Documentation
+
+- **Docs badge now links to the official docs site**
+  - The README `Docs` badge points to `https://flutist-1pn8eqs9s-seonwookes-projects.vercel.app/docs`
+    instead of the previous deepwiki URL.
+
 ## [3.0.1] - 2026-04-16
 
 ### 📝 Documentation

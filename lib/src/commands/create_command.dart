@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:args/args.dart';
 import 'package:path/path.dart' as path;
+import 'package:yaml/yaml.dart';
 import 'package:yaml_edit/yaml_edit.dart';
 
 import '../core/core.dart';
@@ -103,14 +104,14 @@ class CreateCommand implements BaseCommand {
 
     if (scaffoldType == ScaffoldType.simple) {
       _createSimpleModule(currentDir, path, name);
-      createdModulePaths.add('$path/$name');
+      createdModulePaths.add(_workspaceEntryFor(path, name));
       layerDeps[name] = [];
     } else {
       final layers = _getLayersForType(scaffoldType, name);
       _createLayeredModule(currentDir, path, name, scaffoldType, layers);
 
       for (final layer in layers) {
-        createdModulePaths.add('$path/$name/$layer');
+        createdModulePaths.add(_workspaceEntryFor(path, name, layer));
       }
       layerDeps = _getLayerDepsForType(scaffoldType, name);
     }
@@ -118,6 +119,15 @@ class CreateCommand implements BaseCommand {
     _updateRootPubspec(currentDir, createdModulePaths);
     _updateProjectDart(currentDir, layerDeps);
     _updatePackageDart(currentDir, layerDeps.keys.toList());
+  }
+
+  /// Returns a normalized POSIX path for a workspace entry.
+  /// Prevents entries like "./app" when users pass "--path .".
+  String _workspaceEntryFor(String basePath, String name, [String? layer]) {
+    final joined = layer == null
+        ? path.posix.join(basePath, name)
+        : path.posix.join(basePath, name, layer);
+    return path.posix.normalize(joined);
   }
 
   /// Returns the layer dependency map for B6 auto-wiring.
@@ -257,7 +267,17 @@ class CreateCommand implements BaseCommand {
       final editor = YamlEditor(content);
 
       for (final modulePath in modulePaths) {
-        editor.appendToList(['workspace'], modulePath);
+        try {
+          editor.appendToList(['workspace'], modulePath);
+        } catch (_) {
+          // workspace section absent (e.g. fresh existing-project migration) —
+          // create it in block style with the first module.
+          editor.update(
+            ['workspace'],
+            wrapAsYamlNode([modulePath],
+                collectionStyle: CollectionStyle.BLOCK),
+          );
+        }
         Logger.info('  ✓ Added to workspace: $modulePath');
       }
 

@@ -130,7 +130,16 @@ class GenerateCommand implements BaseCommand {
       final yamlDoc = loadYaml(content) as Map;
       final workspace = yamlDoc['workspace'];
 
-      if (workspace is! List) return map;
+      if (workspace == null) {
+        Logger.warn(
+            'No `workspace:` section in pubspec.yaml. Add modules via `flutist create` before running generate.');
+        return map;
+      }
+      if (workspace is! List) {
+        Logger.warn(
+            '`workspace:` in pubspec.yaml is not a list. Generation will skip module resolution.');
+        return map;
+      }
 
       for (final entry in workspace) {
         final entryPath = '$currentDir/$entry';
@@ -144,8 +153,8 @@ class GenerateCommand implements BaseCommand {
             if (name != null) {
               map[name] = entryPath;
             }
-          } catch (_) {
-            // Skip unparseable pubspec.yaml
+          } catch (e) {
+            Logger.warn('Skipped unparseable pubspec.yaml at $entryPath: $e');
           }
         }
       }

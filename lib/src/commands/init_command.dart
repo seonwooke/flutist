@@ -182,6 +182,7 @@ class InitCommand implements BaseCommand {
       Logger.info('Next: Run "flutter pub get" to install dependencies');
     } catch (e) {
       Logger.error('Initialization failed: $e');
+      exit(1);
     }
   }
 
@@ -357,17 +358,8 @@ class InitCommand implements BaseCommand {
       Logger.info('  ✓ flutter.uses-material-design already set');
     }
 
-    // Ensure workspace section exists (block style: "- item" not "[item]")
-    if (!yamlDoc.containsKey('workspace')) {
-      editor.update(
-        ['workspace'],
-        wrapAsYamlNode([], collectionStyle: CollectionStyle.BLOCK),
-      );
-      Logger.info('  ✓ Added workspace section');
-    }
-
     if (isNewProject) {
-      // Add app to workspace if not exists (new project only)
+      // Ensure workspace section exists with app (block style: "- item" not "[item]")
       final workspace = yamlDoc['workspace'];
       if (workspace is List) {
         if (!workspace.contains('app')) {
@@ -377,14 +369,17 @@ class InitCommand implements BaseCommand {
           Logger.info('  ✓ app already in workspace');
         }
       } else {
-        // workspace exists but is not a list, replace it
         editor.update(
           ['workspace'],
           wrapAsYamlNode(['app'], collectionStyle: CollectionStyle.BLOCK),
         );
-        Logger.info('  ✓ Updated workspace section with app');
+        Logger.info('  ✓ Added workspace section with app');
       }
     }
+    // For existing project migration: intentionally skip creating the workspace
+    // section. An empty `workspace: []` makes `flutter pub get` fail, and the
+    // section will be created on demand by WorkspaceEditor when the first
+    // module is added via `flutist create`.
 
     // Ensure blank line before workspace section
     var result = editor.toString();

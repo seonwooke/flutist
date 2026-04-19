@@ -498,8 +498,8 @@ TEMPLATE VARIABLES:
         from: templateDir.path,
       );
 
-      final outputFileName =
-          _replaceVariables(relativePath.replaceAll('.template', ''), attributes);
+      final outputFileName = _replaceVariables(
+          relativePath.replaceAll(RegExp(r'\.template$'), ''), attributes);
 
       var content = templateFile.readAsStringSync();
       content = _replaceVariables(content, attributes);

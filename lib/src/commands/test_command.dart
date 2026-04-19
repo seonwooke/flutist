@@ -205,24 +205,22 @@ EXAMPLES:
       workingDirectory: target.path,
     );
 
-    final stdout = StringBuffer();
-    final stderr = StringBuffer();
-
-    process.stdout.transform(const SystemEncoding().decoder).listen((data) {
-      stdout.write(data);
-    });
-
-    process.stderr.transform(const SystemEncoding().decoder).listen((data) {
-      stderr.write(data);
-    });
+    // Start draining stdout/stderr immediately, but await them after exitCode
+    // so the buffers are fully collected before we return — `listen` + reading
+    // `StringBuffer.toString()` right after `process.exitCode` races against
+    // the transform pipeline and can truncate the final chunks.
+    final stdoutFuture =
+        process.stdout.transform(const SystemEncoding().decoder).join();
+    final stderrFuture =
+        process.stderr.transform(const SystemEncoding().decoder).join();
 
     final exitCode = await process.exitCode;
 
     return _TestResult(
       target: target,
       passed: exitCode == 0,
-      output: stdout.toString(),
-      error: stderr.toString(),
+      output: await stdoutFuture,
+      error: await stderrFuture,
     );
   }
 
