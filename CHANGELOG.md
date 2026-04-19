@@ -23,6 +23,18 @@ All notable changes to Flutist will be documented in this file.
   - Workspace entries are now normalized via POSIX path normalization,
     so `--name app --path .` yields `app` instead of `./app`.
 
+- **`flutist generate` now surfaces a clear warning when `workspace:` is missing or malformed**
+  - Previously, a missing or non-list `workspace:` caused `_buildModulePathMap`
+    to silently return an empty map, producing misleading per-module
+    "Could not find module" warnings while still reporting success.
+  - An upfront warning is now emitted, and unparseable module pubspec.yaml files
+    are logged instead of silently skipped.
+
+- **New-project `pubspec.yaml` template now seeds `workspace:` with `- app`**
+  - The template previously rendered `workspace:` with a null value and relied
+    on a downstream catch-and-create fallback. The template now emits the
+    section as a proper block list, removing the fragility.
+
 ### 📝 Documentation
 
 - **Docs badge now links to the official docs site**
