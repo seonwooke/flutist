@@ -182,6 +182,7 @@ class InitCommand implements BaseCommand {
       Logger.info('Next: Run "flutter pub get" to install dependencies');
     } catch (e) {
       Logger.error('Initialization failed: $e');
+      exit(1);
     }
   }
 
