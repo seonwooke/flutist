@@ -2,6 +2,22 @@
 
 All notable changes to Flutist will be documented in this file.
 
+## [3.0.2] - 2026-04-19
+
+### 🐛 Bug Fixes
+
+- **`flutist init` on existing projects no longer produces an invalid `workspace: []`**
+  - When migrating an existing project, `init` previously inserted an empty `workspace: []`
+    into `pubspec.yaml`, which caused `flutter pub get` to fail.
+  - The `workspace` section is now left untouched during migration and is created on
+    demand by `WorkspaceEditor` when the first module is added via `flutist create`.
+
+### 📝 Documentation
+
+- **Docs badge now links to the official docs site**
+  - The README `Docs` badge points to `https://flutist-1pn8eqs9s-seonwookes-projects.vercel.app/docs`
+    instead of the previous deepwiki URL.
+
 ## [3.0.1] - 2026-04-16
 
 ### 📝 Documentation
