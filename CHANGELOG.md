@@ -10,7 +10,18 @@ All notable changes to Flutist will be documented in this file.
   - When migrating an existing project, `init` previously inserted an empty `workspace: []`
     into `pubspec.yaml`, which caused `flutter pub get` to fail.
   - The `workspace` section is now left untouched during migration and is created on
-    demand by `WorkspaceEditor` when the first module is added via `flutist create`.
+    demand when the first module is added via `flutist create`.
+
+- **`flutist create` now creates the `workspace` section if it's missing**
+  - Previously, running `flutist create` right after a migration-mode `init`
+    (or on any project without a `workspace:` section) failed with
+    `Failed to traverse to subpath (workspace)`.
+  - `CreateCommand` now falls back to creating a block-style `workspace` list
+    with the new module when the section is absent.
+
+- **`flutist create --path .` produces clean workspace entries**
+  - Workspace entries are now normalized via POSIX path normalization,
+    so `--name app --path .` yields `app` instead of `./app`.
 
 ### 📝 Documentation
 
