@@ -2,6 +2,20 @@
 
 All notable changes to Flutist will be documented in this file.
 
+## [3.0.3] - 2026-04-24
+
+### 🔧 Chore
+
+- **Automated GitHub Releases on tag push**
+  - Added `.github/workflows/release.yml` that creates a GitHub Release with
+    auto-generated notes whenever a `v*` tag is pushed.
+  - Version bumps now produce a visible entry on the repository's Releases page.
+
+- **Updated `documentation:` link in `pubspec.yaml`**
+  - The "Documentation" link on pub.dev now points to the dedicated docs site
+    (`https://flutist-1pn8eqs9s-seonwookes-projects.vercel.app/`) instead of
+    the DeepWiki page.
+
 ## [3.0.2] - 2026-04-19
 
 ### 🐛 Bug Fixes
