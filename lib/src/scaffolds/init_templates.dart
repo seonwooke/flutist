@@ -398,7 +398,6 @@ This project supports different module types:
 - **`micro`** - Microfeature Architecture module with Example, Interface, Implementation, Tests, Testing layers
 - **`lite`** - Microfeature lite module with Interface, Implementation, Tests, Testing layers
 - **`simple`** - Simple module with only lib folder
-- **`custom`** - Custom module with custom template
 
 ## 🔧 Development
 
