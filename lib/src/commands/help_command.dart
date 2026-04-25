@@ -193,7 +193,8 @@ RULES:
   • Circular dependencies are not allowed
   • Testing layers should only be referenced by test modules
   • Example layers should not be referenced as dependencies
-  • Clean module layers must follow direction: Presentation → Data → Domain
+  • Clean module layers: Domain must not depend on Data/Presentation;
+    Data must not depend on Presentation
 
 OPTIONS (in ProjectOptions):
   strictMode: true          Enable/disable enforcement (default: true)
