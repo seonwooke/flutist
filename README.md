@@ -4,7 +4,7 @@
 
 **Manage your Flutter modular structure simply and systematically**
 
-[![Docs](https://img.shields.io/badge/Docs-blue.svg?logo=book&logoColor=white)](https://flutist-1pn8eqs9s-seonwookes-projects.vercel.app/docs)
+[![Docs](https://img.shields.io/badge/Docs-blue.svg?logo=book&logoColor=white)](https://flutist-web.vercel.app/docs)
 [![pub.dev](https://img.shields.io/pub/v/flutist.svg)](https://pub.dev/packages/flutist)
 [![Dart](https://img.shields.io/badge/Dart-%3E%3D3.5.0%20%3C4.0.0-blue.svg)](https://dart.dev)
 
@@ -16,7 +16,7 @@
 
 Flutist is a powerful project management framework for Flutter applications, inspired by [Tuist](https://tuist.io) for iOS development. It provides a structured approach to managing large-scale Flutter projects with modular architecture, centralized dependency management, and code generation capabilities.
 
-Learn more about [**Flutist**](https://flutist-1pn8eqs9s-seonwookes-projects.vercel.app/)!
+Learn more about [**Flutist**](https://flutist-web.vercel.app/)!
 
 ### Core Values
 

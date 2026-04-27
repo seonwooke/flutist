@@ -2,6 +2,49 @@
 
 All notable changes to Flutist will be documented in this file.
 
+## [3.0.4] - 2026-04-25
+
+### 🐛 Bug Fixes
+
+- **`flutist help create`: corrected mismatch with argparser**
+  - The help text listed `simple` as a valid `--options` value and marked
+    `--options` as required, but the argparser only accepts
+    `clean|micro|lite` and treats the flag as optional. Running
+    `flutist create --options simple` would fail despite the help
+    advertising it.
+  - The help now reflects the actual CLI surface: `--options` is shown as
+    optional, `simple` is removed from the listed types, and a note
+    explains that omitting `--options` produces a single package. The
+    section was also renamed from "MODULE TYPES" to "SCAFFOLD TYPES" to
+    match the internal `ScaffoldType` enum and the README.
+
+- **`flutist help check`: clarified Clean Architecture direction rule**
+  - The rule was previously phrased as
+    "Clean module layers must follow direction: Presentation → Data →
+    Domain", which implied a strict chain. The checker actually only
+    forbids reverse arrows: `_domain` must not depend on
+    `_data`/`_presentation`, and `_data` must not depend on
+    `_presentation`. Both the parallel auto-wired pattern
+    (`presentation → domain`, `data → domain`) and the chain pattern are
+    valid. The help now states the precise rule.
+
+### 📝 Documentation
+
+- **`flutist init`-generated README: removed unsupported `custom` type**
+  - The README written by `flutist init` listed `custom` as a module type,
+    but `flutist create --options custom` is rejected by the argparser.
+    New users following the README hit an immediate dead end. The entry is
+    removed.
+
+- **Documentation links now use the stable production alias**
+  - The `documentation:` field in `pubspec.yaml` and two README links
+    embedded a Vercel deployment hash
+    (`flutist-1pn8eqs9s-seonwookes-projects.vercel.app`), which is tied to
+    a specific deployment and would break if that deployment were archived
+    or rotated. Switched to the stable production alias
+    `flutist-web.vercel.app`. CHANGELOG entries that reference the old URL
+    in past releases were left untouched to preserve history.
+
 ## [3.0.3] - 2026-04-24
 
 ### 🔧 Chore

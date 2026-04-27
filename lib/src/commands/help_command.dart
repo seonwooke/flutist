@@ -130,23 +130,26 @@ COMMAND: create
 DESCRIPTION: Create a new module in the Flutist project
 
 USAGE:
-  flutist create --name <name> --path <path> --options <type>
+  flutist create --name <name> --path <path> [--options <type>]
 
 REQUIRED OPTIONS:
   --name, -n <name>     Name of the module
   --path, -p <path>     Directory path where the module will be created
-  --options, -o <type>   Module type (clean, micro, lite, simple)
 
-MODULE TYPES:
-  clean      Clean Architecture module (Domain, Data, Presentation)
-  micro      Microfeature Architecture module (Example, Interface, Impl, Tests, Testing)
-  lite       Microfeature lite module (Interface, Impl, Tests, Testing)
-  simple     Simple module with minimal structure
+OPTIONAL OPTIONS:
+  --options, -o <type>  Scaffold type: clean, micro, lite
+                        (omit to create a single package with no layers)
+
+SCAFFOLD TYPES:
+  clean      Clean Architecture (Domain, Data, Presentation)
+  micro      Microfeature Architecture (Interface, Implementation, Testing, Tests, Example)
+  lite       Microfeature lite (Interface, Implementation, Testing, Tests)
 
 EXAMPLES:
   flutist create --name login --path features --options clean
   flutist create --name network --path lib --options micro
   flutist create -n models -p core -o lite
+  flutist create --name utils --path core
 ''');
   }
 
@@ -190,7 +193,8 @@ RULES:
   • Circular dependencies are not allowed
   • Testing layers should only be referenced by test modules
   • Example layers should not be referenced as dependencies
-  • Clean module layers must follow direction: Presentation → Data → Domain
+  • Clean module layers: Domain must not depend on Data/Presentation;
+    Data must not depend on Presentation
 
 OPTIONS (in ProjectOptions):
   strictMode: true          Enable/disable enforcement (default: true)
