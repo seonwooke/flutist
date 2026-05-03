@@ -20,6 +20,10 @@ class CreateCommand implements BaseCommand {
 
   @override
   void execute(List<String> arguments) {
+    if (arguments.contains('--help') || arguments.contains('-h')) {
+      HelpCommand().execute([name]);
+      return;
+    }
     final parser = ArgParser()
       ..addOption(
         'name',

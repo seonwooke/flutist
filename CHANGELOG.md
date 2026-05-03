@@ -2,6 +2,27 @@
 
 All notable changes to Flutist will be documented in this file.
 
+## [3.0.5] - 2026-05-03
+
+### 🐛 Bug Fixes
+
+- **`flutist <command> --help` / `-h` now works for every command**
+  - The general help screen advertised `flutist <command> --help` as a
+    way to see per-command usage, but only `graph`, `test`, and
+    `scaffold` actually wired the flag into their argparser. Running
+    `flutist create --help`, `flutist generate --help`, `flutist check
+    --help`, or `flutist pub --help` returned a "Could not find an
+    option named --help" error instead of help text.
+  - Worse, `flutist init --help` did not error at all. Because `init`
+    skips argparser and reads from stdin, the flag was silently ignored
+    and the command dropped into the interactive new-project prompt,
+    so a user looking for help could accidentally start scaffolding a
+    project in the current directory.
+  - All five commands (`init`, `create`, `generate`, `check`, `pub`)
+    now short-circuit on `--help` or `-h` and delegate to the existing
+    `HelpCommand`, matching the behavior of `graph`, `test`, and
+    `scaffold`.
+
 ## [3.0.4] - 2026-04-25
 
 ### 🐛 Bug Fixes

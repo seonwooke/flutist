@@ -14,6 +14,10 @@ class CheckCommand implements BaseCommand {
 
   @override
   void execute(List<String> arguments) {
+    if (arguments.contains('--help') || arguments.contains('-h')) {
+      HelpCommand().execute([name]);
+      return;
+    }
     Logger.info('Checking architecture rules...');
     Logger.info('');
 

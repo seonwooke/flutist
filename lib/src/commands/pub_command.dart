@@ -16,6 +16,10 @@ class PubCommand implements BaseCommand {
 
   @override
   void execute(List<String> arguments) async {
+    if (arguments.contains('--help') || arguments.contains('-h')) {
+      HelpCommand().execute([name]);
+      return;
+    }
     if (arguments.isEmpty) {
       Logger.error('No subcommand provided.');
       Logger.info('Usage: flutist pub add <package_name>');
