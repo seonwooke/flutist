@@ -19,6 +19,10 @@ class GenerateCommand implements BaseCommand {
 
   @override
   void execute(List<String> arguments) {
+    if (arguments.contains('--help') || arguments.contains('-h')) {
+      HelpCommand().execute([name]);
+      return;
+    }
     Logger.info('Starting Flutist generation...');
 
     try {
