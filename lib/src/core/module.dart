@@ -14,10 +14,7 @@ enum ScaffoldType {
   lite,
 
   /// Single package with no layers.
-  simple,
-
-  /// Custom template structure.
-  custom;
+  simple;
 
   /// Parses a string to [ScaffoldType].
   static ScaffoldType fromString(String value) {
@@ -30,8 +27,6 @@ enum ScaffoldType {
         return ScaffoldType.lite;
       case 'simple':
         return ScaffoldType.simple;
-      case 'custom':
-        return ScaffoldType.custom;
       default:
         throw ArgumentError('Invalid scaffold type: $value');
     }
