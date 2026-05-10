@@ -2,6 +2,35 @@
 
 All notable changes to Flutist will be documented in this file.
 
+## [3.0.6] - 2026-05-10
+
+### 🐛 Bug Fixes
+
+- **`flutist pub add --version` now actually pins the version**
+  - The `pub add` help advertised `--version <version>` and even showed
+    `flutist pub add provider --version ^2.0.0` as an example, but the
+    flag was never parsed. Arguments were forwarded to `dart pub add`
+    verbatim, so `--version` reached `dart pub add` (which does not
+    accept it) and the command failed with an unrelated "could not find
+    an option" error from the underlying tool.
+  - `--version` (and `--version=<value>`) is now parsed up front. It
+    must apply to a single package; combining it with multiple packages
+    is rejected with a clear message. The constraint is forwarded to
+    `dart pub add` using its native `package:constraint` syntax.
+  - The help text for `pub add` was also rewritten to document the
+    multi-package form (`flutist pub add http dio bloc`) that already
+    worked but was undocumented.
+
+### 🧹 Internal
+
+- **Removed unreachable `ScaffoldType.custom`**
+  - The enum value was accepted by `ScaffoldType.fromString` and had
+    switch handlers in `create_command` and `create_templates`, but the
+    `flutist create --options` argparser only allowed `clean`, `micro`,
+    or `lite`. The value was unreachable from the CLI, and the
+    init-generated README already dropped it in 3.0.4. The enum value
+    and its dead handlers are now gone.
+
 ## [3.0.5] - 2026-05-03
 
 ### 🐛 Bug Fixes
