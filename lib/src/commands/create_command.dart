@@ -502,9 +502,6 @@ class CreateCommand implements BaseCommand {
 
       case ScaffoldType.simple:
         return [];
-
-      case ScaffoldType.custom:
-        return [];
     }
   }
 }

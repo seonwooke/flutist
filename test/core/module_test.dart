@@ -8,12 +8,12 @@ void main() {
       expect(ScaffoldType.fromString('micro'), ScaffoldType.micro);
       expect(ScaffoldType.fromString('lite'), ScaffoldType.lite);
       expect(ScaffoldType.fromString('simple'), ScaffoldType.simple);
-      expect(ScaffoldType.fromString('custom'), ScaffoldType.custom);
     });
 
     test('throws on invalid type', () {
       expect(() => ScaffoldType.fromString('invalid'), throwsArgumentError);
       expect(() => ScaffoldType.fromString(''), throwsArgumentError);
+      expect(() => ScaffoldType.fromString('custom'), throwsArgumentError);
     });
 
     test('is case-sensitive', () {

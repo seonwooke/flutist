@@ -145,10 +145,6 @@ This is a **lite module** with a 4-layer Microfeature lite Architecture:
 This is a **simple module** with a minimal structure:
 - **lib/** - Source code directory
 ''';
-      case ScaffoldType.custom:
-        return '''
-This is a **custom module** with custom template structure.
-''';
     }
   }
 
@@ -201,13 +197,6 @@ $moduleName/
 ```
 $moduleName/
 └── lib/              # Source code
-```
-''';
-      case ScaffoldType.custom:
-        return '''
-```
-$moduleName/
-└── [Custom structure]
 ```
 ''';
     }
