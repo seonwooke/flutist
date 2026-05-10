@@ -211,13 +211,14 @@ COMMAND: pub
 DESCRIPTION: Manage dependencies in package.dart
 
 USAGE:
-  flutist pub add <package_name> [--version <version>]
+  flutist pub add <package_name> [<package_name2> ...] [--version <constraint>]
 
 SUBCOMMANDS:
-  add <package>    Add a new dependency to package.dart
+  add <package>...    Add one or more dependencies to package.dart
 
 OPTIONS:
-  --version <version>   Specify package version (optional)
+  --version <constraint>   Pin a version constraint (e.g. ^2.0.0).
+                           Only valid when adding a single package.
 
 OVERVIEW:
   This command manages dependencies in your package.dart file.
@@ -226,8 +227,8 @@ OVERVIEW:
 
 EXAMPLES:
   flutist pub add http
+  flutist pub add http dio bloc
   flutist pub add provider --version ^2.0.0
-  flutist pub add bloc
 ''');
   }
 

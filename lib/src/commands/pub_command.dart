@@ -42,11 +42,45 @@ class PubCommand implements BaseCommand {
 
   /// Handles the 'add' subcommand.
   Future<void> _handleAdd(List<String> arguments) async {
-    if (arguments.isEmpty) {
+    String? versionConstraint;
+    final packageNames = <String>[];
+    for (var i = 0; i < arguments.length; i++) {
+      final arg = arguments[i];
+      if (arg == '--version') {
+        if (i + 1 >= arguments.length) {
+          Logger.error('--version requires a value.');
+          Logger.info(
+              'Usage: flutist pub add <package_name> --version <constraint>');
+          exit(1);
+        }
+        versionConstraint = arguments[i + 1];
+        i++;
+      } else if (arg.startsWith('--version=')) {
+        versionConstraint = arg.substring('--version='.length);
+      } else {
+        packageNames.add(arg);
+      }
+    }
+
+    if (packageNames.isEmpty) {
       Logger.error('No package name provided.');
-      Logger.info('Usage: flutist pub add <package_name> [<package_name2> ...]');
+      Logger.info(
+          'Usage: flutist pub add <package_name> [<package_name2> ...] [--version <constraint>]');
       exit(1);
     }
+
+    if (versionConstraint != null && packageNames.length > 1) {
+      Logger.error('--version can only be used with a single package.');
+      Logger.info(
+          'Got ${packageNames.length} packages: ${packageNames.join(', ')}');
+      Logger.info(
+          'Usage: flutist pub add <package_name> --version <constraint>');
+      exit(1);
+    }
+
+    final pubAddArgs = versionConstraint != null
+        ? ['${packageNames[0]}:$versionConstraint']
+        : packageNames;
 
     final rootPath = Directory.current.path;
     final packageDartPath = path.join(rootPath, 'package.dart');
@@ -59,16 +93,17 @@ class PubCommand implements BaseCommand {
     }
 
     try {
-      Logger.info('Resolving versions for: ${arguments.join(', ')}');
+      Logger.info('Resolving versions for: ${packageNames.join(', ')}');
 
       // Batch-resolve all packages in a single dart pub add call
-      final versions = await _getAllVersions(arguments, rootPath);
+      final versions =
+          await _getAllVersions(pubAddArgs, packageNames, rootPath);
 
       if (versions == null) {
         exit(1);
       }
 
-      for (final packageName in arguments) {
+      for (final packageName in packageNames) {
         final version = versions[packageName];
 
         if (version == null) {
@@ -99,9 +134,13 @@ class PubCommand implements BaseCommand {
     }
   }
 
-  /// Resolves the latest versions of all [packages] in a single dart pub add call.
+  /// Resolves versions for [packageNames] by running `dart pub add [pubAddArgs]`
+  /// in a temp project. [pubAddArgs] may carry `:constraint` suffixes that
+  /// [packageNames] do not, since the resulting pubspec keys are plain names.
   Future<Map<String, String>?> _getAllVersions(
-      List<String> packages, String rootPath) async {
+      List<String> pubAddArgs,
+      List<String> packageNames,
+      String rootPath) async {
     final tempDir = Directory(path.join(rootPath, '.flutist_temp'));
     try {
       if (!tempDir.existsSync()) {
@@ -119,7 +158,7 @@ environment:
       // Run dart pub add with all packages at once
       final result = await Process.run(
         'dart',
-        ['pub', 'add', ...packages],
+        ['pub', 'add', ...pubAddArgs],
         workingDirectory: tempDir.path,
       );
 
@@ -139,7 +178,7 @@ environment:
       if (dependencies == null) return null;
 
       final versions = <String, String>{};
-      for (final packageName in packages) {
+      for (final packageName in packageNames) {
         final version = dependencies[packageName];
         if (version is String) {
           versions[packageName] = version;
