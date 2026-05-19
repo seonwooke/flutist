@@ -45,21 +45,17 @@ class PubCommand implements BaseCommand {
 
   /// Handles the 'delete' subcommand.
   ///
-  /// Removes one or more dependencies from package.dart. By default, refuses
-  /// to remove a dependency that is still referenced in project.dart unless
-  /// `--cascade` is provided, in which case the matching
-  /// `package.dependencies.xxx` entries in project.dart are also removed.
+  /// Removes one or more dependencies from package.dart. Any matching
+  /// `package.dependencies.xxx` entries in project.dart are also removed so
+  /// no dangling references remain. The full plan is printed first; the
+  /// user confirms at the y/n prompt, or passes `-y` for scripts.
   Future<void> _handleDelete(List<String> arguments) async {
-    var cascade = false;
     var dryRun = false;
     var skipConfirm = false;
     final packageNames = <String>[];
 
     for (final arg in arguments) {
       switch (arg) {
-        case '--cascade':
-          cascade = true;
-          break;
         case '--dry-run':
           dryRun = true;
           break;
@@ -71,7 +67,7 @@ class PubCommand implements BaseCommand {
           if (arg.startsWith('-')) {
             Logger.error('Unknown flag: $arg');
             Logger.info(
-                'Usage: flutist pub delete <package_name> [--cascade] [--dry-run] [-y]');
+                'Usage: flutist pub delete <package_name> [--dry-run] [-y]');
             exit(1);
           }
           packageNames.add(arg);
@@ -81,7 +77,7 @@ class PubCommand implements BaseCommand {
     if (packageNames.isEmpty) {
       Logger.error('No package name provided.');
       Logger.info(
-          'Usage: flutist pub delete <package_name> [<package_name2> ...] [--cascade] [--dry-run] [-y]');
+          'Usage: flutist pub delete <package_name> [<package_name2> ...] [--dry-run] [-y]');
       exit(1);
     }
 
@@ -123,25 +119,13 @@ class PubCommand implements BaseCommand {
 
     final hasAnyUsage = usagesByPkg.values.any((u) => u.isNotEmpty);
 
-    if (hasAnyUsage && !cascade) {
-      Logger.error(
-          'Cannot delete: the following dependencies are still in use.');
-      for (final entry in usagesByPkg.entries) {
-        if (entry.value.isEmpty) continue;
-        Logger.error('  ${entry.key} used by: ${entry.value.join(', ')}');
-      }
-      Logger.info('');
-      Logger.info(
-          'Re-run with --cascade to also remove the references from project.dart.');
-      exit(1);
-    }
-
-    // Step 3: print summary.
+    // Step 3: print the full plan. References in project.dart are listed
+    // so the user can see exactly what will be touched before confirming.
     Logger.info('Will remove from package.dart:');
     for (final name in packageNames) {
       Logger.info('  - $name');
     }
-    if (cascade && hasAnyUsage) {
+    if (hasAnyUsage) {
       Logger.info('Will remove references in project.dart:');
       for (final entry in usagesByPkg.entries) {
         if (entry.value.isEmpty) continue;
@@ -173,7 +157,7 @@ class PubCommand implements BaseCommand {
     await File(packageDartPath).writeAsString(updatedPackage);
     Logger.success('Updated package.dart');
 
-    if (cascade && projectExists && hasAnyUsage) {
+    if (projectExists && hasAnyUsage) {
       var updatedProject = projectContent;
       for (final name in packageNames) {
         updatedProject = _removeDependencyReferences(updatedProject, name);
