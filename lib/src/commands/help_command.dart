@@ -212,23 +212,37 @@ DESCRIPTION: Manage dependencies in package.dart
 
 USAGE:
   flutist pub add <package_name> [<package_name2> ...] [--version <constraint>]
+  flutist pub delete <package_name> [<package_name2> ...] [--dry-run] [-y]
 
 SUBCOMMANDS:
-  add <package>...    Add one or more dependencies to package.dart
+  add <package>...       Add one or more dependencies to package.dart
+  delete <package>...    Remove one or more dependencies from package.dart
 
-OPTIONS:
+OPTIONS (add):
   --version <constraint>   Pin a version constraint (e.g. ^2.0.0).
                            Only valid when adding a single package.
 
+OPTIONS (delete):
+  --dry-run                Print what would change without writing files.
+  -y, --yes                Skip the confirmation prompt.
+
 OVERVIEW:
   This command manages dependencies in your package.dart file.
-  After adding a dependency, you should run "flutist generate"
+  After modifying dependencies, you should run "flutist generate"
   to sync the changes to all module pubspec.yaml files.
+
+  `pub delete` prints the full plan first (including any
+  `package.dependencies.xxx` references it will remove from project.dart)
+  and waits for a y/n confirmation. Pass -y to skip the prompt in scripts.
 
 EXAMPLES:
   flutist pub add http
   flutist pub add http dio bloc
   flutist pub add provider --version ^2.0.0
+  flutist pub delete http
+  flutist pub delete http dio
+  flutist pub delete provider --dry-run
+  flutist pub delete provider -y
 ''');
   }
 
