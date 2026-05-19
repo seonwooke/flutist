@@ -233,15 +233,40 @@ class PubCommand implements BaseCommand {
     return packageContent.replaceFirst(pattern, '');
   }
 
-  /// Removes `package.dependencies.<camelCase>,` lines from project.dart so
-  /// that no dangling references remain after the dependency is deleted.
+  /// Removes `package.dependencies.<camelCase>` references from project.dart
+  /// so that no dangling references remain after the dependency is deleted.
+  ///
+  /// Handles both forms users actually write:
+  ///   1. Own-line multi-line list:
+  ///        dependencies: [
+  ///          package.dependencies.flutterBloc,
+  ///        ],
+  ///   2. Inline list on a single line:
+  ///        dependencies: [package.dependencies.flutterBloc],
+  ///        dependencies: [package.dependencies.a, package.dependencies.b],
   String _removeDependencyReferences(String projectContent, String pkg) {
     final camel = StringCase.toCamelCase(pkg);
-    final pattern = RegExp(
-      '(?:^|\\n)[ \\t]*package\\.dependencies\\.$camel\\b\\s*,?[ \\t]*(?=\\n|\$)',
-      multiLine: true,
+    final ref = 'package\\.dependencies\\.$camel\\b';
+    var result = projectContent;
+
+    // 1. Own-line form in a multi-line list. Eats the line including its
+    //    trailing comma, but leaves the trailing newline so adjacent lines
+    //    keep their formatting.
+    result = result.replaceAll(
+      RegExp('\\n[ \\t]*$ref[ \\t]*,?[ \\t]*(?=\\n)'),
+      '',
     );
-    return projectContent.replaceAll(pattern, '');
+
+    // 2. Inline form, ref followed by a comma (first or middle item).
+    result = result.replaceAll(RegExp('$ref[ \\t]*,[ \\t]*'), '');
+
+    // 3. Inline form, ref preceded by a comma (last item, no trailing comma).
+    result = result.replaceAll(RegExp('[ \\t]*,[ \\t]*$ref'), '');
+
+    // 4. Ref alone in the list (only entry).
+    result = result.replaceAll(RegExp(ref), '');
+
+    return result;
   }
 
   /// Handles the 'add' subcommand.
