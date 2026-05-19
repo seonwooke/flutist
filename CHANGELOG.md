@@ -2,6 +2,38 @@
 
 All notable changes to Flutist will be documented in this file.
 
+## [3.1.0] - 2026-05-19
+
+### ✨ Features
+
+- **`flutist pub delete <pkg>` — remove dependencies declaratively**
+  - `flutist pub add` had no inverse. Removing a dependency meant
+    hand-editing `package.dart`, hunting down every
+    `package.dependencies.xxx` line in `project.dart`, regenerating
+    `flutist_gen.dart`, and finally running `flutist generate` to
+    clean up the per-module `pubspec.yaml` files. Easy to get wrong;
+    the smallest mistake left dangling references that broke the next
+    `flutist generate`.
+  - `pub delete` does the whole round trip in one shot. It scans
+    `project.dart` for usages, prints the full plan (the
+    `Dependency` entry that will leave `package.dart` plus every
+    module reference that will be cleaned), and waits for a y/n
+    confirmation. After the user approves it rewrites both files,
+    regenerates `flutist_gen.dart`, and runs the full generate
+    pipeline so every module `pubspec.yaml` is back in sync without
+    a follow-up command.
+  - Accepts one or more package names: `flutist pub delete http dio
+    bloc`. Each is validated against `package.dart` up front;
+    requesting an unknown name aborts before any file is touched.
+  - `--dry-run` prints the plan and exits without writing.
+    `-y` / `--yes` skips the confirmation prompt for scripts.
+  - The reference cleanup handles both list shapes users actually
+    write: own-line entries in a multi-line list and inline lists
+    like `dependencies: [package.dependencies.flutterBloc]`.
+    Surrounding indentation and adjacent items keep their formatting.
+  - `help` text for `pub` is rewritten to document both
+    subcommands (`add`, `delete`) and the new flags.
+
 ## [3.0.6] - 2026-05-10
 
 ### 🐛 Bug Fixes

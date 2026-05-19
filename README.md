@@ -76,6 +76,9 @@ Layer packages and their dependencies are **automatically wired** in `project.da
 # Add packages to package.dart with auto-resolved versions
 flutist pub add http bloc flutter_bloc
 
+# Remove a package (also cleans references in project.dart and runs generate)
+flutist pub delete flutter_bloc
+
 # Sync dependencies to all modules
 flutist generate
 ```
@@ -104,7 +107,7 @@ Templates live in `flutist/templates/`. Define your own templates to match your 
 | **`check`** | Check architecture rules (CI-friendly, no file changes) | `flutist check` |
 | **`test`** | Run tests for all modules in parallel (auto-selects `flutter test` or `dart test`) | `flutist test [-m <module>]` |
 | **`scaffold`** | Generate code from templates | `flutist scaffold <template> --name <name>` |
-| **`pub`** | Manage dependencies | `flutist pub add <package>` |
+| **`pub`** | Add or remove dependencies | `flutist pub add <package>` / `flutist pub delete <package>` |
 | **`graph`** | Visualize module dependencies | `flutist graph [--format <format>]` |
 | **`help`** | Show help information | `flutist help [command]` |
 
