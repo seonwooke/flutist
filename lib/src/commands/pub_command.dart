@@ -33,11 +33,215 @@ class PubCommand implements BaseCommand {
       case 'add':
         await _handleAdd(subArgs);
         break;
+      case 'delete':
+        await _handleDelete(subArgs);
+        break;
       default:
         Logger.error('Unknown subcommand: $subcommand');
-        Logger.info('Available subcommands: add');
+        Logger.info('Available subcommands: add, delete');
         exit(1);
     }
+  }
+
+  /// Handles the 'delete' subcommand.
+  ///
+  /// Removes one or more dependencies from package.dart. By default, refuses
+  /// to remove a dependency that is still referenced in project.dart unless
+  /// `--cascade` is provided, in which case the matching
+  /// `package.dependencies.xxx` entries in project.dart are also removed.
+  Future<void> _handleDelete(List<String> arguments) async {
+    var cascade = false;
+    var dryRun = false;
+    var skipConfirm = false;
+    final packageNames = <String>[];
+
+    for (final arg in arguments) {
+      switch (arg) {
+        case '--cascade':
+          cascade = true;
+          break;
+        case '--dry-run':
+          dryRun = true;
+          break;
+        case '-y':
+        case '--yes':
+          skipConfirm = true;
+          break;
+        default:
+          if (arg.startsWith('-')) {
+            Logger.error('Unknown flag: $arg');
+            Logger.info(
+                'Usage: flutist pub delete <package_name> [--cascade] [--dry-run] [-y]');
+            exit(1);
+          }
+          packageNames.add(arg);
+      }
+    }
+
+    if (packageNames.isEmpty) {
+      Logger.error('No package name provided.');
+      Logger.info(
+          'Usage: flutist pub delete <package_name> [<package_name2> ...] [--cascade] [--dry-run] [-y]');
+      exit(1);
+    }
+
+    final rootPath = Directory.current.path;
+    final packageDartPath = path.join(rootPath, 'package.dart');
+    final projectDartPath = path.join(rootPath, 'project.dart');
+
+    if (!File(packageDartPath).existsSync()) {
+      Logger.error('package.dart not found.');
+      Logger.info('Run "flutist init" first to create package.dart');
+      exit(1);
+    }
+
+    var packageContent = await File(packageDartPath).readAsString();
+    final projectExists = File(projectDartPath).existsSync();
+    var projectContent =
+        projectExists ? await File(projectDartPath).readAsString() : '';
+
+    // Step 1: verify every requested package exists in package.dart.
+    final missing = <String>[];
+    for (final name in packageNames) {
+      if (!_dependencyExists(packageContent, name)) {
+        missing.add(name);
+      }
+    }
+    if (missing.isNotEmpty) {
+      Logger.error(
+          'Not found in package.dart: ${missing.join(', ')}');
+      exit(1);
+    }
+
+    // Step 2: collect usages from project.dart.
+    final usagesByPkg = <String, List<String>>{};
+    if (projectExists) {
+      for (final name in packageNames) {
+        usagesByPkg[name] = _findDependencyUsages(projectContent, name);
+      }
+    }
+
+    final hasAnyUsage = usagesByPkg.values.any((u) => u.isNotEmpty);
+
+    if (hasAnyUsage && !cascade) {
+      Logger.error(
+          'Cannot delete: the following dependencies are still in use.');
+      for (final entry in usagesByPkg.entries) {
+        if (entry.value.isEmpty) continue;
+        Logger.error('  ${entry.key} used by: ${entry.value.join(', ')}');
+      }
+      Logger.info('');
+      Logger.info(
+          'Re-run with --cascade to also remove the references from project.dart.');
+      exit(1);
+    }
+
+    // Step 3: print summary.
+    Logger.info('Will remove from package.dart:');
+    for (final name in packageNames) {
+      Logger.info('  - $name');
+    }
+    if (cascade && hasAnyUsage) {
+      Logger.info('Will remove references in project.dart:');
+      for (final entry in usagesByPkg.entries) {
+        if (entry.value.isEmpty) continue;
+        Logger.info('  - ${entry.key} (from: ${entry.value.join(', ')})');
+      }
+    }
+
+    if (dryRun) {
+      Logger.info('--dry-run set; no files changed.');
+      return;
+    }
+
+    // Step 4: confirm.
+    if (!skipConfirm) {
+      Logger.info('');
+      Logger.info('Proceed? (y/n)');
+      final answer = stdin.readLineSync()?.trim().toLowerCase();
+      if (answer != 'y' && answer != 'yes') {
+        Logger.info('Aborted.');
+        return;
+      }
+    }
+
+    // Step 5: rewrite package.dart and project.dart.
+    var updatedPackage = packageContent;
+    for (final name in packageNames) {
+      updatedPackage = _removeDependencyFromPackage(updatedPackage, name);
+    }
+    await File(packageDartPath).writeAsString(updatedPackage);
+    Logger.success('Updated package.dart');
+
+    if (cascade && projectExists && hasAnyUsage) {
+      var updatedProject = projectContent;
+      for (final name in packageNames) {
+        updatedProject = _removeDependencyReferences(updatedProject, name);
+      }
+      await File(projectDartPath).writeAsString(updatedProject);
+      Logger.success('Updated project.dart');
+    }
+
+    GenFileGenerator.generate(rootPath);
+
+    for (final name in packageNames) {
+      Logger.success('Removed $name from package.dart');
+    }
+  }
+
+  /// Returns true if [packageContent] contains a Dependency entry named [pkg].
+  bool _dependencyExists(String packageContent, String pkg) {
+    final pattern = RegExp(
+      "Dependency\\s*\\(\\s*name:\\s*'$pkg'\\s*,\\s*version:\\s*'[^']+'\\s*\\)",
+    );
+    return pattern.hasMatch(packageContent);
+  }
+
+  /// Returns the list of module names in project.dart that reference [pkg]
+  /// via `package.dependencies.<camelCase>`. Comment lines are skipped.
+  List<String> _findDependencyUsages(String projectContent, String pkg) {
+    final camel = StringCase.toCamelCase(pkg);
+    final usages = <String>[];
+
+    final modulePattern = RegExp(r'Module\s*\((.*?)\),', dotAll: true);
+    for (final match in modulePattern.allMatches(projectContent)) {
+      final body = match.group(1)!;
+      final nameMatch = RegExp(r"name:\s*'([^']+)'").firstMatch(body);
+      if (nameMatch == null) continue;
+
+      // Strip comment lines to mirror ProjectParser behavior.
+      final stripped = body
+          .split('\n')
+          .where((line) => !line.trim().startsWith('//'))
+          .join('\n');
+      final refPattern = RegExp('package\\.dependencies\\.$camel\\b');
+      if (refPattern.hasMatch(stripped)) {
+        usages.add(nameMatch.group(1)!);
+      }
+    }
+    return usages;
+  }
+
+  /// Removes the `Dependency(name: 'pkg', version: '...')` line from
+  /// [packageContent], including the trailing comma and the preceding
+  /// indentation/newline so the surrounding block stays clean.
+  String _removeDependencyFromPackage(String packageContent, String pkg) {
+    final pattern = RegExp(
+      "(?:^|\\n)[ \\t]*Dependency\\s*\\(\\s*name:\\s*'$pkg'\\s*,\\s*version:\\s*'[^']+'\\s*\\)\\s*,?[ \\t]*(?=\\n|\$)",
+      multiLine: true,
+    );
+    return packageContent.replaceFirst(pattern, '');
+  }
+
+  /// Removes `package.dependencies.<camelCase>,` lines from project.dart so
+  /// that no dangling references remain after the dependency is deleted.
+  String _removeDependencyReferences(String projectContent, String pkg) {
+    final camel = StringCase.toCamelCase(pkg);
+    final pattern = RegExp(
+      '(?:^|\\n)[ \\t]*package\\.dependencies\\.$camel\\b\\s*,?[ \\t]*(?=\\n|\$)',
+      multiLine: true,
+    );
+    return projectContent.replaceAll(pattern, '');
   }
 
   /// Handles the 'add' subcommand.
