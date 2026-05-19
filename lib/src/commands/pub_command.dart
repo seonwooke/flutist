@@ -166,11 +166,17 @@ class PubCommand implements BaseCommand {
       Logger.success('Updated project.dart');
     }
 
-    GenFileGenerator.generate(rootPath);
-
     for (final name in packageNames) {
       Logger.success('Removed $name from package.dart');
     }
+
+    // After deletion, module pubspec.yaml files still list the dependency.
+    // Running the full generate pipeline syncs them and regenerates
+    // flutist_gen.dart in one step, so the workspace ends in a consistent
+    // state without the user having to remember a follow-up command.
+    Logger.info('');
+    Logger.info('Syncing workspace via `flutist generate`...');
+    GenerateCommand().execute([]);
   }
 
   /// Returns true if [packageContent] contains a Dependency entry named [pkg].
