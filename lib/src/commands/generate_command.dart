@@ -214,12 +214,17 @@ class GenerateCommand implements BaseCommand {
       final content = pubspecFile.readAsStringSync();
       final editor = YamlEditor(content);
 
+      // Names Flutist owns. Anything outside this set was written by the
+      // user and is preserved as-is.
+      final managedNames = _managedNames(package, modulePathMap);
+
       // Clear and rebuild dependencies section
-      _rebuildDependenciesSection(
-          editor, module, package, pubspecPath, modulePathMap);
+      _rebuildDependenciesSection(currentDir, editor, module, package,
+          pubspecPath, modulePathMap, managedNames);
 
       // Clear and rebuild dev_dependencies section
-      _rebuildDevDependenciesSection(editor, module, package);
+      _rebuildDevDependenciesSection(
+          currentDir, editor, module, package, pubspecPath, managedNames);
 
       // Write back to file with formatting
       final updatedContent = _formatPubspecContent(editor.toString());
@@ -230,16 +235,95 @@ class GenerateCommand implements BaseCommand {
     }
   }
 
-  /// Gets version for a dependency from package.dart.
-  String? _getVersionFromPackage(Package package, String dependencyName) {
-    try {
-      final dep = package.dependencies.firstWhere(
-        (d) => d.name == dependencyName,
-      );
-      return dep.version;
-    } catch (e) {
-      return null;
+  /// Gets the declaration for a dependency from package.dart.
+  Dependency? _lookupDependency(Package package, String dependencyName) {
+    for (final dep in package.dependencies) {
+      if (dep.name == dependencyName) return dep;
     }
+    return null;
+  }
+
+  /// Every name Flutist manages: dependencies and modules declared in
+  /// package.dart, plus every module present in the workspace.
+  ///
+  /// Entries in a module's pubspec.yaml whose name falls outside this set
+  /// were added by the user (a local path package, a git package, a
+  /// hand-written pub dependency) and must survive generation untouched.
+  Set<String> _managedNames(Package package, Map<String, String> modulePathMap) {
+    return <String>{
+      ...package.dependencies.map((d) => d.name),
+      ...package.modules.map((m) => m.name),
+      ...modulePathMap.keys,
+    };
+  }
+
+  /// Builds the pubspec.yaml value for [dep] as seen from [moduleDirPath].
+  ///
+  /// Path dependencies are declared in package.dart relative to the project
+  /// root, so the path is re-anchored to the consuming module here.
+  dynamic _pubspecValueFor(
+    String currentDir,
+    Dependency dep,
+    String moduleDirPath,
+  ) {
+    switch (dep.kind) {
+      case DependencyKind.hosted:
+        return dep.version;
+
+      case DependencyKind.path:
+        final absolute = path.normalize(path.join(currentDir, dep.path!));
+        return {'path': path.relative(absolute, from: moduleDirPath)};
+
+      case DependencyKind.git:
+        if (dep.gitRef == null && dep.gitPath == null) {
+          return {'git': dep.gitUrl};
+        }
+        return {
+          'git': {
+            'url': dep.gitUrl,
+            if (dep.gitRef != null) 'ref': dep.gitRef,
+            if (dep.gitPath != null) 'path': dep.gitPath,
+          }
+        };
+    }
+  }
+
+  /// Human-readable summary of a resolved dependency, for the generation log.
+  String _describeDependency(Dependency dep, dynamic value) {
+    switch (dep.kind) {
+      case DependencyKind.hosted:
+        return '${dep.name} ($value)';
+      case DependencyKind.path:
+        return '${dep.name} (path: ${(value as Map)['path']})';
+      case DependencyKind.git:
+        return '${dep.name} (git: ${dep.gitUrl})';
+    }
+  }
+
+  /// Collects entries in [section] that Flutist does not manage, so they can
+  /// be written back untouched.
+  Map<String, dynamic> _preservedEntries(
+    YamlEditor editor,
+    String section,
+    Set<String> managedNames,
+  ) {
+    final preserved = <String, dynamic>{};
+
+    try {
+      final node = editor.parseAt([section]);
+      if (node.value is Map) {
+        for (final entry in (node.value as Map).entries) {
+          final name = entry.key as String;
+          if (!managedNames.contains(name)) {
+            preserved[name] = entry.value;
+          }
+        }
+      }
+    } catch (e) {
+      // Section doesn't exist yet
+    }
+
+    return preserved;
   }
 
   /// Ensures a section exists in the YAML document.
@@ -372,46 +456,35 @@ class GenerateCommand implements BaseCommand {
 
   /// Rebuilds the dependencies section completely.
   void _rebuildDependenciesSection(
+    String currentDir,
     YamlEditor editor,
     Module module,
     Package package,
     String pubspecPath,
     Map<String, String> modulePathMap,
+    Set<String> managedNames,
   ) {
-    // Get current dependencies to preserve SDK dependencies
-    final currentDeps = <String, dynamic>{};
-    try {
-      final depsNode = editor.parseAt(['dependencies']);
-      // Convert YamlNode value to Map
-      if (depsNode.value is Map) {
-        final deps = depsNode.value as Map;
-        // Preserve all SDK dependencies (flutter, flutter_localizations, etc.)
-        for (final entry in deps.entries) {
-          if (entry.value is Map &&
-              (entry.value as Map).containsKey('sdk')) {
-            currentDeps[entry.key as String] = entry.value;
-          }
-        }
-      }
-    } catch (e) {
-      // Section doesn't exist yet
-    }
+    final currentModuleDir = path.dirname(pubspecPath);
 
-    // Collect all dependencies
+    // Entries Flutist does not own (SDK deps like flutter, and anything the
+    // user added by hand) are carried over untouched.
     final allDeps = <String, dynamic>{};
-    allDeps.addAll(currentDeps);
+    allDeps.addAll(_preservedEntries(editor, 'dependencies', managedNames));
 
     // Add dependencies from project.dart
     for (final dep in module.dependencies) {
-      final version = _getVersionFromPackage(package, dep.name);
-      if (version != null) {
-        allDeps[dep.name] = version;
-        Logger.info('  ✓ Added dependency: ${dep.name} ($version)');
+      final declared = _lookupDependency(package, dep.name);
+      if (declared == null) {
+        Logger.warn('  ⚠ Not declared in package.dart: ${dep.name}');
+        continue;
       }
+      final value = _pubspecValueFor(currentDir, declared, currentModuleDir);
+      allDeps[dep.name] = value;
+      Logger.info(
+          '  ✓ Added dependency: ${_describeDependency(declared, value)}');
     }
 
     // Add module dependencies (with calculated relative path)
-    final currentModuleDir = path.dirname(pubspecPath);
 
     for (final modDep in module.modules) {
       // Skip self-reference
@@ -445,31 +518,20 @@ class GenerateCommand implements BaseCommand {
 
   /// Rebuilds the dev_dependencies section completely.
   void _rebuildDevDependenciesSection(
+    String currentDir,
     YamlEditor editor,
     Module module,
     Package package,
+    String pubspecPath,
+    Set<String> managedNames,
   ) {
-    // Names that flutist will manage (from project.dart devDependencies)
-    final flutistManagedNames =
-        module.devDependencies.map((d) => d.name).toSet();
+    final currentModuleDir = path.dirname(pubspecPath);
 
     // Preserve existing entries that flutist does not manage
-    // (SDK deps like flutter_test, user-added deps like test, flutter_lints, etc.)
-    final preserved = <String, dynamic>{};
-    try {
-      final devDepsNode = editor.parseAt(['dev_dependencies']);
-      if (devDepsNode.value is Map) {
-        final devDeps = devDepsNode.value as Map;
-        for (final entry in devDeps.entries) {
-          final name = entry.key as String;
-          if (!flutistManagedNames.contains(name)) {
-            preserved[name] = entry.value;
-          }
-        }
-      }
-    } catch (e) {
-      // Section doesn't exist yet
-    }
+    // (SDK deps like flutter_test, user-added deps like flutter_lints, and
+    // any local path or git package the user wired up by hand).
+    final preserved =
+        _preservedEntries(editor, 'dev_dependencies', managedNames);
 
     if (module.devDependencies.isEmpty && preserved.isEmpty) {
       // Remove dev_dependencies section only if truly empty
@@ -486,11 +548,15 @@ class GenerateCommand implements BaseCommand {
     allDevDeps.addAll(preserved);
 
     for (final devDep in module.devDependencies) {
-      final version = _getVersionFromPackage(package, devDep.name);
-      if (version != null) {
-        allDevDeps[devDep.name] = version;
-        Logger.info('  ✓ Added dev_dependency: ${devDep.name} ($version)');
+      final declared = _lookupDependency(package, devDep.name);
+      if (declared == null) {
+        Logger.warn('  ⚠ Not declared in package.dart: ${devDep.name}');
+        continue;
       }
+      final value = _pubspecValueFor(currentDir, declared, currentModuleDir);
+      allDevDeps[devDep.name] = value;
+      Logger.info(
+          '  ✓ Added dev_dependency: ${_describeDependency(declared, value)}');
     }
 
     // Update dev_dependencies section

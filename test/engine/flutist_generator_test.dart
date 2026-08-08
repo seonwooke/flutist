@@ -93,14 +93,14 @@ final package = Package(
 final package = Package(
   name: 'test',
   dependencies: [
-    Dependency.git(name: 'analytics', url: 'git\@github.com:acme/a.git'),
+    Dependency.git(name: 'analytics', url: 'git@github.com:acme/a.git'),
   ],
   modules: [],
 );
 """;
       final result = GenFileGenerator.parsePackageDart(content);
       expect(result.dependencies, hasLength(1));
-      expect(result.dependencies[0].gitUrl, 'git\@github.com:acme/a.git');
+      expect(result.dependencies[0].gitUrl, 'git@github.com:acme/a.git');
       expect(result.dependencies[0].gitRef, isNull);
       expect(result.dependencies[0].gitPath, isNull);
     });
