@@ -162,6 +162,59 @@ final package = Package(
       expect(result.dependencies[0].name, 'http');
     });
 
+    test('ignores commented-out dependencies', () {
+      const content = """
+final package = Package(
+  name: 'test',
+  dependencies: [
+    // Example)
+    // Dependency(name: 'intl', version: '^20.2.0'),
+    // Dependency.path(name: 'design_system', path: 'shared/design_system'),
+    // Dependency.git(
+    //   name: 'analytics',
+    //   url: 'https://github.com/acme/analytics.git',
+    //   ref: 'main',
+    // ),
+    Dependency(name: 'http', version: '^1.1.0'),
+  ],
+  modules: [],
+);
+""";
+      final result = GenFileGenerator.parsePackageDart(content);
+      expect(result.dependencies.map((d) => d.name), ['http']);
+    });
+
+    test('ignores commented-out modules', () {
+      const content = """
+final package = Package(
+  name: 'test',
+  dependencies: [],
+  modules: [
+    Module(name: 'auth'),
+    // Module(name: 'legacy'),
+  ],
+);
+""";
+      final result = GenFileGenerator.parsePackageDart(content);
+      expect(result.modules.map((m) => m.name), ['auth']);
+    });
+
+    test('keeps the // inside a git URL', () {
+      const content = """
+final package = Package(
+  name: 'test',
+  dependencies: [
+    Dependency.git(name: 'a', url: 'https://github.com/acme/a.git', ref: 'v1'),
+  ],
+  modules: [],
+);
+""";
+      final result = GenFileGenerator.parsePackageDart(content);
+      expect(result.dependencies, hasLength(1));
+      expect(result.dependencies[0].gitUrl, 'https://github.com/acme/a.git');
+      expect(result.dependencies[0].gitRef, 'v1');
+    });
+
     test('parses modules', () {
       const content = """
 final package = Package(

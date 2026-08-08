@@ -84,15 +84,20 @@ class GenFileGenerator {
   static Package parsePackageDart(String content) {
     _warnIfInlineDeclarations(content, 'package.dart');
 
+    // Commented-out declarations must not become real ones. The init
+    // template ships examples behind `//`, and users leave old entries
+    // commented while trying things out.
+    final active = _stripLineComments(content);
+
     // Parse package name
-    final nameMatch = RegExp(r"name:\s*'([^']+)'").firstMatch(content);
+    final nameMatch = RegExp(r"name:\s*'([^']+)'").firstMatch(active);
     final packageName = nameMatch?.group(1) ?? 'workspace';
 
     // Parse dependencies
-    final dependencies = _parseDependencies(content);
+    final dependencies = _parseDependencies(active);
 
     // Parse modules
-    final modules = _parseModules(content);
+    final modules = _parseModules(active);
 
     // Warn if file has Module( outside comments but parsed none
     if (modules.isEmpty && _hasModuleOutsideComments(content)) {
@@ -106,6 +111,40 @@ class GenFileGenerator {
       dependencies: dependencies,
       modules: modules,
     );
+  }
+
+  /// Removes `//` line comments, leaving the lines themselves in place so
+  /// that offsets stay line-aligned.
+  ///
+  /// A `//` inside a string literal is left alone, which matters because git
+  /// URLs contain one: `url: 'https://github.com/acme/a.git'`.
+  static String _stripLineComments(String content) {
+    return content.split('\n').map(_stripLineComment).join('\n');
+  }
+
+  static String _stripLineComment(String line) {
+    String? quote;
+
+    for (var i = 0; i < line.length; i++) {
+      final char = line[i];
+
+      if (quote != null) {
+        if (char == r'\') {
+          i++; // skip the escaped character
+        } else if (char == quote) {
+          quote = null;
+        }
+        continue;
+      }
+
+      if (char == "'" || char == '"') {
+        quote = char;
+      } else if (char == '/' && i + 1 < line.length && line[i + 1] == '/') {
+        return line.substring(0, i);
+      }
+    }
+
+    return line;
   }
 
   /// Returns true if content has `Module(` on a non-comment line.
