@@ -235,6 +235,21 @@ OVERVIEW:
   `package.dependencies.xxx` references it will remove from project.dart)
   and waits for a y/n confirmation. Pass -y to skip the prompt in scripts.
 
+LOCAL AND GIT PACKAGES:
+  `pub add` resolves from pub.dev. Packages on disk or in a Git repository
+  are declared in package.dart by hand, then picked up by "flutist generate":
+
+    Dependency.path(name: 'design_system', path: 'shared/design_system'),
+    Dependency.git(
+      name: 'analytics',
+      url: 'https://github.com/acme/analytics.git',
+      ref: 'main',
+    ),
+
+  A path is written relative to package.dart, not to the module using it.
+  Flutist re-anchors it for each module, so the same line resolves from any
+  depth in the workspace. `pub delete` removes all three kinds.
+
 EXAMPLES:
   flutist pub add http
   flutist pub add http dio bloc
