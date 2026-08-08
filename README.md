@@ -83,6 +83,25 @@ flutist pub delete flutter_bloc
 flutist generate
 ```
 
+Packages on disk or in a Git repository are declared in `package.dart` directly:
+
+```dart
+final package = Package(
+  name: 'my_app',
+  dependencies: [
+    Dependency(name: 'http', version: '^1.1.0'),
+    Dependency.path(name: 'design_system', path: 'shared/design_system'),
+    Dependency.git(
+      name: 'analytics',
+      url: 'https://github.com/acme/analytics.git',
+      ref: 'main',
+    ),
+  ],
+);
+```
+
+Reference them from `project.dart` the same way as any other dependency, then run `flutist generate`. A `path` is written relative to `package.dart`, not to the module using it: Flutist re-anchors it per module, so one declaration resolves correctly from `app/` and from `features/auth/auth_domain/` alike.
+
 ### 4. Generate Code from Custom Templates
 
 ```bash
@@ -112,7 +131,7 @@ Templates live in `flutist/templates/`. Define your own templates to match your 
 | **`help`** | Show help information | `flutist help [command]` |
 
 
-> **Note:** `flutist generate` manages dependencies declared in `package.dart` and `project.dart`. SDK dependencies (`flutter_localizations`, etc.) and Flutter-specific settings (`flutter: generate: true`, `flutter: uses-material-design: true`) should be added directly to each module's `pubspec.yaml` — they are preserved during generation.
+> **Note:** `flutist generate` rewrites the `dependencies` and `dev_dependencies` sections of each module's `pubspec.yaml`, but only for names declared in `package.dart` or belonging to a workspace module. Everything else is yours and is preserved untouched: SDK dependencies (`flutter_localizations`, etc.), Flutter-specific settings (`flutter: generate: true`, `flutter: uses-material-design: true`), and any dependency you added to a module's `pubspec.yaml` by hand.
 
 ## Core Files
 

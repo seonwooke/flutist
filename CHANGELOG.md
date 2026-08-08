@@ -2,6 +2,90 @@
 
 All notable changes to Flutist will be documented in this file.
 
+## [3.2.0] - 2026-08-08
+
+### ✨ Features
+
+- **Local and Git packages can be declared in `package.dart`**
+  - `Dependency` could only describe a package published on pub.dev:
+    a name and a version constraint. A package sitting on disk or
+    living in a Git repository had no representation, so the only way
+    to use one was to edit a module's `pubspec.yaml` by hand, and
+    that edit did not survive the next `flutist generate` (see the
+    fix below).
+  - Two new forms sit alongside the existing one:
+    ```dart
+    Dependency.path(name: 'design_system', path: 'shared/design_system'),
+    Dependency.git(
+      name: 'analytics',
+      url: 'https://github.com/acme/analytics.git',
+      ref: 'main',
+      path: 'packages/analytics',
+    ),
+    ```
+    `ref` and `path` are optional on `Dependency.git`; omitting both
+    emits pub's short `git: <url>` form.
+  - Reference them from `project.dart` exactly like any other
+    dependency (`package.dependencies.designSystem`) and run
+    `flutist generate`.
+  - A `Dependency.path` is written **relative to `package.dart`**, not
+    relative to the module consuming it. Flutist re-anchors the path
+    for each module when writing its `pubspec.yaml`, so a single
+    declaration yields `../shared/design_system` for a top-level
+    module and `../../../shared/design_system` for a nested one. This
+    is the part that hand-editing gets wrong most often.
+  - `Dependency.version` is now nullable, since it is meaningless for
+    the two new kinds. The pub.dev constructor still requires it, so
+    existing `package.dart` files need no changes.
+
+### 🐛 Bug Fixes
+
+- **`flutist generate` no longer discards hand-written dependencies**
+  - Generation rebuilt each module's `dependencies` section from
+    scratch and kept only entries carrying an `sdk:` key. Every other
+    pre-existing entry was deleted without so much as a warning. A
+    local `path:` dependency, a `git:` dependency, or a package added
+    straight to a module's `pubspec.yaml` vanished on the next
+    `flutist generate`.
+  - Worse, `dev_dependencies` behaved the opposite way and preserved
+    unmanaged entries, so the two halves of the same file followed
+    contradictory rules.
+  - Preservation is now decided by ownership instead of by shape. A
+    name declared in `package.dart`, or belonging to a module in the
+    workspace, is Flutist's to manage. Anything else belongs to the
+    user and is written back untouched. Both sections follow the rule.
+  - Removing a dependency from `package.dart` still clears it from
+    every module, so `pub delete` is unaffected.
+
+- **`flutist pub delete` works on path and git dependencies**
+  - The package.dart lookup assumed a single-line
+    `Dependency(name: '...', version: '...')` with the arguments in
+    that exact order, so a path or git declaration was reported as
+    "not found in package.dart" and could not be deleted. Lookup now
+    matches the declaration head and reads the argument list by paren
+    matching, which handles any argument order and the multi-line git
+    form.
+  - After deletion, the dependency also lingered in every module's
+    `pubspec.yaml`: `generate` reads `package.dart` to decide what it
+    owns, and the entry had just been removed from it, so the leftover
+    looked user-authored and was preserved. `pub delete` now tells
+    `generate` which names it removed. The same gap affected
+    `dev_dependencies` previously.
+
+- **Dependencies missing from `package.dart` are reported**
+  - A dependency referenced in `project.dart` but not declared in
+    `package.dart` was skipped silently, leaving the user to work out
+    why it never appeared in the generated `pubspec.yaml`. Generation
+    now names it.
+
+### 🧹 Internal
+
+- The `package.dart` dependency parser reads named arguments
+  individually rather than matching one fixed argument order, so
+  `Dependency(version: '^1.0.0', name: 'http')` parses correctly. A
+  declaration missing a required argument is reported and skipped
+  instead of silently disappearing.
+
 ## [3.1.0] - 2026-05-19
 
 ### ✨ Features
