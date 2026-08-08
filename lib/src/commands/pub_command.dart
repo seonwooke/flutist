@@ -195,15 +195,20 @@ class PubCommand implements BaseCommand {
   /// multi-line layout: the declaration head is found by pattern, then the
   /// argument list is read by paren matching, so neither argument order nor
   /// line breaks matter.
+  ///
+  /// The search runs against a copy with line comments blanked out, so a
+  /// commented-out example is never mistaken for the real declaration. The
+  /// mask preserves length, so the offsets returned index the original.
   List<int>? _dependencySpan(String packageContent, String pkg) {
+    final searchable = DartSource.maskLineComments(packageContent);
     final headPattern = RegExp(r'Dependency(?:\.\w+)?\s*\(');
 
-    for (final head in headPattern.allMatches(packageContent)) {
+    for (final head in headPattern.allMatches(searchable)) {
       var depth = 1;
       var i = head.end;
 
-      while (i < packageContent.length && depth > 0) {
-        final char = packageContent[i];
+      while (i < searchable.length && depth > 0) {
+        final char = searchable[i];
         if (char == '(') {
           depth++;
         } else if (char == ')') {
@@ -214,7 +219,7 @@ class PubCommand implements BaseCommand {
 
       if (depth != 0) continue;
 
-      final body = packageContent.substring(head.end, i - 1);
+      final body = searchable.substring(head.end, i - 1);
       final nameMatch =
           RegExp("(?:^|[\\s,(])name:\\s*'([^']*)'").firstMatch(body);
       if (nameMatch?.group(1) != pkg) continue;

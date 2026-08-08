@@ -1,3 +1,4 @@
+export 'dart_source.dart';
 export 'error_helper.dart';
 export 'file_helper.dart';
 export 'logger.dart';
