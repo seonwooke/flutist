@@ -128,7 +128,7 @@ class GenFileGenerator {
       final trimmed = line.trim();
       if (trimmed.startsWith('//')) continue;
       if (RegExp(r'\[.*Module\s*\(.*\).*\]').hasMatch(line) ||
-          RegExp(r'\[.*Dependency\s*\(.*\).*\]').hasMatch(line)) {
+          RegExp(r'\[.*Dependency(?:\.\w+)?\s*\(.*\).*\]').hasMatch(line)) {
         Logger.warn('$fileName appears to use inline declarations.');
         Logger.warn(
             'Flutist only parses multiline format. '
@@ -152,17 +152,81 @@ class GenFileGenerator {
 
     final dependenciesContent = match.group(1)!;
 
-    final dependencyPattern = RegExp(
-      r"Dependency\s*\(\s*name:\s*'([^']+)'\s*,\s*version:\s*'([^']+)'\s*\)",
-    );
+    // Matches the head of a declaration: `Dependency(`, `Dependency.path(`,
+    // or `Dependency.git(`. The argument list is read by paren matching so
+    // that named arguments may appear in any order.
+    final headPattern = RegExp(r'Dependency(?:\.(path|git))?\s*\(');
 
-    for (final depMatch in dependencyPattern.allMatches(dependenciesContent)) {
-      final name = depMatch.group(1)!;
-      final version = depMatch.group(2)!;
-      dependencies.add(Dependency(name: name, version: version));
+    for (final head in headPattern.allMatches(dependenciesContent)) {
+      final args = _readArgumentList(dependenciesContent, head.end);
+      if (args == null) continue;
+
+      final name = _namedStringArg(args, 'name');
+      if (name == null) continue;
+
+      switch (head.group(1)) {
+        case 'path':
+          final path = _namedStringArg(args, 'path');
+          if (path == null) {
+            Logger.warn(
+                'Dependency.path(name: \'$name\') is missing `path:`. Skipped.');
+            continue;
+          }
+          dependencies.add(Dependency.path(name: name, path: path));
+
+        case 'git':
+          final url = _namedStringArg(args, 'url');
+          if (url == null) {
+            Logger.warn(
+                'Dependency.git(name: \'$name\') is missing `url:`. Skipped.');
+            continue;
+          }
+          dependencies.add(Dependency.git(
+            name: name,
+            url: url,
+            ref: _namedStringArg(args, 'ref'),
+            path: _namedStringArg(args, 'path'),
+          ));
+
+        default:
+          final version = _namedStringArg(args, 'version');
+          if (version == null) {
+            Logger.warn(
+                'Dependency(name: \'$name\') is missing `version:`. Skipped.');
+            continue;
+          }
+          dependencies.add(Dependency(name: name, version: version));
+      }
     }
 
     return dependencies;
+  }
+
+  /// Returns the argument list starting at [start] (just past the opening
+  /// paren) up to its matching close paren, or null if unbalanced.
+  static String? _readArgumentList(String content, int start) {
+    var depth = 1;
+    var i = start;
+
+    while (i < content.length && depth > 0) {
+      final char = content[i];
+      if (char == '(') {
+        depth++;
+      } else if (char == ')') {
+        depth--;
+      }
+      i++;
+    }
+
+    if (depth != 0) return null;
+    return content.substring(start, i - 1);
+  }
+
+  /// Extracts a single-quoted named argument value from an argument list.
+  static String? _namedStringArg(String args, String argName) {
+    final match =
+        RegExp("(?:^|[\\s,(])$argName:\\s*'([^']*)'").firstMatch(args);
+    return match?.group(1);
   }
 
   /// Parses modules from package.dart content.
