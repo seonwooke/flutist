@@ -72,6 +72,29 @@ All notable changes to Flutist will be documented in this file.
     `generate` which names it removed. The same gap affected
     `dev_dependencies` previously.
 
+- **Commented-out declarations are no longer parsed as real ones**
+  - The `package.dart` parser matched `Dependency` and `Module`
+    declarations anywhere in the file, comments included. Because
+    `flutist init` writes its `package.dart` with commented examples,
+    every project created by Flutist carried phantom `intl` and `test`
+    dependencies. They showed up as accessors in `flutist_gen.dart`,
+    and referencing one produced a `pubspec.yaml` entry pinned to the
+    example's made-up version.
+  - This also collided with the ownership rule above: the phantom
+    `test` entry made `test` look like a name Flutist manages, so a
+    module with a hand-written `test:` dev_dependency would have had
+    it removed.
+  - Line comments are now masked before parsing. The mask is
+    quote-aware, so the `//` inside a git URL survives.
+
+- **`pub delete` removes the declaration, not a commented example**
+  - The `package.dart` lookup scanned raw text and stopped at the
+    first textual match. Deleting a package that also appeared in one
+    of the commented examples removed the comment and left the real
+    declaration untouched, while still reporting success and cleaning
+    `project.dart` and every module `pubspec.yaml`. The command that
+    exists to keep the workspace consistent left it inconsistent.
+
 - **Dependencies missing from `package.dart` are reported**
   - A dependency referenced in `project.dart` but not declared in
     `package.dart` was skipped silently, leaving the user to work out
