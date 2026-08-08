@@ -17,8 +17,18 @@ class GenerateCommand implements BaseCommand {
   String get description =>
       'Sync all pubspec.yaml files based on project.dart.';
 
+  /// Runs the generation pipeline.
+  ///
+  /// [removedDependencies] names dependencies that were just deleted from
+  /// package.dart by the calling command. Flutist can no longer tell from
+  /// package.dart that it once owned them, so they would be mistaken for
+  /// user-authored entries and left behind in each module's pubspec.yaml.
+  /// Naming them here clears them out.
   @override
-  void execute(List<String> arguments) {
+  void execute(
+    List<String> arguments, {
+    Set<String> removedDependencies = const {},
+  }) {
     if (arguments.contains('--help') || arguments.contains('-h')) {
       HelpCommand().execute([name]);
       return;
@@ -89,7 +99,8 @@ class GenerateCommand implements BaseCommand {
           packageData: packageData, projectModuleNames: projectModuleNames);
 
       // Step 4: Update pubspec.yaml files
-      _updatePubspecFiles(currentDir, projectData, packageData);
+      _updatePubspecFiles(
+          currentDir, projectData, packageData, removedDependencies);
 
       Logger.success('Generation completed!');
     } catch (e) {
@@ -170,15 +181,16 @@ class GenerateCommand implements BaseCommand {
   }
 
   /// Updates pubspec.yaml files for all modules.
-  void _updatePubspecFiles(
-      String currentDir, Project project, Package package) {
+  void _updatePubspecFiles(String currentDir, Project project, Package package,
+      Set<String> removedDependencies) {
     Logger.info('Updating pubspec.yaml files...');
 
     // Build module path map from workspace once
     final modulePathMap = _buildModulePathMap(currentDir);
 
     for (final module in project.modules) {
-      _updateModulePubspec(currentDir, module, package, modulePathMap);
+      _updateModulePubspec(
+          currentDir, module, package, modulePathMap, removedDependencies);
     }
 
     Logger.success('Updated all pubspec.yaml files');
@@ -190,6 +202,7 @@ class GenerateCommand implements BaseCommand {
     Module module,
     Package package,
     Map<String, String> modulePathMap,
+    Set<String> removedDependencies,
   ) {
     // Find the module's pubspec.yaml location
     final moduleDirPath = modulePathMap[module.name];
@@ -216,7 +229,8 @@ class GenerateCommand implements BaseCommand {
 
       // Names Flutist owns. Anything outside this set was written by the
       // user and is preserved as-is.
-      final managedNames = _managedNames(package, modulePathMap);
+      final managedNames =
+          _managedNames(package, modulePathMap, removedDependencies);
 
       // Clear and rebuild dependencies section
       _rebuildDependenciesSection(currentDir, editor, module, package,
@@ -249,11 +263,16 @@ class GenerateCommand implements BaseCommand {
   /// Entries in a module's pubspec.yaml whose name falls outside this set
   /// were added by the user (a local path package, a git package, a
   /// hand-written pub dependency) and must survive generation untouched.
-  Set<String> _managedNames(Package package, Map<String, String> modulePathMap) {
+  Set<String> _managedNames(
+    Package package,
+    Map<String, String> modulePathMap,
+    Set<String> removedDependencies,
+  ) {
     return <String>{
       ...package.dependencies.map((d) => d.name),
       ...package.modules.map((m) => m.name),
       ...modulePathMap.keys,
+      ...removedDependencies,
     };
   }
 
