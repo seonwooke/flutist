@@ -171,6 +171,29 @@ WHAT IT DOES:
   • Updates each module's pubspec.yaml with correct dependencies
   • Regenerates flutist_gen.dart
 
+WHAT IT TOUCHES:
+  Only the dependencies and dev_dependencies sections, and within them
+  only names Flutist owns. A name is Flutist's if package.dart declares
+  it, or if it belongs to a module in the workspace.
+
+  Kept as written:
+    • path: and git: dependencies you added by hand
+    • pub.dev packages not declared in package.dart
+    • sdk entries (flutter, flutter_test, flutter_localizations)
+    • every other section (flutter:, assets:, resolution:, environment:)
+    • modules that project.dart does not list, which are never opened
+
+  Rewritten:
+    • versions of packages declared in package.dart
+    • names Flutist owns that project.dart does not reference, which are
+      removed; generate names each one and the declaration that keeps it
+
+  Wiring one workspace module to another by editing a pubspec.yaml does
+  not stick. Declare it in project.dart under the module's modules list.
+
+  Comments inside dependencies and dev_dependencies are not preserved;
+  those sections are re-serialized in full.
+
 EXAMPLES:
   flutist generate
 ''');

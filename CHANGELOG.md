@@ -2,7 +2,7 @@
 
 All notable changes to Flutist will be documented in this file.
 
-## [3.2.0] - 2026-08-08
+## [3.2.0] - 2026-08-30
 
 ### ✨ Features
 
@@ -101,6 +101,27 @@ All notable changes to Flutist will be documented in this file.
     why it never appeared in the generated `pubspec.yaml`. Generation
     now names it.
 
+- **`flutist generate` no longer drops entries silently**
+  - A dependency Flutist owns but that `project.dart` does not
+    reference is removed from a module's `pubspec.yaml`. That is by
+    design, since `project.dart` is the source of truth for what each
+    module depends on, but generation did it without a word. The only
+    signal was the entry being gone, which reads as data loss.
+  - Each dropped name is now reported along with the declaration that
+    would keep it, and the two cases are distinguished: a workspace
+    module points at `package.modules.x` in the module's `modules`
+    list, a `package.dart` dependency at `package.dependencies.x` in
+    its `dependencies` list.
+  - Removing an entire `dev_dependencies` section is covered too. That
+    was the same gap one level up: a section holding nothing but
+    Flutist-owned names vanished without comment.
+  - Two cases stay quiet on purpose. Names handed over by `pub delete`
+    were already reported by that command. Names `project.dart` does
+    declare were dropped for another reason, such as a module missing
+    from the workspace, which generation reports on its own; pointing
+    the user at a declaration that already exists would send them to
+    the wrong file.
+
 ### 🧹 Internal
 
 - The `package.dart` dependency parser reads named arguments
@@ -108,6 +129,32 @@ All notable changes to Flutist will be documented in this file.
   `Dependency(version: '^1.0.0', name: 'http')` parses correctly. A
   declaration missing a required argument is reported and skipped
   instead of silently disappearing.
+
+### 📚 Documentation
+
+- **What `flutist generate` touches is now written down**
+  - Which entries in a module's `pubspec.yaml` survive generation was
+    answerable only from the source. README gains a table covering
+    what is kept, what is overwritten, and what is removed, and
+    `flutist help generate` carries the same summary.
+  - Both state the two limits that were previously undocumented:
+    comments inside `dependencies` and `dev_dependencies` do not
+    survive, since those sections are re-serialized in full, and blank
+    lines are normalized to one between sections.
+
+### 🧪 Tests
+
+- **Coverage for pubspec.yaml generation**
+  - Ownership-based preservation is the guarantee that lets a team
+    keep a local path package or a Git fork wired up by hand, and the
+    `commands/` directory had no tests at all. The whole pipeline was
+    resting on manual verification.
+  - Both halves of the rule are now covered: sdk, hand-written `path:`,
+    `git:` and hosted entries and non-dependency sections survive,
+    while a name declared in `package.dart` is rewritten from it. Also
+    covered are `path:` re-anchoring at two nesting depths, both git
+    emission forms, idempotence across runs, and the drop warnings
+    including their two silent cases.
 
 ## [3.1.0] - 2026-05-19
 
