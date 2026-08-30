@@ -156,6 +156,30 @@ All notable changes to Flutist will be documented in this file.
     emission forms, idempotence across runs, and the drop warnings
     including their two silent cases.
 
+### ⬆️ Upgrading from 3.1.0
+
+Two things can change in your workspace on the first `flutist generate`
+after upgrading. Both are reported as they happen; neither is silent.
+
+- **A `dev_dependencies` entry may be removed.** Up to 3.1.0 the two
+  sections followed contradictory rules: `dependencies` kept only
+  `sdk:` entries, while `dev_dependencies` kept anything the module's
+  `project.dart` entry did not name. Both now follow the same
+  ownership rule. So a package declared in `package.dart` and written
+  into a module's `dev_dependencies` by hand, but never referenced
+  from that module in `project.dart`, is now removed. Generation names
+  it and the one line that keeps it:
+  `package.dependencies.<name>` in the module's `devDependencies`.
+- **`flutist_gen.dart` may lose accessors.** The parser used to read
+  commented-out declarations as real ones, so a `package.dart` written
+  by `flutist init` produced phantom `intl` and `test` accessors, and
+  referencing one wrote a nonexistent version into `pubspec.yaml`.
+  Those accessors are gone. If `project.dart` referenced one, uncomment
+  the matching declaration in `package.dart`, or drop the reference.
+
+The `dependencies` section only gains: entries 3.1.0 deleted, such as a
+hand-written `path:`, `git:` or pub.dev package, now survive.
+
 ## [3.1.0] - 2026-05-19
 
 ### ✨ Features
