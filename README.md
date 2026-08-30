@@ -83,6 +83,25 @@ flutist pub delete flutter_bloc
 flutist generate
 ```
 
+Packages on disk or in a Git repository are declared in `package.dart` directly:
+
+```dart
+final package = Package(
+  name: 'my_app',
+  dependencies: [
+    Dependency(name: 'http', version: '^1.1.0'),
+    Dependency.path(name: 'design_system', path: 'shared/design_system'),
+    Dependency.git(
+      name: 'analytics',
+      url: 'https://github.com/acme/analytics.git',
+      ref: 'main',
+    ),
+  ],
+);
+```
+
+Reference them from `project.dart` the same way as any other dependency, then run `flutist generate`. A `path` is written relative to `package.dart`, not to the module using it: Flutist re-anchors it per module, so one declaration resolves correctly from `app/` and from `features/auth/auth_domain/` alike.
+
 ### 4. Generate Code from Custom Templates
 
 ```bash
@@ -112,7 +131,38 @@ Templates live in `flutist/templates/`. Define your own templates to match your 
 | **`help`** | Show help information | `flutist help [command]` |
 
 
-> **Note:** `flutist generate` manages dependencies declared in `package.dart` and `project.dart`. SDK dependencies (`flutter_localizations`, etc.) and Flutter-specific settings (`flutter: generate: true`, `flutter: uses-material-design: true`) should be added directly to each module's `pubspec.yaml` — they are preserved during generation.
+## What `flutist generate` Touches
+
+`flutist generate` rewrites only the `dependencies` and `dev_dependencies` sections of each module's `pubspec.yaml`, and within those sections it only manages names it owns. **A name is Flutist's if `package.dart` declares it, or if it belongs to a module in the workspace. Everything else is yours and is written back untouched.**
+
+| In a module's `pubspec.yaml` | After `flutist generate` |
+|---|---|
+| A `path:` dependency you added by hand | **Kept** |
+| A `git:` dependency you added by hand | **Kept** |
+| A pub.dev package not declared in `package.dart` | **Kept** |
+| SDK entries (`flutter`, `flutter_test`, `flutter_localizations`) | **Kept** |
+| Other sections (`flutter:`, `assets:`, `resolution:`, `environment:`) | **Kept** |
+| A module not listed in `project.dart` | **Never touched at all** |
+| The version of a package declared in `package.dart` | **Overwritten** from `package.dart` |
+| A name Flutist owns that `project.dart` does not reference | **Removed**, with a warning naming the declaration that would keep it |
+
+The last row is the one to know about. Wiring one workspace module to another by editing a `pubspec.yaml` directly does not stick, because `project.dart` is the source of truth for module relationships. Declare it there instead:
+
+```dart
+Module(
+  name: 'auth_data',
+  modules: [
+    package.modules.network,   // this is what survives generate
+  ],
+)
+```
+
+Two limits worth knowing:
+
+- **Comments inside `dependencies` / `dev_dependencies` are not preserved.** Those sections are re-serialized wholesale. Comments elsewhere in the file are fine.
+- **Blank lines inside the file are normalized** to one line between sections.
+
+Prefer declaring local and Git packages in `package.dart` over hand-editing. Both survive either way, but only a declared one appears in `flutist_gen.dart`, `flutist graph`, and `flutist check`, and only a declared `path:` gets re-anchored automatically for each module's depth.
 
 ## Core Files
 

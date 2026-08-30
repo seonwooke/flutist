@@ -171,6 +171,29 @@ WHAT IT DOES:
   • Updates each module's pubspec.yaml with correct dependencies
   • Regenerates flutist_gen.dart
 
+WHAT IT TOUCHES:
+  Only the dependencies and dev_dependencies sections, and within them
+  only names Flutist owns. A name is Flutist's if package.dart declares
+  it, or if it belongs to a module in the workspace.
+
+  Kept as written:
+    • path: and git: dependencies you added by hand
+    • pub.dev packages not declared in package.dart
+    • sdk entries (flutter, flutter_test, flutter_localizations)
+    • every other section (flutter:, assets:, resolution:, environment:)
+    • modules that project.dart does not list, which are never opened
+
+  Rewritten:
+    • versions of packages declared in package.dart
+    • names Flutist owns that project.dart does not reference, which are
+      removed; generate names each one and the declaration that keeps it
+
+  Wiring one workspace module to another by editing a pubspec.yaml does
+  not stick. Declare it in project.dart under the module's modules list.
+
+  Comments inside dependencies and dev_dependencies are not preserved;
+  those sections are re-serialized in full.
+
 EXAMPLES:
   flutist generate
 ''');
@@ -234,6 +257,21 @@ OVERVIEW:
   `pub delete` prints the full plan first (including any
   `package.dependencies.xxx` references it will remove from project.dart)
   and waits for a y/n confirmation. Pass -y to skip the prompt in scripts.
+
+LOCAL AND GIT PACKAGES:
+  `pub add` resolves from pub.dev. Packages on disk or in a Git repository
+  are declared in package.dart by hand, then picked up by "flutist generate":
+
+    Dependency.path(name: 'design_system', path: 'shared/design_system'),
+    Dependency.git(
+      name: 'analytics',
+      url: 'https://github.com/acme/analytics.git',
+      ref: 'main',
+    ),
+
+  A path is written relative to package.dart, not to the module using it.
+  Flutist re-anchors it for each module, so the same line resolves from any
+  depth in the workspace. `pub delete` removes all three kinds.
 
 EXAMPLES:
   flutist pub add http

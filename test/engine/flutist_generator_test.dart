@@ -45,6 +45,176 @@ final package = Package(
       expect(result.dependencies[1].version, '^6.1.1');
     });
 
+    test('parses path dependencies', () {
+      const content = """
+final package = Package(
+  name: 'test',
+  dependencies: [
+    Dependency.path(name: 'design_system', path: 'shared/design_system'),
+  ],
+  modules: [],
+);
+""";
+      final result = GenFileGenerator.parsePackageDart(content);
+      expect(result.dependencies, hasLength(1));
+      expect(result.dependencies[0].name, 'design_system');
+      expect(result.dependencies[0].path, 'shared/design_system');
+      expect(result.dependencies[0].version, isNull);
+      expect(result.dependencies[0].kind, DependencyKind.path);
+    });
+
+    test('parses git dependencies', () {
+      const content = """
+final package = Package(
+  name: 'test',
+  dependencies: [
+    Dependency.git(
+      name: 'analytics',
+      url: 'https://github.com/acme/analytics.git',
+      ref: 'main',
+      path: 'packages/analytics',
+    ),
+  ],
+  modules: [],
+);
+""";
+      final result = GenFileGenerator.parsePackageDart(content);
+      expect(result.dependencies, hasLength(1));
+      expect(result.dependencies[0].name, 'analytics');
+      expect(result.dependencies[0].gitUrl,
+          'https://github.com/acme/analytics.git');
+      expect(result.dependencies[0].gitRef, 'main');
+      expect(result.dependencies[0].gitPath, 'packages/analytics');
+      expect(result.dependencies[0].kind, DependencyKind.git);
+    });
+
+    test('parses git dependencies without ref or path', () {
+      const content = """
+final package = Package(
+  name: 'test',
+  dependencies: [
+    Dependency.git(name: 'analytics', url: 'git@github.com:acme/a.git'),
+  ],
+  modules: [],
+);
+""";
+      final result = GenFileGenerator.parsePackageDart(content);
+      expect(result.dependencies, hasLength(1));
+      expect(result.dependencies[0].gitUrl, 'git@github.com:acme/a.git');
+      expect(result.dependencies[0].gitRef, isNull);
+      expect(result.dependencies[0].gitPath, isNull);
+    });
+
+    test('parses hosted, path, and git dependencies together', () {
+      const content = """
+final package = Package(
+  name: 'test',
+  dependencies: [
+    Dependency(name: 'http', version: '^1.1.0'),
+    Dependency.path(name: 'design_system', path: 'shared/design_system'),
+    Dependency.git(name: 'analytics', url: 'https://example.com/a.git'),
+  ],
+  modules: [],
+);
+""";
+      final result = GenFileGenerator.parsePackageDart(content);
+      expect(result.dependencies.map((d) => d.name),
+          ['http', 'design_system', 'analytics']);
+      expect(result.dependencies.map((d) => d.kind), [
+        DependencyKind.hosted,
+        DependencyKind.path,
+        DependencyKind.git,
+      ]);
+    });
+
+    test('parses named arguments in any order', () {
+      const content = """
+final package = Package(
+  name: 'test',
+  dependencies: [
+    Dependency(version: '^1.1.0', name: 'http'),
+    Dependency.git(ref: 'v2', url: 'https://example.com/a.git', name: 'a'),
+  ],
+  modules: [],
+);
+""";
+      final result = GenFileGenerator.parsePackageDart(content);
+      expect(result.dependencies, hasLength(2));
+      expect(result.dependencies[0].name, 'http');
+      expect(result.dependencies[0].version, '^1.1.0');
+      expect(result.dependencies[1].name, 'a');
+      expect(result.dependencies[1].gitRef, 'v2');
+    });
+
+    test('skips malformed declarations without dropping later ones', () {
+      const content = """
+final package = Package(
+  name: 'test',
+  dependencies: [
+    Dependency.path(name: 'broken'),
+    Dependency(name: 'http', version: '^1.1.0'),
+  ],
+  modules: [],
+);
+""";
+      final result = GenFileGenerator.parsePackageDart(content);
+      expect(result.dependencies, hasLength(1));
+      expect(result.dependencies[0].name, 'http');
+    });
+
+    test('ignores commented-out dependencies', () {
+      const content = """
+final package = Package(
+  name: 'test',
+  dependencies: [
+    // Example)
+    // Dependency(name: 'intl', version: '^20.2.0'),
+    // Dependency.path(name: 'design_system', path: 'shared/design_system'),
+    // Dependency.git(
+    //   name: 'analytics',
+    //   url: 'https://github.com/acme/analytics.git',
+    //   ref: 'main',
+    // ),
+    Dependency(name: 'http', version: '^1.1.0'),
+  ],
+  modules: [],
+);
+""";
+      final result = GenFileGenerator.parsePackageDart(content);
+      expect(result.dependencies.map((d) => d.name), ['http']);
+    });
+
+    test('ignores commented-out modules', () {
+      const content = """
+final package = Package(
+  name: 'test',
+  dependencies: [],
+  modules: [
+    Module(name: 'auth'),
+    // Module(name: 'legacy'),
+  ],
+);
+""";
+      final result = GenFileGenerator.parsePackageDart(content);
+      expect(result.modules.map((m) => m.name), ['auth']);
+    });
+
+    test('keeps the // inside a git URL', () {
+      const content = """
+final package = Package(
+  name: 'test',
+  dependencies: [
+    Dependency.git(name: 'a', url: 'https://github.com/acme/a.git', ref: 'v1'),
+  ],
+  modules: [],
+);
+""";
+      final result = GenFileGenerator.parsePackageDart(content);
+      expect(result.dependencies, hasLength(1));
+      expect(result.dependencies[0].gitUrl, 'https://github.com/acme/a.git');
+      expect(result.dependencies[0].gitRef, 'v1');
+    });
+
     test('parses modules', () {
       const content = """
 final package = Package(

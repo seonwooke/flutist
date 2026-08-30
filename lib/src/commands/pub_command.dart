@@ -174,17 +174,60 @@ class PubCommand implements BaseCommand {
     // Running the full generate pipeline syncs them and regenerates
     // flutist_gen.dart in one step, so the workspace ends in a consistent
     // state without the user having to remember a follow-up command.
+    //
+    // The deleted names have to be handed over explicitly: generate decides
+    // what it owns by reading package.dart, and these are no longer in it.
     Logger.info('');
     Logger.info('Syncing workspace via `flutist generate`...');
-    GenerateCommand().execute([]);
+    GenerateCommand()
+        .execute([], removedDependencies: packageNames.toSet());
   }
 
   /// Returns true if [packageContent] contains a Dependency entry named [pkg].
   bool _dependencyExists(String packageContent, String pkg) {
-    final pattern = RegExp(
-      "Dependency\\s*\\(\\s*name:\\s*'$pkg'\\s*,\\s*version:\\s*'[^']+'\\s*\\)",
-    );
-    return pattern.hasMatch(packageContent);
+    return _dependencySpan(packageContent, pkg) != null;
+  }
+
+  /// Returns the `[start, end)` offsets of the `Dependency` declaration in
+  /// [packageContent] whose `name:` is [pkg], or null if there is none.
+  ///
+  /// Matches the hosted, path, and git forms in either single-line or
+  /// multi-line layout: the declaration head is found by pattern, then the
+  /// argument list is read by paren matching, so neither argument order nor
+  /// line breaks matter.
+  ///
+  /// The search runs against a copy with line comments blanked out, so a
+  /// commented-out example is never mistaken for the real declaration. The
+  /// mask preserves length, so the offsets returned index the original.
+  List<int>? _dependencySpan(String packageContent, String pkg) {
+    final searchable = DartSource.maskLineComments(packageContent);
+    final headPattern = RegExp(r'Dependency(?:\.\w+)?\s*\(');
+
+    for (final head in headPattern.allMatches(searchable)) {
+      var depth = 1;
+      var i = head.end;
+
+      while (i < searchable.length && depth > 0) {
+        final char = searchable[i];
+        if (char == '(') {
+          depth++;
+        } else if (char == ')') {
+          depth--;
+        }
+        i++;
+      }
+
+      if (depth != 0) continue;
+
+      final body = searchable.substring(head.end, i - 1);
+      final nameMatch =
+          RegExp("(?:^|[\\s,(])name:\\s*'([^']*)'").firstMatch(body);
+      if (nameMatch?.group(1) != pkg) continue;
+
+      return [head.start, i];
+    }
+
+    return null;
   }
 
   /// Returns the list of module names in project.dart that reference [pkg]
@@ -212,15 +255,35 @@ class PubCommand implements BaseCommand {
     return usages;
   }
 
-  /// Removes the `Dependency(name: 'pkg', version: '...')` line from
-  /// [packageContent], including the trailing comma and the preceding
-  /// indentation/newline so the surrounding block stays clean.
+  /// Removes the `Dependency` declaration named [pkg] from [packageContent],
+  /// including its trailing comma, its own indentation, and the line break it
+  /// sat on, so the surrounding block stays clean.
+  ///
+  /// Works for the multi-line git form as well as the single-line hosted and
+  /// path forms.
   String _removeDependencyFromPackage(String packageContent, String pkg) {
-    final pattern = RegExp(
-      "(?:^|\\n)[ \\t]*Dependency\\s*\\(\\s*name:\\s*'$pkg'\\s*,\\s*version:\\s*'[^']+'\\s*\\)\\s*,?[ \\t]*(?=\\n|\$)",
-      multiLine: true,
-    );
-    return packageContent.replaceFirst(pattern, '');
+    final span = _dependencySpan(packageContent, pkg);
+    if (span == null) return packageContent;
+
+    var start = span[0];
+    var end = span[1];
+
+    // Forward: an optional comma, trailing spaces, and one line break.
+    if (end < packageContent.length && packageContent[end] == ',') end++;
+    while (end < packageContent.length &&
+        (packageContent[end] == ' ' || packageContent[end] == '\t')) {
+      end++;
+    }
+    if (end < packageContent.length && packageContent[end] == '\n') end++;
+
+    // Backward: the indentation on this line only, leaving the previous
+    // line's own break intact.
+    while (start > 0 &&
+        (packageContent[start - 1] == ' ' || packageContent[start - 1] == '\t')) {
+      start--;
+    }
+
+    return packageContent.substring(0, start) + packageContent.substring(end);
   }
 
   /// Removes `package.dependencies.<camelCase>` references from project.dart
@@ -420,12 +483,8 @@ environment:
     String packageName,
     String version,
   ) {
-    // Check if dependency already exists
-    final existingPattern = RegExp(
-      "Dependency\\s*\\(\\s*name:\\s*'$packageName'\\s*,\\s*version:\\s*'[^']+'\\s*\\)",
-    );
-
-    if (existingPattern.hasMatch(packageContent)) {
+    // Check if dependency already exists, in any of its declaration forms
+    if (_dependencyExists(packageContent, packageName)) {
       Logger.warn('$packageName already exists in package.dart. Skipping.');
       return packageContent;
     }

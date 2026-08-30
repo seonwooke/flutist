@@ -2,6 +2,184 @@
 
 All notable changes to Flutist will be documented in this file.
 
+## [3.2.0] - 2026-08-30
+
+### ✨ Features
+
+- **Local and Git packages can be declared in `package.dart`**
+  - `Dependency` could only describe a package published on pub.dev:
+    a name and a version constraint. A package sitting on disk or
+    living in a Git repository had no representation, so the only way
+    to use one was to edit a module's `pubspec.yaml` by hand, and
+    that edit did not survive the next `flutist generate` (see the
+    fix below).
+  - Two new forms sit alongside the existing one:
+    ```dart
+    Dependency.path(name: 'design_system', path: 'shared/design_system'),
+    Dependency.git(
+      name: 'analytics',
+      url: 'https://github.com/acme/analytics.git',
+      ref: 'main',
+      path: 'packages/analytics',
+    ),
+    ```
+    `ref` and `path` are optional on `Dependency.git`; omitting both
+    emits pub's short `git: <url>` form.
+  - Reference them from `project.dart` exactly like any other
+    dependency (`package.dependencies.designSystem`) and run
+    `flutist generate`.
+  - A `Dependency.path` is written **relative to `package.dart`**, not
+    relative to the module consuming it. Flutist re-anchors the path
+    for each module when writing its `pubspec.yaml`, so a single
+    declaration yields `../shared/design_system` for a top-level
+    module and `../../../shared/design_system` for a nested one. This
+    is the part that hand-editing gets wrong most often.
+  - `Dependency.version` is now nullable, since it is meaningless for
+    the two new kinds. The pub.dev constructor still requires it, so
+    existing `package.dart` files need no changes.
+
+### 🐛 Bug Fixes
+
+- **`flutist generate` no longer discards hand-written dependencies**
+  - Generation rebuilt each module's `dependencies` section from
+    scratch and kept only entries carrying an `sdk:` key. Every other
+    pre-existing entry was deleted without so much as a warning. A
+    local `path:` dependency, a `git:` dependency, or a package added
+    straight to a module's `pubspec.yaml` vanished on the next
+    `flutist generate`.
+  - Worse, `dev_dependencies` behaved the opposite way and preserved
+    unmanaged entries, so the two halves of the same file followed
+    contradictory rules.
+  - Preservation is now decided by ownership instead of by shape. A
+    name declared in `package.dart`, or belonging to a module in the
+    workspace, is Flutist's to manage. Anything else belongs to the
+    user and is written back untouched. Both sections follow the rule.
+  - Removing a dependency from `package.dart` still clears it from
+    every module, so `pub delete` is unaffected.
+
+- **`flutist pub delete` works on path and git dependencies**
+  - The package.dart lookup assumed a single-line
+    `Dependency(name: '...', version: '...')` with the arguments in
+    that exact order, so a path or git declaration was reported as
+    "not found in package.dart" and could not be deleted. Lookup now
+    matches the declaration head and reads the argument list by paren
+    matching, which handles any argument order and the multi-line git
+    form.
+  - After deletion, the dependency also lingered in every module's
+    `pubspec.yaml`: `generate` reads `package.dart` to decide what it
+    owns, and the entry had just been removed from it, so the leftover
+    looked user-authored and was preserved. `pub delete` now tells
+    `generate` which names it removed. The same gap affected
+    `dev_dependencies` previously.
+
+- **Commented-out declarations are no longer parsed as real ones**
+  - The `package.dart` parser matched `Dependency` and `Module`
+    declarations anywhere in the file, comments included. Because
+    `flutist init` writes its `package.dart` with commented examples,
+    every project created by Flutist carried phantom `intl` and `test`
+    dependencies. They showed up as accessors in `flutist_gen.dart`,
+    and referencing one produced a `pubspec.yaml` entry pinned to the
+    example's made-up version.
+  - This also collided with the ownership rule above: the phantom
+    `test` entry made `test` look like a name Flutist manages, so a
+    module with a hand-written `test:` dev_dependency would have had
+    it removed.
+  - Line comments are now masked before parsing. The mask is
+    quote-aware, so the `//` inside a git URL survives.
+
+- **`pub delete` removes the declaration, not a commented example**
+  - The `package.dart` lookup scanned raw text and stopped at the
+    first textual match. Deleting a package that also appeared in one
+    of the commented examples removed the comment and left the real
+    declaration untouched, while still reporting success and cleaning
+    `project.dart` and every module `pubspec.yaml`. The command that
+    exists to keep the workspace consistent left it inconsistent.
+
+- **Dependencies missing from `package.dart` are reported**
+  - A dependency referenced in `project.dart` but not declared in
+    `package.dart` was skipped silently, leaving the user to work out
+    why it never appeared in the generated `pubspec.yaml`. Generation
+    now names it.
+
+- **`flutist generate` no longer drops entries silently**
+  - A dependency Flutist owns but that `project.dart` does not
+    reference is removed from a module's `pubspec.yaml`. That is by
+    design, since `project.dart` is the source of truth for what each
+    module depends on, but generation did it without a word. The only
+    signal was the entry being gone, which reads as data loss.
+  - Each dropped name is now reported along with the declaration that
+    would keep it, and the two cases are distinguished: a workspace
+    module points at `package.modules.x` in the module's `modules`
+    list, a `package.dart` dependency at `package.dependencies.x` in
+    its `dependencies` list.
+  - Removing an entire `dev_dependencies` section is covered too. That
+    was the same gap one level up: a section holding nothing but
+    Flutist-owned names vanished without comment.
+  - Two cases stay quiet on purpose. Names handed over by `pub delete`
+    were already reported by that command. Names `project.dart` does
+    declare were dropped for another reason, such as a module missing
+    from the workspace, which generation reports on its own; pointing
+    the user at a declaration that already exists would send them to
+    the wrong file.
+
+### 🧹 Internal
+
+- The `package.dart` dependency parser reads named arguments
+  individually rather than matching one fixed argument order, so
+  `Dependency(version: '^1.0.0', name: 'http')` parses correctly. A
+  declaration missing a required argument is reported and skipped
+  instead of silently disappearing.
+
+### 📚 Documentation
+
+- **What `flutist generate` touches is now written down**
+  - Which entries in a module's `pubspec.yaml` survive generation was
+    answerable only from the source. README gains a table covering
+    what is kept, what is overwritten, and what is removed, and
+    `flutist help generate` carries the same summary.
+  - Both state the two limits that were previously undocumented:
+    comments inside `dependencies` and `dev_dependencies` do not
+    survive, since those sections are re-serialized in full, and blank
+    lines are normalized to one between sections.
+
+### 🧪 Tests
+
+- **Coverage for pubspec.yaml generation**
+  - Ownership-based preservation is the guarantee that lets a team
+    keep a local path package or a Git fork wired up by hand, and the
+    `commands/` directory had no tests at all. The whole pipeline was
+    resting on manual verification.
+  - Both halves of the rule are now covered: sdk, hand-written `path:`,
+    `git:` and hosted entries and non-dependency sections survive,
+    while a name declared in `package.dart` is rewritten from it. Also
+    covered are `path:` re-anchoring at two nesting depths, both git
+    emission forms, idempotence across runs, and the drop warnings
+    including their two silent cases.
+
+### ⬆️ Upgrading from 3.1.0
+
+Two things can change in your workspace on the first `flutist generate`
+after upgrading. Both are reported as they happen; neither is silent.
+
+- **A `dev_dependencies` entry may be removed.** Up to 3.1.0 the two
+  sections followed contradictory rules: `dependencies` kept only
+  `sdk:` entries, while `dev_dependencies` kept anything the module's
+  `project.dart` entry did not name. Both now follow the same
+  ownership rule. So a package declared in `package.dart` and written
+  into a module's `dev_dependencies` by hand, but never referenced
+  from that module in `project.dart`, is now removed. Generation names
+  it and the one line that keeps it:
+  `package.dependencies.<name>` in the module's `devDependencies`.
+- **`flutist_gen.dart` may lose accessors.** The parser used to read
+  commented-out declarations as real ones, so a `package.dart` written
+  by `flutist init` produced phantom `intl` and `test` accessors, and
+  referencing one wrote a nonexistent version into `pubspec.yaml`.
+  Those accessors are gone. If `project.dart` referenced one, uncomment
+  the matching declaration in `package.dart`, or drop the reference.
+
+The `dependencies` section only gains: entries 3.1.0 deleted, such as a
+hand-written `path:`, `git:` or pub.dev package, now survive.
+
 ## [3.1.0] - 2026-05-19
 
 ### ✨ Features

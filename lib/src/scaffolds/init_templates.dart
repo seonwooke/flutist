@@ -107,6 +107,16 @@ final package = Package(
     // Example)
     // Dependency(name: 'intl', version: '^20.2.0'),
     // Dependency(name: 'test', version: '^1.28.0'),
+    //
+    // Local packages, declared relative to this file:
+    // Dependency.path(name: 'design_system', path: 'shared/design_system'),
+    //
+    // Git packages:
+    // Dependency.git(
+    //   name: 'analytics',
+    //   url: 'https://github.com/acme/analytics.git',
+    //   ref: 'main',
+    // ),
   ],
   modules: [
     // Modules are auto-registered when you run flutist create
@@ -128,6 +138,16 @@ final package = Package(
     // Example)
     // Dependency(name: 'intl', version: '^20.2.0'),
     // Dependency(name: 'test', version: '^1.28.0'),
+    //
+    // Local packages, declared relative to this file:
+    // Dependency.path(name: 'design_system', path: 'shared/design_system'),
+    //
+    // Git packages:
+    // Dependency.git(
+    //   name: 'analytics',
+    //   url: 'https://github.com/acme/analytics.git',
+    //   ref: 'main',
+    // ),
   ],
   modules: [
     // Modules are auto-registered when you run flutist create
