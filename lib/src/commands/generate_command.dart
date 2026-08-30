@@ -234,11 +234,11 @@ class GenerateCommand implements BaseCommand {
 
       // Clear and rebuild dependencies section
       _rebuildDependenciesSection(currentDir, editor, module, package,
-          pubspecPath, modulePathMap, managedNames);
+          pubspecPath, modulePathMap, managedNames, removedDependencies);
 
       // Clear and rebuild dev_dependencies section
-      _rebuildDevDependenciesSection(
-          currentDir, editor, module, package, pubspecPath, managedNames);
+      _rebuildDevDependenciesSection(currentDir, editor, module, package,
+          pubspecPath, modulePathMap, managedNames, removedDependencies);
 
       // Write back to file with formatting
       final updatedContent = _formatPubspecContent(editor.toString());
@@ -343,6 +343,81 @@ class GenerateCommand implements BaseCommand {
     }
 
     return preserved;
+  }
+
+  /// The entry names currently present in [section], before this run rewrites
+  /// it. Returns an empty set when the section is absent.
+  Set<String> _existingEntryNames(YamlEditor editor, String section) {
+    try {
+      final node = editor.parseAt([section]);
+      if (node.value is Map) {
+        return (node.value as Map).keys.cast<String>().toSet();
+      }
+    } catch (e) {
+      // Section doesn't exist yet.
+    }
+    return <String>{};
+  }
+
+  /// Reports entries that this run is about to drop from [section].
+  ///
+  /// A name Flutist owns but that nothing in `project.dart` references is
+  /// removed by design: `project.dart` is the source of truth for what each
+  /// module depends on, so an entry added straight to a module's
+  /// `pubspec.yaml` cannot survive. Doing that silently reads as data loss,
+  /// though, so each dropped name is named along with the declaration that
+  /// would keep it.
+  ///
+  /// Names in [removedDependencies] are skipped: `pub delete` already told
+  /// the user it was removing them.
+  ///
+  /// So are names `project.dart` already declares for this module. Those did
+  /// not survive for some other reason, such as a module missing from the
+  /// workspace, which the rebuild reports on its own. Telling the user to add
+  /// a declaration that is already there would point at the wrong file.
+  void _warnDroppedEntries({
+    required String section,
+    required Set<String> before,
+    required Set<String> after,
+    required Module module,
+    required Package package,
+    required Map<String, String> modulePathMap,
+    required Set<String> removedDependencies,
+  }) {
+    final field = section == 'dependencies' ? 'dependencies' : 'devDependencies';
+
+    // Everything project.dart already asks for on this module.
+    final declared = <String>{
+      ...module.dependencies.map((d) => d.name),
+      ...module.devDependencies.map((d) => d.name),
+      ...module.modules.map((m) => m.name),
+    };
+
+    for (final name in before.difference(after)) {
+      if (removedDependencies.contains(name)) continue;
+      if (declared.contains(name)) continue;
+
+      final camel = StringCase.toCamelCase(name);
+
+      if (modulePathMap.containsKey(name) ||
+          package.modules.any((m) => m.name == name)) {
+        Logger.warn('  ⚠ Dropped $name from $section');
+        Logger.warn(
+            '     $name is a workspace module, so project.dart decides who '
+            'depends on it.');
+        Logger.warn(
+            '     To keep it, add package.modules.$camel to the '
+            "'${module.name}' modules list in project.dart.");
+      } else if (package.dependencies.any((d) => d.name == name)) {
+        Logger.warn('  ⚠ Dropped $name from $section');
+        Logger.warn(
+            '     $name is declared in package.dart, so project.dart decides '
+            'which modules get it.');
+        Logger.warn(
+            '     To keep it, add package.dependencies.$camel to the '
+            "'${module.name}' $field list in project.dart.");
+      }
+    }
   }
 
   /// Ensures a section exists in the YAML document.
@@ -482,8 +557,10 @@ class GenerateCommand implements BaseCommand {
     String pubspecPath,
     Map<String, String> modulePathMap,
     Set<String> managedNames,
+    Set<String> removedDependencies,
   ) {
     final currentModuleDir = path.dirname(pubspecPath);
+    final before = _existingEntryNames(editor, 'dependencies');
 
     // Entries Flutist does not own (SDK deps like flutter, and anything the
     // user added by hand) are carried over untouched.
@@ -526,6 +603,16 @@ class GenerateCommand implements BaseCommand {
       }
     }
 
+    _warnDroppedEntries(
+      section: 'dependencies',
+      before: before,
+      after: allDeps.keys.toSet(),
+      module: module,
+      package: package,
+      modulePathMap: modulePathMap,
+      removedDependencies: removedDependencies,
+    );
+
     // Update dependencies section (even if empty, we'll format it in _formatPubspecContent)
     try {
       editor.update(['dependencies'], allDeps);
@@ -542,9 +629,12 @@ class GenerateCommand implements BaseCommand {
     Module module,
     Package package,
     String pubspecPath,
+    Map<String, String> modulePathMap,
     Set<String> managedNames,
+    Set<String> removedDependencies,
   ) {
     final currentModuleDir = path.dirname(pubspecPath);
+    final before = _existingEntryNames(editor, 'dev_dependencies');
 
     // Preserve existing entries that flutist does not manage
     // (SDK deps like flutter_test, user-added deps like flutter_lints, and
@@ -553,6 +643,18 @@ class GenerateCommand implements BaseCommand {
         _preservedEntries(editor, 'dev_dependencies', managedNames);
 
     if (module.devDependencies.isEmpty && preserved.isEmpty) {
+      // Every entry the section held was Flutist's and nothing declares it
+      // any more, so the section goes away. Say which names went with it.
+      _warnDroppedEntries(
+        section: 'dev_dependencies',
+        before: before,
+        after: const <String>{},
+        module: module,
+        package: package,
+        modulePathMap: modulePathMap,
+        removedDependencies: removedDependencies,
+      );
+
       // Remove dev_dependencies section only if truly empty
       try {
         editor.remove(['dev_dependencies']);
@@ -577,6 +679,16 @@ class GenerateCommand implements BaseCommand {
       Logger.info(
           '  ✓ Added dev_dependency: ${_describeDependency(declared, value)}');
     }
+
+    _warnDroppedEntries(
+      section: 'dev_dependencies',
+      before: before,
+      after: allDevDeps.keys.toSet(),
+      module: module,
+      package: package,
+      modulePathMap: modulePathMap,
+      removedDependencies: removedDependencies,
+    );
 
     // Update dev_dependencies section
     try {
